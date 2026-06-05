@@ -16,7 +16,7 @@ services:
     environment:
       - LLM_ENDPOINT=${LLM_ENDPOINT:-https://api.modelgate.ru/v1}
       - LLM_API_KEY=${LLM_API_KEY:-}
-      - LLM_MODEL=${LLM_MODEL:-openai/gpt-4o}
+      - LLM_MODEL=${LLM_MODEL:-deepseek-v4-flash}
       - LLM_MODEL_COORDINATOR=${LLM_MODEL_COORDINATOR:-}
       - LLM_MODEL_ANALYST=${LLM_MODEL_ANALYST:-}
       - LLM_MODEL_CRITIC=${LLM_MODEL_CRITIC:-}

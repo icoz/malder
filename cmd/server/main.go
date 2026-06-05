@@ -44,7 +44,7 @@ func loadConfig() *Config {
 	cfg := &Config{
 		LLMEndpoint:         getEnv("LLM_ENDPOINT", "https://api.modelgate.ru/v1"),
 		LLMAPIKey:           getEnv("LLM_API_KEY", ""),
-		LLMModel:            getEnv("LLM_MODEL", "openai/gpt-4o"),
+		LLMModel:            getEnv("LLM_MODEL", "deepseek-v4-flash"),
 		LLMTemperature:      getEnvFloat("LLM_TEMPERATURE", 0.7),
 		LLMTimeout:          getEnvDuration("LLM_TIMEOUT", 60*time.Second),
 		OpenSerpURL:         getEnv("OPENSERP_URL", "http://localhost:8080"),

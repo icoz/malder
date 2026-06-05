@@ -32,7 +32,7 @@
 |------------|----------|--------------|
 | LLM_ENDPOINT | URL LLM API | https://api.modelgate.ru/v1 |
 | LLM_API_KEY | API ключ | "" |
-| LLM_MODEL | Модель по умолчанию | openai/gpt-4o |
+| LLM_MODEL | Модель по умолчанию | deepseek-v4-flash |
 | LLM_MODEL_COORDINATOR | Модель для координатора (планирование) | LLM_MODEL |
 | LLM_MODEL_ANALYST | Модель для аналитика (генерация отчёта) | LLM_MODEL |
 | LLM_MODEL_CRITIC | Модель для критика (оценка) | LLM_MODEL |
