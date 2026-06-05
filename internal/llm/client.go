@@ -1,120 +1,120 @@
 package llm
 
 import (
-    "bytes"
-    "context"
-    "encoding/json"
-    "fmt"
-    "io"
-    "net/http"
-    "time"
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"time"
 )
 
 type Client struct {
-    endpoint    string
-    apiKey      string
-    model       string
-    temperature float64
-    httpClient  *http.Client
+	endpoint    string
+	apiKey      string
+	model       string
+	temperature float64
+	httpClient  *http.Client
 }
 
 type Config struct {
-    Endpoint    string
-    APIKey      string
-    Model       string
-    Timeout     time.Duration
-    Temperature float64
+	Endpoint    string
+	APIKey      string
+	Model       string
+	Timeout     time.Duration
+	Temperature float64
 }
 
 func NewClient(cfg Config) *Client {
-    if cfg.Timeout == 0 {
-        cfg.Timeout = 60 * time.Second
-    }
-    if cfg.Temperature == 0 {
-        cfg.Temperature = 0.7
-    }
-    return &Client{
-        endpoint:    cfg.Endpoint,
-        apiKey:      cfg.APIKey,
-        model:       cfg.Model,
-        temperature: cfg.Temperature,
-        httpClient:  &http.Client{Timeout: cfg.Timeout},
-    }
+	if cfg.Timeout == 0 {
+		cfg.Timeout = 60 * time.Second
+	}
+	if cfg.Temperature == 0 {
+		cfg.Temperature = 0.7
+	}
+	return &Client{
+		endpoint:    cfg.Endpoint,
+		apiKey:      cfg.APIKey,
+		model:       cfg.Model,
+		temperature: cfg.Temperature,
+		httpClient:  &http.Client{Timeout: cfg.Timeout},
+	}
 }
 
 type ChatMessage struct {
-    Role    string `json:"role"`
-    Content string `json:"content"`
+	Role    string `json:"role"`
+	Content string `json:"content"`
 }
 
 type chatRequest struct {
-    Model       string        `json:"model"`
-    Messages    []ChatMessage `json:"messages"`
-    Temperature float64       `json:"temperature"`
-    Stream      bool          `json:"stream"`
+	Model       string        `json:"model"`
+	Messages    []ChatMessage `json:"messages"`
+	Temperature float64       `json:"temperature"`
+	Stream      bool          `json:"stream"`
 }
 
 type chatResponse struct {
-    Choices []struct {
-        Message ChatMessage `json:"message"`
-    } `json:"choices"`
-    Error *struct {
-        Message string `json:"message"`
-    } `json:"error,omitempty"`
+	Choices []struct {
+		Message ChatMessage `json:"message"`
+	} `json:"choices"`
+	Error *struct {
+		Message string `json:"message"`
+	} `json:"error,omitempty"`
 }
 
 func (c *Client) Complete(ctx context.Context, messages []ChatMessage) (string, error) {
-    reqBody := chatRequest{
-        Model:       c.model,
-        Messages:    messages,
-        Temperature: c.temperature,
-        Stream:      false,
-    }
-    jsonData, err := json.Marshal(reqBody)
-    if err != nil {
-        return "", fmt.Errorf("marshal request: %w", err)
-    }
+	reqBody := chatRequest{
+		Model:       c.model,
+		Messages:    messages,
+		Temperature: c.temperature,
+		Stream:      false,
+	}
+	jsonData, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", fmt.Errorf("marshal request: %w", err)
+	}
 
-    httpReq, err := http.NewRequestWithContext(ctx, "POST", c.endpoint+"/v1/chat/completions", bytes.NewReader(jsonData))
-    if err != nil {
-        return "", fmt.Errorf("create request: %w", err)
-    }
-    httpReq.Header.Set("Content-Type", "application/json")
-    if c.apiKey != "" {
-        httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
-    }
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", c.endpoint+"/v1/chat/completions", bytes.NewReader(jsonData))
+	if err != nil {
+		return "", fmt.Errorf("create request: %w", err)
+	}
+	httpReq.Header.Set("Content-Type", "application/json")
+	if c.apiKey != "" {
+		httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
+	}
 
-    resp, err := c.httpClient.Do(httpReq)
-    if err != nil {
-        return "", fmt.Errorf("http do: %w", err)
-    }
-    defer resp.Body.Close()
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return "", fmt.Errorf("http do: %w", err)
+	}
+	defer resp.Body.Close()
 
-    body, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return "", fmt.Errorf("read body: %w", err)
-    }
-    if resp.StatusCode != http.StatusOK {
-        return "", fmt.Errorf("LLM API error %d: %s", resp.StatusCode, string(body))
-    }
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("read body: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("LLM API error %d: %s", resp.StatusCode, string(body))
+	}
 
-    var chatResp chatResponse
-    if err := json.Unmarshal(body, &chatResp); err != nil {
-        return "", fmt.Errorf("unmarshal response: %w", err)
-    }
-    if chatResp.Error != nil {
-        return "", fmt.Errorf("LLM error: %s", chatResp.Error.Message)
-    }
-    if len(chatResp.Choices) == 0 {
-        return "", fmt.Errorf("no choices in response")
-    }
-    return chatResp.Choices[0].Message.Content, nil
+	var chatResp chatResponse
+	if err := json.Unmarshal(body, &chatResp); err != nil {
+		return "", fmt.Errorf("unmarshal response: %w", err)
+	}
+	if chatResp.Error != nil {
+		return "", fmt.Errorf("LLM error: %s", chatResp.Error.Message)
+	}
+	if len(chatResp.Choices) == 0 {
+		return "", fmt.Errorf("no choices in response")
+	}
+	return chatResp.Choices[0].Message.Content, nil
 }
 
 func (c *Client) CompleteSimple(ctx context.Context, systemPrompt, userPrompt string) (string, error) {
-    messages := []ChatMessage{
-        {Role: "system", Content: systemPrompt},
-        {Role: "user", Content: userPrompt},
-    }
-    return c.Complete(ctx, messages)
+	messages := []ChatMessage{
+		{Role: "system", Content: systemPrompt},
+		{Role: "user", Content: userPrompt},
+	}
+	return c.Complete(ctx, messages)
 }
