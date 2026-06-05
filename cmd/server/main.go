@@ -24,6 +24,10 @@ type Config struct {
 	LLMTemperature float64
 	LLMTimeout     time.Duration
 
+	LLMModelCoordinator string
+	LLMModelAnalyst     string
+	LLMModelCritic      string
+
 	OpenSerpURL string
 
 	MemoryPath string
@@ -37,10 +41,10 @@ type Config struct {
 }
 
 func loadConfig() *Config {
-	return &Config{
-		LLMEndpoint:         getEnv("LLM_ENDPOINT", "http://localhost:11434/v1"),
+	cfg := &Config{
+		LLMEndpoint:         getEnv("LLM_ENDPOINT", "https://api.modelgate.ru/v1"),
 		LLMAPIKey:           getEnv("LLM_API_KEY", ""),
-		LLMModel:            getEnv("LLM_MODEL", "llama3.2"),
+		LLMModel:            getEnv("LLM_MODEL", "openai/gpt-4o"),
 		LLMTemperature:      getEnvFloat("LLM_TEMPERATURE", 0.7),
 		LLMTimeout:          getEnvDuration("LLM_TIMEOUT", 60*time.Second),
 		OpenSerpURL:         getEnv("OPENSERP_URL", "http://localhost:8080"),
@@ -50,6 +54,10 @@ func loadConfig() *Config {
 		MaxIterations:       getEnvInt("MAX_ITERATIONS", 3),
 		ServerPort:          getEnv("SERVER_PORT", "8080"),
 	}
+	cfg.LLMModelCoordinator = getEnv("LLM_MODEL_COORDINATOR", cfg.LLMModel)
+	cfg.LLMModelAnalyst = getEnv("LLM_MODEL_ANALYST", cfg.LLMModel)
+	cfg.LLMModelCritic = getEnv("LLM_MODEL_CRITIC", cfg.LLMModel)
+	return cfg
 }
 
 func getEnv(key, defaultVal string) string {
@@ -91,11 +99,9 @@ func main() {
 	log.Printf("Запуск malder с конфигурацией: %+v", cfg)
 
 	llmClient := llm.NewClient(llm.Config{
-		Endpoint:    cfg.LLMEndpoint,
-		APIKey:      cfg.LLMAPIKey,
-		Model:       cfg.LLMModel,
-		Temperature: cfg.LLMTemperature,
-		Timeout:     cfg.LLMTimeout,
+		Endpoint: cfg.LLMEndpoint,
+		APIKey:   cfg.LLMAPIKey,
+		Timeout:  cfg.LLMTimeout,
 	})
 
 	mem, err := memory.NewLongTermMemory(cfg.MemoryPath)
@@ -119,12 +125,14 @@ func main() {
 
 	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, cfg.MaxPagesPerQuery)
 
-	analystAgent := agent.NewAnalystAgent(llmClient, mem, saveFactTool)
+	analystAgent := agent.NewAnalystAgent(llmClient, cfg.LLMModelAnalyst, cfg.LLMTemperature, mem, saveFactTool)
 
-	criticAgent := agent.NewCriticAgent(llmClient)
+	criticAgent := agent.NewCriticAgent(llmClient, cfg.LLMModelCritic, cfg.LLMTemperature)
 
 	coordinator := agent.NewCoordinator(agent.CoordinatorConfig{
 		LLM:           llmClient,
+		Model:         cfg.LLMModelCoordinator,
+		Temperature:   cfg.LLMTemperature,
 		Memory:        mem,
 		SearchAgent:   searchAgent,
 		AnalystAgent:  analystAgent,
@@ -212,6 +220,8 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 			}
 			tempCoord := agent.NewCoordinator(agent.CoordinatorConfig{
 				LLM:           coord.LLM(),
+				Model:         coord.Model(),
+				Temperature:   coord.Temperature(),
 				Memory:        coord.Memory(),
 				SearchAgent:   coord.SearchAgent(),
 				AnalystAgent:  coord.AnalystAgent(),

@@ -14,9 +14,12 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - LLM_ENDPOINT=${LLM_ENDPOINT:-http://host.docker.internal:11434/v1}
+      - LLM_ENDPOINT=${LLM_ENDPOINT:-https://api.modelgate.ru/v1}
       - LLM_API_KEY=${LLM_API_KEY:-}
-      - LLM_MODEL=${LLM_MODEL:-llama3.2}
+      - LLM_MODEL=${LLM_MODEL:-openai/gpt-4o}
+      - LLM_MODEL_COORDINATOR=${LLM_MODEL_COORDINATOR:-}
+      - LLM_MODEL_ANALYST=${LLM_MODEL_ANALYST:-}
+      - LLM_MODEL_CRITIC=${LLM_MODEL_CRITIC:-}
       - LLM_TEMPERATURE=0.7
       - LLM_TIMEOUT=60s
       - OPENSERP_URL=http://openserp:8080

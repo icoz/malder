@@ -14,6 +14,8 @@ type ProgressReporter func(event string, data map[string]any)
 
 type CoordinatorAgent struct {
 	llm           *llm.Client
+	model         string
+	temperature   float64
 	memory        *memory.LongTermMemory
 	searchAgent   *SearchAgent
 	analystAgent  *AnalystAgent
@@ -24,6 +26,8 @@ type CoordinatorAgent struct {
 
 type CoordinatorConfig struct {
 	LLM           *llm.Client
+	Model         string
+	Temperature   float64
 	Memory        *memory.LongTermMemory
 	SearchAgent   *SearchAgent
 	AnalystAgent  *AnalystAgent
@@ -37,6 +41,8 @@ func NewCoordinator(cfg CoordinatorConfig) *CoordinatorAgent {
 	}
 	return &CoordinatorAgent{
 		llm:           cfg.LLM,
+		model:         cfg.Model,
+		temperature:   cfg.Temperature,
 		memory:        cfg.Memory,
 		searchAgent:   cfg.SearchAgent,
 		analystAgent:  cfg.AnalystAgent,
@@ -49,12 +55,14 @@ func (c *CoordinatorAgent) SetProgressReporter(reporter ProgressReporter) {
 	c.reporter = reporter
 }
 
-func (c *CoordinatorAgent) LLM() *llm.Client               { return c.llm }
+func (c *CoordinatorAgent) LLM() *llm.Client              { return c.llm }
 func (c *CoordinatorAgent) Memory() *memory.LongTermMemory { return c.memory }
 func (c *CoordinatorAgent) SearchAgent() *SearchAgent      { return c.searchAgent }
 func (c *CoordinatorAgent) AnalystAgent() *AnalystAgent    { return c.analystAgent }
 func (c *CoordinatorAgent) CriticAgent() *CriticAgent      { return c.criticAgent }
 func (c *CoordinatorAgent) MaxIterations() int             { return c.maxIterations }
+func (c *CoordinatorAgent) Model() string                  { return c.model }
+func (c *CoordinatorAgent) Temperature() float64           { return c.temperature }
 
 func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (string, error) {
 	c.report("start", map[string]any{"query": userQuery})
@@ -120,7 +128,7 @@ func (c *CoordinatorAgent) planQueries(ctx context.Context, userQuery string) ([
 Ответь ТОЛЬКО в формате JSON-массива строк, например: ["запрос 1", "запрос 2", "запрос 3"]
 Не пиши ничего кроме JSON.`, userQuery)
 
-	response, err := c.llm.CompleteSimple(ctx, "Ты помощник, отвечающий только JSON.", prompt)
+	response, err := c.llm.CompleteSimple(ctx, c.model, "Ты помощник, отвечающий только JSON.", prompt, c.temperature)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +149,7 @@ func (c *CoordinatorAgent) extractQueriesFromFeedback(ctx context.Context, feedb
 Ответь ТОЛЬКО в формате JSON-массива строк, например: ["запрос 1", "запрос 2"]
 Не пиши ничего кроме JSON.`, feedback)
 
-	response, err := c.llm.CompleteSimple(ctx, "Ты полезный помощник.", prompt)
+	response, err := c.llm.CompleteSimple(ctx, c.model, "Ты полезный помощник.", prompt, c.temperature)
 	if err != nil {
 		log.Printf("Ошибка при генерации доп. запросов: %v", err)
 		return nil

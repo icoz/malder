@@ -15,11 +15,17 @@ type CritiqueResult struct {
 }
 
 type CriticAgent struct {
-	llm *llm.Client
+	llm         *llm.Client
+	model       string
+	temperature float64
 }
 
-func NewCriticAgent(llmClient *llm.Client) *CriticAgent {
-	return &CriticAgent{llm: llmClient}
+func NewCriticAgent(llmClient *llm.Client, model string, temperature float64) *CriticAgent {
+	return &CriticAgent{
+		llm:         llmClient,
+		model:       model,
+		temperature: temperature,
+	}
 }
 
 const criticPromptTemplate = `Ты — строгий, но справедливый критик исследовательских отчётов. 
@@ -49,7 +55,7 @@ func (c *CriticAgent) Evaluate(ctx context.Context, report string) (int, string,
 	log.Println("CriticAgent: оценка отчёта")
 	prompt := fmt.Sprintf(criticPromptTemplate, report)
 	systemPrompt := "Ты помощник, отвечающий только JSON. Никаких пояснений до или после JSON."
-	response, err := c.llm.CompleteSimple(ctx, systemPrompt, prompt)
+	response, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature)
 	if err != nil {
 		return 0, "", fmt.Errorf("ошибка LLM: %w", err)
 	}

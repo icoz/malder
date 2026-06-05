@@ -15,11 +15,15 @@ type AnalystAgent struct {
 	llm          *llm.Client
 	memory       *memory.LongTermMemory
 	saveFactTool *tool.SaveFactTool
+	model        string
+	temperature  float64
 }
 
-func NewAnalystAgent(llmClient *llm.Client, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool) *AnalystAgent {
+func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool) *AnalystAgent {
 	return &AnalystAgent{
 		llm:          llmClient,
+		model:        model,
+		temperature:  temperature,
 		memory:       mem,
 		saveFactTool: saveTool,
 	}
@@ -38,7 +42,7 @@ func (a *AnalystAgent) GenerateReport(ctx context.Context, topic string) (string
 
 	prompt := a.buildPrompt(topic, facts)
 	systemPrompt := "Ты — эксперт-аналитик. Составляй чёткие, структурированные отчёты на русском языке. Используй факты из предоставленного контекста. Если факты противоречивы, укажи это."
-	report, err := a.llm.CompleteSimple(ctx, systemPrompt, prompt)
+	report, err := a.llm.CompleteSimple(ctx, a.model, systemPrompt, prompt, a.temperature)
 	if err != nil {
 		return "", fmt.Errorf("ошибка LLM: %w", err)
 	}

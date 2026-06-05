@@ -30,8 +30,14 @@
 
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
-| LLM_ENDPOINT | URL LLM API | http://localhost:11434/v1 |
-| LLM_MODEL | Имя модели | llama3.2 |
+| LLM_ENDPOINT | URL LLM API | https://api.modelgate.ru/v1 |
+| LLM_API_KEY | API ключ | "" |
+| LLM_MODEL | Модель по умолчанию | openai/gpt-4o |
+| LLM_MODEL_COORDINATOR | Модель для координатора (планирование) | LLM_MODEL |
+| LLM_MODEL_ANALYST | Модель для аналитика (генерация отчёта) | LLM_MODEL |
+| LLM_MODEL_CRITIC | Модель для критика (оценка) | LLM_MODEL |
+| LLM_TEMPERATURE | Температура LLM | 0.7 |
+| LLM_TIMEOUT | Таймаут запроса к LLM | 60s |
 | OPENSERP_URL | URL OpenSerp | http://localhost:8080 |
 | MEMORY_PATH | Путь для сохранения памяти | ./data/malder_memory |
 | MAX_CONCURRENT_SEARCH | Параллельных поисков | 3 |

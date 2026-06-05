@@ -11,34 +11,25 @@ import (
 )
 
 type Client struct {
-	endpoint    string
-	apiKey      string
-	model       string
-	temperature float64
-	httpClient  *http.Client
+	endpoint   string
+	apiKey     string
+	httpClient *http.Client
 }
 
 type Config struct {
-	Endpoint    string
-	APIKey      string
-	Model       string
-	Timeout     time.Duration
-	Temperature float64
+	Endpoint string
+	APIKey   string
+	Timeout  time.Duration
 }
 
 func NewClient(cfg Config) *Client {
 	if cfg.Timeout == 0 {
 		cfg.Timeout = 60 * time.Second
 	}
-	if cfg.Temperature == 0 {
-		cfg.Temperature = 0.7
-	}
 	return &Client{
-		endpoint:    cfg.Endpoint,
-		apiKey:      cfg.APIKey,
-		model:       cfg.Model,
-		temperature: cfg.Temperature,
-		httpClient:  &http.Client{Timeout: cfg.Timeout},
+		endpoint:   cfg.Endpoint,
+		apiKey:     cfg.APIKey,
+		httpClient: &http.Client{Timeout: cfg.Timeout},
 	}
 }
 
@@ -63,11 +54,11 @@ type chatResponse struct {
 	} `json:"error,omitempty"`
 }
 
-func (c *Client) Complete(ctx context.Context, messages []ChatMessage) (string, error) {
+func (c *Client) Complete(ctx context.Context, model string, messages []ChatMessage, temperature float64) (string, error) {
 	reqBody := chatRequest{
-		Model:       c.model,
+		Model:       model,
 		Messages:    messages,
-		Temperature: c.temperature,
+		Temperature: temperature,
 		Stream:      false,
 	}
 	jsonData, err := json.Marshal(reqBody)
@@ -111,10 +102,10 @@ func (c *Client) Complete(ctx context.Context, messages []ChatMessage) (string, 
 	return chatResp.Choices[0].Message.Content, nil
 }
 
-func (c *Client) CompleteSimple(ctx context.Context, systemPrompt, userPrompt string) (string, error) {
+func (c *Client) CompleteSimple(ctx context.Context, model string, systemPrompt, userPrompt string, temperature float64) (string, error) {
 	messages := []ChatMessage{
 		{Role: "system", Content: systemPrompt},
 		{Role: "user", Content: userPrompt},
 	}
-	return c.Complete(ctx, messages)
+	return c.Complete(ctx, model, messages, temperature)
 }
