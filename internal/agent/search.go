@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/icoz/malder/internal/llm"
 	"github.com/icoz/malder/internal/log"
 	"github.com/icoz/malder/internal/memory"
 	"github.com/icoz/malder/internal/scheduler"
@@ -18,6 +19,9 @@ type SearchAgent struct {
 	fetchTool        *tool.FetchPageTool
 	memory           *memory.LongTermMemory
 	scheduler        *scheduler.AdaptiveScheduler
+	sourceStore      *memory.SourceStore
+	summarizer       *llm.Client
+	summarizerModel  string
 	maxPagesPerQuery int
 	minFactsForCache int
 }
@@ -27,6 +31,9 @@ func NewSearchAgent(
 	fetchTool *tool.FetchPageTool,
 	mem *memory.LongTermMemory,
 	sched *scheduler.AdaptiveScheduler,
+	sourceStore *memory.SourceStore,
+	summarizer *llm.Client,
+	summarizerModel string,
 	maxPagesPerQuery int,
 	minFactsForCache int,
 ) *SearchAgent {
@@ -42,6 +49,9 @@ func NewSearchAgent(
 		fetchTool:        fetchTool,
 		memory:           mem,
 		scheduler:        sched,
+		sourceStore:      sourceStore,
+		summarizer:       summarizer,
+		summarizerModel:  summarizerModel,
 		maxPagesPerQuery: maxPagesPerQuery,
 		minFactsForCache: minFactsForCache,
 	}
@@ -162,21 +172,91 @@ func (s *SearchAgent) processPage(ctx context.Context, pageURL, query string) (e
 		log.Debug("← SearchAgent.processPage(%s) = %v", pageURL, err)
 	}()
 	log.Debug("→ SearchAgent.processPage(url=%s, query=%s)", pageURL, query)
+
 	content, err := s.fetchTool.Execute(ctx, map[string]any{"url": pageURL})
 	if err != nil {
 		return fmt.Errorf("fetch_page: %w", err)
 	}
-	const maxFactLen = 5000
-	if len(content) > maxFactLen {
-		content = content[:maxFactLen] + "... (обрезано)"
+
+	// Save raw original
+	const maxRawLen = 10000
+	rawContent := content
+	if len(rawContent) > maxRawLen {
+		rawContent = rawContent[:maxRawLen] + "... (обрезано)"
 	}
-	fact := fmt.Sprintf("Источник: %s\nПо запросу: %s\nСодержимое:\n%s", pageURL, query, content)
-	key := fmt.Sprintf("page_%d_%s", time.Now().UnixNano(), hashString(pageURL))
-	if err := s.memory.Save(ctx, key, fact); err != nil {
-		return fmt.Errorf("сохранение факта: %w", err)
+	rawKey := fmt.Sprintf("page_raw_%d_%s", time.Now().UnixNano(), hashString(pageURL))
+	rawFact := fmt.Sprintf("Источник: %s\nПо запросу: %s\nСодержимое:\n%s", pageURL, query, rawContent)
+	if err := s.memory.Save(ctx, rawKey, rawFact); err != nil {
+		return fmt.Errorf("сохранение оригинала: %w", err)
 	}
-	log.Info("SearchAgent: сохранена страница %s (%d символов)", pageURL, len(content))
+	if s.sourceStore != nil {
+		s.sourceStore.Put(memory.Provenance{
+			Key: rawKey, Kind: "page", SourceURL: pageURL,
+			Preview: s.getPreview(rawContent), IsRaw: true,
+		})
+	}
+
+	// Summarize
+	summary, sumErr := s.summarizeContent(ctx, content, pageURL)
+	if sumErr != nil {
+		log.Warn("SearchAgent: ошибка суммаризации %s: %v", pageURL, sumErr)
+		log.Info("SearchAgent: сохранена страница %s (%d символов)", pageURL, len(rawContent))
+		return nil
+	}
+
+	summaryKey := fmt.Sprintf("page_summary_%d_%s", time.Now().UnixNano(), hashString(pageURL))
+	summaryFact := fmt.Sprintf("Источник: %s\nПо запросу: %s\nСуть:\n%s", pageURL, query, summary)
+	if err := s.memory.Save(ctx, summaryKey, summaryFact); err != nil {
+		return fmt.Errorf("сохранение суммаризации: %w", err)
+	}
+	if s.sourceStore != nil {
+		s.sourceStore.Put(memory.Provenance{
+			Key: summaryKey, Kind: "page", SourceURL: pageURL,
+			Parents: []string{rawKey}, Preview: s.getPreview(summary), IsRaw: false,
+		})
+	}
+
+	log.Info("SearchAgent: сохранена страница %s (raw=%d, summary=%d символов)", pageURL, len(rawContent), len(summary))
 	return nil
+}
+
+func (s *SearchAgent) summarizeContent(ctx context.Context, content, pageURL string) (string, error) {
+	const maxLLMInput = 15000
+	input := content
+	if len(input) > maxLLMInput {
+		input = input[:maxLLMInput] + "..."
+	}
+
+	prompt := fmt.Sprintf(`Извлеки ключевые факты из текста страницы.
+
+URL: %s
+
+Текст:
+%s
+
+Извлеки 3-7 ключевых фактов или утверждений, которые можно использовать в исследовательском отчёте. Сохрани числовые данные, даты, имена, названия. Если есть прямые цитаты — сохрани их дословно. Не добавляй комментарии от себя.
+
+Ответ напиши в виде маркированного списка на русском языке.`, pageURL, input)
+
+	resp, err := s.summarizer.CompleteSimple(ctx, s.summarizerModel, "Ты — экстрактор фактов. Отвечай только фактами, без пояснений.", prompt, 0.3)
+	if err != nil {
+		return "", err
+	}
+
+	const maxSummaryLen = 3000
+	if len(resp) > maxSummaryLen {
+		resp = resp[:maxSummaryLen] + "..."
+	}
+	return resp, nil
+}
+
+func (s *SearchAgent) getPreview(text string) string {
+	const previewLen = 200
+	cleaned := strings.ReplaceAll(text, "\n", " ")
+	if len(cleaned) > previewLen {
+		return cleaned[:previewLen] + "..."
+	}
+	return cleaned
 }
 
 func extractLinks(md string) []string {

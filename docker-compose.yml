@@ -34,6 +34,7 @@ services:
 
       - OPENSERP_URL=http://openserp:7000
       - MEMORY_PATH=/data
+      - SOURCE_STORE_PATH=/data/sources.db
       - MALDER_LOG_LEVEL=${MALDER_LOG_LEVEL:-info}
       - MALDER_DEBUG_FILE=${MALDER_DEBUG_FILE:-/data/malder_debug.log}
       - EMBEDDING_ENDPOINT=${EMBEDDING_ENDPOINT:-}

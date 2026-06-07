@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/icoz/malder/internal/llm"
@@ -18,6 +19,7 @@ type CoordinatorAgent struct {
 	model                  string
 	temperature            float64
 	memory                 *memory.LongTermMemory
+	sourceStore            *memory.SourceStore
 	searchAgent            *SearchAgent
 	analystAgent           *AnalystAgent
 	criticAgent            *CriticAgent
@@ -32,6 +34,7 @@ type CoordinatorConfig struct {
 	Model                  string
 	Temperature            float64
 	Memory                 *memory.LongTermMemory
+	SourceStore            *memory.SourceStore
 	SearchAgent            *SearchAgent
 	AnalystAgent           *AnalystAgent
 	CriticAgent            *CriticAgent
@@ -56,6 +59,7 @@ func NewCoordinator(cfg CoordinatorConfig) *CoordinatorAgent {
 		model:                  cfg.Model,
 		temperature:            cfg.Temperature,
 		memory:                 cfg.Memory,
+		sourceStore:            cfg.SourceStore,
 		searchAgent:            cfg.SearchAgent,
 		analystAgent:           cfg.AnalystAgent,
 		criticAgent:            cfg.CriticAgent,
@@ -146,9 +150,9 @@ func (c *CoordinatorAgent) researchSubtopics(ctx context.Context, plan *Research
 	}
 
 	type result struct {
-		key   string
-		rep   *SubReport
-		err   error
+		key string
+		rep *SubReport
+		err error
 	}
 
 	results := make(chan result, len(jobs))
@@ -237,7 +241,15 @@ func (c *CoordinatorAgent) synthesizeSections(ctx context.Context, plan *Researc
 				return
 			}
 
-			c.saveToMemory(ctx, "section_"+sec.Name, fmt.Sprintf("Раздел: %s\n\n%s", sec.Name, report))
+			c.saveToMemory(ctx, "section_"+sec.Name, fmt.Sprintf("Источник: аналитический синтез\nРаздел: %s\n\n%s", sec.Name, report))
+			if c.sourceStore != nil {
+				c.sourceStore.Put(memory.Provenance{
+					Key:     "section_" + sec.Name,
+					Kind:    "section",
+					Preview: getPreview(report),
+					IsRaw:   true,
+				})
+			}
 			results <- sectionResult{idx, report, nil}
 		}(i, section)
 	}
@@ -267,8 +279,14 @@ func (c *CoordinatorAgent) criticLoop(ctx context.Context, title string, section
 		finalReport = report
 		c.report("synthesis_complete", map[string]any{"iteration": iteration, "report_length": len(report)})
 
-		c.saveToMemory(ctx, fmt.Sprintf("final_%d", time.Now().UnixNano()),
-			fmt.Sprintf("Итоговый отчёт (итерация %d):\n%s", iteration, report))
+		key := fmt.Sprintf("final_%d", time.Now().UnixNano())
+		c.saveToMemory(ctx, key, fmt.Sprintf("Источник: итоговый синтез\nИтерация: %d\n%s", iteration, report))
+		if c.sourceStore != nil {
+			c.sourceStore.Put(memory.Provenance{
+				Key: key, Kind: "final",
+				Preview: getPreview(report), IsRaw: true,
+			})
+		}
 
 		if iteration == c.maxIterations {
 			break
@@ -396,6 +414,31 @@ func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, se
 		sb += fmt.Sprintf("=== Раздел %d ===\n%s\n\n", i+1, sr)
 	}
 
+	// Collect source URLs from memory
+	var sourcesText string
+	if c.memory != nil {
+		facts, err := c.memory.Recall(ctx, title)
+		if err == nil {
+			seen := make(map[string]bool)
+			var urls []string
+			for _, f := range facts {
+				for _, line := range strings.Split(f, "\n") {
+					line = strings.TrimSpace(line)
+					if strings.HasPrefix(line, "Источник:") {
+						url := strings.TrimSpace(strings.TrimPrefix(line, "Источник:"))
+						if strings.HasPrefix(url, "http") && !seen[url] {
+							urls = append(urls, url)
+							seen[url] = true
+						}
+					}
+				}
+			}
+			if len(urls) > 0 {
+				sourcesText = "\nИсточники для цитирования:\n" + strings.Join(urls, "\n")
+			}
+		}
+	}
+
 	systemPrompt := "Ты — автор исследовательских отчётов."
 	prompt := fmt.Sprintf(`Тема исследования: "%s"
 
@@ -410,8 +453,9 @@ func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, se
 - Объедини разделы логическими переходами
 - Напиши заключение: выводы, рекомендации
 - Если в разделах есть ссылки на источники, собери их в итоговый список в конце
+- При цитировании конкретных данных указывай URL из списка источников%s
 
-Отчёт пиши на русском языке.`, title, sb)
+Отчёт пиши на русском языке.`, title, sb, sourcesText)
 
 	report, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature)
 	if err != nil {
@@ -471,4 +515,13 @@ func flattenQueries(plan *ResearchPlan) []string {
 		}
 	}
 	return queries
+}
+
+func getPreview(text string) string {
+	const n = 200
+	cleaned := strings.ReplaceAll(text, "\n", " ")
+	if len(cleaned) > n {
+		return cleaned[:n] + "..."
+	}
+	return cleaned
 }

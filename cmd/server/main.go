@@ -46,7 +46,8 @@ type Config struct {
 
 	OpenSerpURL string
 
-	MemoryPath string
+	MemoryPath      string
+	SourceStorePath string
 
 	MaxConcurrentSearch int
 	MaxPagesPerQuery    int
@@ -69,6 +70,7 @@ func loadConfig() *Config {
 		LLMTimeout:          getEnvDuration("LLM_TIMEOUT", 60*time.Second),
 		OpenSerpURL:         getEnv("OPENSERP_URL", "http://localhost:8080"),
 		MemoryPath:          getEnv("MEMORY_PATH", "./data/malder_memory"),
+		SourceStorePath:     getEnv("SOURCE_STORE_PATH", ""),
 		MaxConcurrentSearch: getEnvInt("MAX_CONCURRENT_SEARCH", 3),
 		MaxPagesPerQuery:    getEnvInt("MAX_PAGES_PER_QUERY", 3),
 		MinFactsForCache:    getEnvInt("MIN_FACTS_FOR_CACHE", 3),
@@ -153,6 +155,16 @@ func main() {
 	}
 	defer mem.Close()
 
+	sourceStorePath := cfg.SourceStorePath
+	if sourceStorePath == "" {
+		sourceStorePath = cfg.MemoryPath + "_sources.db"
+	}
+	sourceStore, err := memory.NewSourceStore(sourceStorePath)
+	if err != nil {
+		stdlog.Fatalf("Не удалось инициализировать SourceStore: %v", err)
+	}
+	defer sourceStore.Close()
+
 	searchTool := tool.NewSearchTool(cfg.OpenSerpURL, 10*time.Second, getEnv("SEARCH_ENGINE", "duck"))
 	fetchTool := tool.NewFetchPageTool(15 * time.Second)
 	saveFactTool := tool.NewSaveFactTool(mem)
@@ -166,9 +178,9 @@ func main() {
 	}
 	adaptiveScheduler := scheduler.NewAdaptiveScheduler(schedCfg)
 
-	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, cfg.MaxPagesPerQuery, cfg.MinFactsForCache)
+	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, sourceStore, llmAnalyst, cfg.LLMModelAnalyst, cfg.MaxPagesPerQuery, cfg.MinFactsForCache)
 
-	analystAgent := agent.NewAnalystAgent(llmAnalyst, cfg.LLMModelAnalyst, cfg.LLMTemperature, mem, saveFactTool)
+	analystAgent := agent.NewAnalystAgent(llmAnalyst, cfg.LLMModelAnalyst, cfg.LLMTemperature, mem, saveFactTool, sourceStore)
 
 	criticAgent := agent.NewCriticAgent(llmCritic, cfg.LLMModelCritic, cfg.LLMTemperature)
 
@@ -177,6 +189,7 @@ func main() {
 		Model:                  cfg.LLMModelCoordinator,
 		Temperature:            cfg.LLMTemperature,
 		Memory:                 mem,
+		SourceStore:            sourceStore,
 		SearchAgent:            searchAgent,
 		AnalystAgent:           analystAgent,
 		CriticAgent:            criticAgent,
@@ -275,6 +288,7 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 				Model:                  coord.Model(),
 				Temperature:            coord.Temperature(),
 				Memory:                 coord.Memory(),
+				SourceStore:            nil,
 				SearchAgent:            coord.SearchAgent(),
 				AnalystAgent:           coord.AnalystAgent(),
 				CriticAgent:            coord.CriticAgent(),

@@ -180,3 +180,1022 @@
 2026-06-07T19:35:51Z [DEBUG] ← llm.Complete = (len=1010, nil)
 2026-06-07T19:35:51Z [DEBUG] ← CriticAgent.Evaluate = (8, "Отчёт содержит корректные факты, хорошую структуру и ссылки. Однако не хватает практических примеров кода, углублённого описания механизмов синхронизации (каналы, мьютексы) и деталей работы планировщика Go. Для большей полноты стоило бы добавить раздел с реальными сценариями использования и сравнением с альтернативами (например, async/await в других языках). Точность высокая, но небольшой пробел — не упомянуто, что горутины могут блокировать системные потоки при долгих операциях (например, syscall). В целом отчёт полезен, но не идеален.", nil)
 2026-06-07T19:35:51Z [DEBUG] ← CoordinatorAgent.Run(что такое горутины) = (len=8848, nil)
+2026-06-07T20:29:54Z [DEBUG] → NewSearchAgent(maxPages=3, minFacts=3)
+2026-06-07T20:29:54Z [DEBUG] → NewCoordinator(maxIter=3, maxConcurrent=3, maxRetries=2)
+2026-06-07T20:30:04Z [DEBUG] → CoordinatorAgent.Run(query=что такое горутины, maxIter=3)
+2026-06-07T20:30:04Z [DEBUG] → CoordinatorAgent.createPlan(query=что такое горутины)
+2026-06-07T20:30:04Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:30:30Z [DEBUG] ← llm.Complete = (len=3611, nil)
+2026-06-07T20:30:30Z [DEBUG] ← CoordinatorAgent.createPlan = (&{Что такое горутины [{Основные понятия и механизм работы горутин [{Определение и назначение горутин [что такое горутины в Go простыми словами горутины vs потоки ОС сравнение зачем нужны горутины в Go]} {Запуск и завершение горутин [как запустить горутину в Go как дождаться завершения горутины main горутины и функция main завершение]} {Планировщик горутин (GMP) [планировщик горутин Go GMP M:N scheduling горутин Go как работает планировщик горутин]}]} {Синхронизация и взаимодействие горутин [{Каналы для передачи данных [каналы в Go передача данных между горутинами буферизированные и небуферизированные каналы Go select statement каналы горутины]} {Мьютексы и WaitGroup [sync.Mutex синхронизация горутин sync.WaitGroup пример использования как синхронизировать горутины в Go]} {Контекст и атомарные операции [context.Context отмена горутин atomic операции в Go горутины как безопасно остановить горутину]}]} {Практическое использование и производительность [{Типичные ошибки и ловушки [утечка горутин причины и решения deadlock в горутинах примеры гонка данных в горутинах обнаружение]} {Оптимизация и профилирование [профилирование горутин pprof оптимальное количество горутин как измерить производительность горутин]} {Примеры применения [worker pool на горутинах Go горутины для параллельной обработки данных пример использования горутин в веб-сервере]}]}]}, <nil>)
+2026-06-07T20:30:30Z [DEBUG] → SearchAgent.Run(queries=[что такое горутины в Go простыми словами горутины vs потоки ОС сравнение зачем нужны горутины в Go как запустить горутину в Go как дождаться завершения горутины main горутины и функция main завершение планировщик горутин Go GMP M:N scheduling горутин Go как работает планировщик горутин каналы в Go передача данных между горутинами буферизированные и небуферизированные каналы Go select statement каналы горутины sync.Mutex синхронизация горутин sync.WaitGroup пример использования как синхронизировать горутины в Go context.Context отмена горутин atomic операции в Go горутины как безопасно остановить горутину утечка горутин причины и решения deadlock в горутинах примеры гонка данных в горутинах обнаружение профилирование горутин pprof оптимальное количество горутин как измерить производительность горутин worker pool на горутинах Go горутины для параллельной обработки данных пример использования горутин в веб-сервере])
+2026-06-07T20:30:30Z [DEBUG] → SearchAgent.processQuery(query=пример использования горутин в веб-сервере)
+2026-06-07T20:30:30Z [DEBUG] → SearchAgent.processQuery(query=горутины vs потоки ОС сравнение)
+2026-06-07T20:30:30Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:30Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:30Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины vs потоки ОС сравнение)
+2026-06-07T20:30:30Z [DEBUG] → LongTermMemory.RecallWithTopK(query=горутины vs потоки ОС сравнение, topK=5)
+2026-06-07T20:30:30Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:30Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:30Z [DEBUG] → SearchAgent.processQueryInternal(query=пример использования горутин в веб-сервере)
+2026-06-07T20:30:30Z [DEBUG] → LongTermMemory.RecallWithTopK(query=пример использования горутин в веб-сервере, topK=5)
+2026-06-07T20:30:30Z [DEBUG] → SearchAgent.processQuery(query=зачем нужны горутины в Go)
+2026-06-07T20:30:30Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:30Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:30Z [DEBUG] → SearchAgent.processQueryInternal(query=зачем нужны горутины в Go)
+2026-06-07T20:30:30Z [DEBUG] → LongTermMemory.RecallWithTopK(query=зачем нужны горутины в Go, topK=5)
+2026-06-07T20:30:31Z [DEBUG] ← LongTermMemory.RecallWithTopK(горутины vs потоки ОС сравнение, 5) = (len=5, <nil>)
+2026-06-07T20:30:31Z [DEBUG] ← LongTermMemory.Recall(горутины vs потоки ОС сравнение) = (len=5, <nil>)
+2026-06-07T20:30:31Z [DEBUG] ← SearchAgent.processQueryInternal(горутины vs потоки ОС сравнение) = <nil>
+2026-06-07T20:30:31Z [DEBUG] → AdaptiveScheduler.Record(duration=700.426186ms, err=<nil>)
+2026-06-07T20:30:31Z [DEBUG] ← SearchAgent.processQuery(горутины vs потоки ОС сравнение) = <nil>
+2026-06-07T20:30:31Z [DEBUG] → SearchAgent.processQuery(query=как запустить горутину в Go)
+2026-06-07T20:30:31Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:31Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:31Z [DEBUG] → SearchAgent.processQueryInternal(query=как запустить горутину в Go)
+2026-06-07T20:30:31Z [DEBUG] → LongTermMemory.RecallWithTopK(query=как запустить горутину в Go, topK=5)
+2026-06-07T20:30:31Z [DEBUG] ← LongTermMemory.RecallWithTopK(пример использования горутин в веб-сервере, 5) = (len=5, <nil>)
+2026-06-07T20:30:31Z [DEBUG] ← LongTermMemory.Recall(пример использования горутин в веб-сервере) = (len=5, <nil>)
+2026-06-07T20:30:31Z [DEBUG] ← SearchAgent.processQueryInternal(пример использования горутин в веб-сервере) = <nil>
+2026-06-07T20:30:31Z [DEBUG] → AdaptiveScheduler.Record(duration=713.747261ms, err=<nil>)
+2026-06-07T20:30:31Z [DEBUG] ← SearchAgent.processQuery(пример использования горутин в веб-сервере) = <nil>
+2026-06-07T20:30:31Z [DEBUG] → SearchAgent.processQuery(query=как дождаться завершения горутины main)
+2026-06-07T20:30:31Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:31Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:31Z [DEBUG] → SearchAgent.processQueryInternal(query=как дождаться завершения горутины main)
+2026-06-07T20:30:31Z [DEBUG] → LongTermMemory.RecallWithTopK(query=как дождаться завершения горутины main, topK=5)
+2026-06-07T20:30:32Z [DEBUG] ← LongTermMemory.RecallWithTopK(как запустить горутину в Go, 5) = (len=5, <nil>)
+2026-06-07T20:30:32Z [DEBUG] ← LongTermMemory.Recall(как запустить горутину в Go) = (len=5, <nil>)
+2026-06-07T20:30:32Z [DEBUG] ← SearchAgent.processQueryInternal(как запустить горутину в Go) = <nil>
+2026-06-07T20:30:32Z [DEBUG] → AdaptiveScheduler.Record(duration=660.109002ms, err=<nil>)
+2026-06-07T20:30:32Z [DEBUG] ← SearchAgent.processQuery(как запустить горутину в Go) = <nil>
+2026-06-07T20:30:32Z [DEBUG] → SearchAgent.processQuery(query=горутины и функция main завершение)
+2026-06-07T20:30:32Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:32Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:32Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины и функция main завершение)
+2026-06-07T20:30:32Z [DEBUG] → LongTermMemory.RecallWithTopK(query=горутины и функция main завершение, topK=5)
+2026-06-07T20:30:32Z [DEBUG] ← LongTermMemory.RecallWithTopK(зачем нужны горутины в Go, 5) = (len=5, <nil>)
+2026-06-07T20:30:32Z [DEBUG] ← LongTermMemory.Recall(зачем нужны горутины в Go) = (len=5, <nil>)
+2026-06-07T20:30:32Z [DEBUG] ← SearchAgent.processQueryInternal(зачем нужны горутины в Go) = <nil>
+2026-06-07T20:30:32Z [DEBUG] → AdaptiveScheduler.Record(duration=1.908605711s, err=<nil>)
+2026-06-07T20:30:32Z [DEBUG] ← SearchAgent.processQuery(зачем нужны горутины в Go) = <nil>
+2026-06-07T20:30:32Z [DEBUG] → SearchAgent.processQuery(query=планировщик горутин Go GMP)
+2026-06-07T20:30:32Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:32Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:32Z [DEBUG] → SearchAgent.processQueryInternal(query=планировщик горутин Go GMP)
+2026-06-07T20:30:32Z [DEBUG] → LongTermMemory.RecallWithTopK(query=планировщик горутин Go GMP, topK=5)
+2026-06-07T20:30:32Z [DEBUG] ← LongTermMemory.RecallWithTopK(как дождаться завершения горутины main, 5) = (len=5, <nil>)
+2026-06-07T20:30:32Z [DEBUG] ← LongTermMemory.Recall(как дождаться завершения горутины main) = (len=5, <nil>)
+2026-06-07T20:30:32Z [DEBUG] ← SearchAgent.processQueryInternal(как дождаться завершения горутины main) = <nil>
+2026-06-07T20:30:32Z [DEBUG] → AdaptiveScheduler.Record(duration=1.26855893s, err=<nil>)
+2026-06-07T20:30:32Z [DEBUG] ← SearchAgent.processQuery(как дождаться завершения горутины main) = <nil>
+2026-06-07T20:30:32Z [DEBUG] → SearchAgent.processQuery(query=M:N scheduling горутин Go)
+2026-06-07T20:30:32Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:32Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:32Z [DEBUG] → SearchAgent.processQueryInternal(query=M:N scheduling горутин Go)
+2026-06-07T20:30:32Z [DEBUG] → LongTermMemory.RecallWithTopK(query=M:N scheduling горутин Go, topK=5)
+2026-06-07T20:30:32Z [DEBUG] ← LongTermMemory.RecallWithTopK(горутины и функция main завершение, 5) = (len=5, <nil>)
+2026-06-07T20:30:32Z [DEBUG] ← LongTermMemory.Recall(горутины и функция main завершение) = (len=5, <nil>)
+2026-06-07T20:30:32Z [DEBUG] ← SearchAgent.processQueryInternal(горутины и функция main завершение) = <nil>
+2026-06-07T20:30:32Z [DEBUG] → AdaptiveScheduler.Record(duration=651.124801ms, err=<nil>)
+2026-06-07T20:30:32Z [DEBUG] ← SearchAgent.processQuery(горутины и функция main завершение) = <nil>
+2026-06-07T20:30:32Z [DEBUG] → SearchAgent.processQuery(query=как работает планировщик горутин)
+2026-06-07T20:30:32Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:32Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:32Z [DEBUG] → SearchAgent.processQueryInternal(query=как работает планировщик горутин)
+2026-06-07T20:30:32Z [DEBUG] → LongTermMemory.RecallWithTopK(query=как работает планировщик горутин, topK=5)
+2026-06-07T20:30:33Z [DEBUG] ← LongTermMemory.RecallWithTopK(планировщик горутин Go GMP, 5) = (len=5, <nil>)
+2026-06-07T20:30:33Z [DEBUG] ← LongTermMemory.Recall(планировщик горутин Go GMP) = (len=5, <nil>)
+2026-06-07T20:30:33Z [DEBUG] ← SearchAgent.processQueryInternal(планировщик горутин Go GMP) = <nil>
+2026-06-07T20:30:33Z [DEBUG] → AdaptiveScheduler.Record(duration=740.535323ms, err=<nil>)
+2026-06-07T20:30:33Z [DEBUG] ← SearchAgent.processQuery(планировщик горутин Go GMP) = <nil>
+2026-06-07T20:30:33Z [DEBUG] → SearchAgent.processQuery(query=каналы в Go передача данных между горутинами)
+2026-06-07T20:30:33Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:33Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:33Z [DEBUG] → SearchAgent.processQueryInternal(query=каналы в Go передача данных между горутинами)
+2026-06-07T20:30:33Z [DEBUG] → LongTermMemory.RecallWithTopK(query=каналы в Go передача данных между горутинами, topK=5)
+2026-06-07T20:30:33Z [DEBUG] ← LongTermMemory.RecallWithTopK(M:N scheduling горутин Go, 5) = (len=5, <nil>)
+2026-06-07T20:30:33Z [DEBUG] ← LongTermMemory.Recall(M:N scheduling горутин Go) = (len=5, <nil>)
+2026-06-07T20:30:33Z [DEBUG] ← SearchAgent.processQueryInternal(M:N scheduling горутин Go) = <nil>
+2026-06-07T20:30:33Z [DEBUG] → AdaptiveScheduler.Record(duration=700.110929ms, err=<nil>)
+2026-06-07T20:30:33Z [DEBUG] ← SearchAgent.processQuery(M:N scheduling горутин Go) = <nil>
+2026-06-07T20:30:33Z [DEBUG] → SearchAgent.processQuery(query=буферизированные и небуферизированные каналы Go)
+2026-06-07T20:30:33Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:33Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:33Z [DEBUG] → SearchAgent.processQueryInternal(query=буферизированные и небуферизированные каналы Go)
+2026-06-07T20:30:33Z [DEBUG] → LongTermMemory.RecallWithTopK(query=буферизированные и небуферизированные каналы Go, topK=5)
+2026-06-07T20:30:33Z [DEBUG] ← LongTermMemory.RecallWithTopK(как работает планировщик горутин, 5) = (len=5, <nil>)
+2026-06-07T20:30:33Z [DEBUG] ← LongTermMemory.Recall(как работает планировщик горутин) = (len=5, <nil>)
+2026-06-07T20:30:33Z [DEBUG] ← SearchAgent.processQueryInternal(как работает планировщик горутин) = <nil>
+2026-06-07T20:30:33Z [DEBUG] → AdaptiveScheduler.Record(duration=758.672948ms, err=<nil>)
+2026-06-07T20:30:33Z [DEBUG] ← SearchAgent.processQuery(как работает планировщик горутин) = <nil>
+2026-06-07T20:30:33Z [DEBUG] → SearchAgent.processQuery(query=select statement каналы горутины)
+2026-06-07T20:30:33Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:33Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:33Z [DEBUG] → SearchAgent.processQueryInternal(query=select statement каналы горутины)
+2026-06-07T20:30:33Z [DEBUG] → LongTermMemory.RecallWithTopK(query=select statement каналы горутины, topK=5)
+2026-06-07T20:30:34Z [DEBUG] ← LongTermMemory.RecallWithTopK(каналы в Go передача данных между горутинами, 5) = (len=5, <nil>)
+2026-06-07T20:30:34Z [DEBUG] ← LongTermMemory.Recall(каналы в Go передача данных между горутинами) = (len=5, <nil>)
+2026-06-07T20:30:34Z [DEBUG] ← SearchAgent.processQueryInternal(каналы в Go передача данных между горутинами) = <nil>
+2026-06-07T20:30:34Z [DEBUG] → AdaptiveScheduler.Record(duration=670.611172ms, err=<nil>)
+2026-06-07T20:30:34Z [DEBUG] ← SearchAgent.processQuery(каналы в Go передача данных между горутинами) = <nil>
+2026-06-07T20:30:34Z [DEBUG] → SearchAgent.processQuery(query=sync.Mutex синхронизация горутин)
+2026-06-07T20:30:34Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:34Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:34Z [DEBUG] → SearchAgent.processQueryInternal(query=sync.Mutex синхронизация горутин)
+2026-06-07T20:30:34Z [DEBUG] → LongTermMemory.RecallWithTopK(query=sync.Mutex синхронизация горутин, topK=5)
+2026-06-07T20:30:34Z [DEBUG] ← LongTermMemory.RecallWithTopK(буферизированные и небуферизированные каналы Go, 5) = (len=5, <nil>)
+2026-06-07T20:30:34Z [DEBUG] ← LongTermMemory.Recall(буферизированные и небуферизированные каналы Go) = (len=5, <nil>)
+2026-06-07T20:30:34Z [DEBUG] ← SearchAgent.processQueryInternal(буферизированные и небуферизированные каналы Go) = <nil>
+2026-06-07T20:30:34Z [DEBUG] → AdaptiveScheduler.Record(duration=691.319574ms, err=<nil>)
+2026-06-07T20:30:34Z [DEBUG] ← SearchAgent.processQuery(буферизированные и небуферизированные каналы Go) = <nil>
+2026-06-07T20:30:34Z [DEBUG] → SearchAgent.processQuery(query=sync.WaitGroup пример использования)
+2026-06-07T20:30:34Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:34Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:34Z [DEBUG] → SearchAgent.processQueryInternal(query=sync.WaitGroup пример использования)
+2026-06-07T20:30:34Z [DEBUG] → LongTermMemory.RecallWithTopK(query=sync.WaitGroup пример использования, topK=5)
+2026-06-07T20:30:34Z [DEBUG] ← LongTermMemory.RecallWithTopK(select statement каналы горутины, 5) = (len=5, <nil>)
+2026-06-07T20:30:34Z [DEBUG] ← LongTermMemory.Recall(select statement каналы горутины) = (len=5, <nil>)
+2026-06-07T20:30:34Z [DEBUG] ← SearchAgent.processQueryInternal(select statement каналы горутины) = <nil>
+2026-06-07T20:30:34Z [DEBUG] → AdaptiveScheduler.Record(duration=773.98501ms, err=<nil>)
+2026-06-07T20:30:34Z [DEBUG] ← SearchAgent.processQuery(select statement каналы горутины) = <nil>
+2026-06-07T20:30:34Z [DEBUG] → SearchAgent.processQuery(query=как синхронизировать горутины в Go)
+2026-06-07T20:30:34Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:34Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:34Z [DEBUG] → SearchAgent.processQueryInternal(query=как синхронизировать горутины в Go)
+2026-06-07T20:30:34Z [DEBUG] → LongTermMemory.RecallWithTopK(query=как синхронизировать горутины в Go, topK=5)
+2026-06-07T20:30:34Z [DEBUG] ← LongTermMemory.RecallWithTopK(sync.Mutex синхронизация горутин, 5) = (len=5, <nil>)
+2026-06-07T20:30:34Z [DEBUG] ← LongTermMemory.Recall(sync.Mutex синхронизация горутин) = (len=5, <nil>)
+2026-06-07T20:30:34Z [DEBUG] ← SearchAgent.processQueryInternal(sync.Mutex синхронизация горутин) = <nil>
+2026-06-07T20:30:34Z [DEBUG] → AdaptiveScheduler.Record(duration=662.468528ms, err=<nil>)
+2026-06-07T20:30:34Z [DEBUG] ← SearchAgent.processQuery(sync.Mutex синхронизация горутин) = <nil>
+2026-06-07T20:30:34Z [DEBUG] → SearchAgent.processQuery(query=context.Context отмена горутин)
+2026-06-07T20:30:34Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:34Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:34Z [DEBUG] → SearchAgent.processQueryInternal(query=context.Context отмена горутин)
+2026-06-07T20:30:34Z [DEBUG] → LongTermMemory.RecallWithTopK(query=context.Context отмена горутин, topK=5)
+2026-06-07T20:30:34Z [DEBUG] ← LongTermMemory.RecallWithTopK(sync.WaitGroup пример использования, 5) = (len=5, <nil>)
+2026-06-07T20:30:34Z [DEBUG] ← LongTermMemory.Recall(sync.WaitGroup пример использования) = (len=5, <nil>)
+2026-06-07T20:30:34Z [DEBUG] ← SearchAgent.processQueryInternal(sync.WaitGroup пример использования) = <nil>
+2026-06-07T20:30:34Z [DEBUG] → AdaptiveScheduler.Record(duration=639.943083ms, err=<nil>)
+2026-06-07T20:30:34Z [DEBUG] ← SearchAgent.processQuery(sync.WaitGroup пример использования) = <nil>
+2026-06-07T20:30:34Z [DEBUG] → SearchAgent.processQuery(query=atomic операции в Go горутины)
+2026-06-07T20:30:34Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:34Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:34Z [DEBUG] → SearchAgent.processQueryInternal(query=atomic операции в Go горутины)
+2026-06-07T20:30:34Z [DEBUG] → LongTermMemory.RecallWithTopK(query=atomic операции в Go горутины, topK=5)
+2026-06-07T20:30:35Z [DEBUG] ← LongTermMemory.RecallWithTopK(как синхронизировать горутины в Go, 5) = (len=5, <nil>)
+2026-06-07T20:30:35Z [DEBUG] ← LongTermMemory.Recall(как синхронизировать горутины в Go) = (len=5, <nil>)
+2026-06-07T20:30:35Z [DEBUG] ← SearchAgent.processQueryInternal(как синхронизировать горутины в Go) = <nil>
+2026-06-07T20:30:35Z [DEBUG] → AdaptiveScheduler.Record(duration=708.028727ms, err=<nil>)
+2026-06-07T20:30:35Z [DEBUG] ← SearchAgent.processQuery(как синхронизировать горутины в Go) = <nil>
+2026-06-07T20:30:35Z [DEBUG] → SearchAgent.processQuery(query=как безопасно остановить горутину)
+2026-06-07T20:30:35Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:35Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:35Z [DEBUG] → SearchAgent.processQueryInternal(query=как безопасно остановить горутину)
+2026-06-07T20:30:35Z [DEBUG] → LongTermMemory.RecallWithTopK(query=как безопасно остановить горутину, topK=5)
+2026-06-07T20:30:35Z [DEBUG] ← LongTermMemory.RecallWithTopK(atomic операции в Go горутины, 5) = (len=5, <nil>)
+2026-06-07T20:30:35Z [DEBUG] ← LongTermMemory.Recall(atomic операции в Go горутины) = (len=5, <nil>)
+2026-06-07T20:30:35Z [DEBUG] ← SearchAgent.processQueryInternal(atomic операции в Go горутины) = <nil>
+2026-06-07T20:30:35Z [DEBUG] → AdaptiveScheduler.Record(duration=632.454635ms, err=<nil>)
+2026-06-07T20:30:35Z [DEBUG] ← SearchAgent.processQuery(atomic операции в Go горутины) = <nil>
+2026-06-07T20:30:35Z [DEBUG] → SearchAgent.processQuery(query=утечка горутин причины и решения)
+2026-06-07T20:30:35Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:35Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:35Z [DEBUG] → SearchAgent.processQueryInternal(query=утечка горутин причины и решения)
+2026-06-07T20:30:35Z [DEBUG] → LongTermMemory.RecallWithTopK(query=утечка горутин причины и решения, topK=5)
+2026-06-07T20:30:35Z [DEBUG] ← LongTermMemory.RecallWithTopK(context.Context отмена горутин, 5) = (len=5, <nil>)
+2026-06-07T20:30:35Z [DEBUG] ← LongTermMemory.Recall(context.Context отмена горутин) = (len=5, <nil>)
+2026-06-07T20:30:35Z [DEBUG] ← SearchAgent.processQueryInternal(context.Context отмена горутин) = <nil>
+2026-06-07T20:30:35Z [DEBUG] → AdaptiveScheduler.Record(duration=799.250418ms, err=<nil>)
+2026-06-07T20:30:35Z [DEBUG] ← SearchAgent.processQuery(context.Context отмена горутин) = <nil>
+2026-06-07T20:30:35Z [DEBUG] → SearchAgent.processQuery(query=deadlock в горутинах примеры)
+2026-06-07T20:30:35Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:35Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:35Z [DEBUG] → SearchAgent.processQueryInternal(query=deadlock в горутинах примеры)
+2026-06-07T20:30:35Z [DEBUG] → LongTermMemory.RecallWithTopK(query=deadlock в горутинах примеры, topK=5)
+2026-06-07T20:30:35Z [DEBUG] ← LongTermMemory.RecallWithTopK(как безопасно остановить горутину, 5) = (len=5, <nil>)
+2026-06-07T20:30:35Z [DEBUG] ← LongTermMemory.Recall(как безопасно остановить горутину) = (len=5, <nil>)
+2026-06-07T20:30:35Z [DEBUG] ← SearchAgent.processQueryInternal(как безопасно остановить горутину) = <nil>
+2026-06-07T20:30:35Z [DEBUG] → AdaptiveScheduler.Record(duration=651.658163ms, err=<nil>)
+2026-06-07T20:30:35Z [DEBUG] ← SearchAgent.processQuery(как безопасно остановить горутину) = <nil>
+2026-06-07T20:30:35Z [DEBUG] → SearchAgent.processQuery(query=гонка данных в горутинах обнаружение)
+2026-06-07T20:30:35Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:35Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:35Z [DEBUG] → SearchAgent.processQueryInternal(query=гонка данных в горутинах обнаружение)
+2026-06-07T20:30:35Z [DEBUG] → LongTermMemory.RecallWithTopK(query=гонка данных в горутинах обнаружение, topK=5)
+2026-06-07T20:30:36Z [DEBUG] ← LongTermMemory.RecallWithTopK(утечка горутин причины и решения, 5) = (len=5, <nil>)
+2026-06-07T20:30:36Z [DEBUG] ← LongTermMemory.Recall(утечка горутин причины и решения) = (len=5, <nil>)
+2026-06-07T20:30:36Z [DEBUG] ← SearchAgent.processQueryInternal(утечка горутин причины и решения) = <nil>
+2026-06-07T20:30:36Z [DEBUG] → AdaptiveScheduler.Record(duration=649.151954ms, err=<nil>)
+2026-06-07T20:30:36Z [DEBUG] ← SearchAgent.processQuery(утечка горутин причины и решения) = <nil>
+2026-06-07T20:30:36Z [DEBUG] → SearchAgent.processQuery(query=профилирование горутин pprof)
+2026-06-07T20:30:36Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:36Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:36Z [DEBUG] → SearchAgent.processQueryInternal(query=профилирование горутин pprof)
+2026-06-07T20:30:36Z [DEBUG] → LongTermMemory.RecallWithTopK(query=профилирование горутин pprof, topK=5)
+2026-06-07T20:30:36Z [DEBUG] ← LongTermMemory.RecallWithTopK(deadlock в горутинах примеры, 5) = (len=5, <nil>)
+2026-06-07T20:30:36Z [DEBUG] ← LongTermMemory.Recall(deadlock в горутинах примеры) = (len=5, <nil>)
+2026-06-07T20:30:36Z [DEBUG] ← SearchAgent.processQueryInternal(deadlock в горутинах примеры) = <nil>
+2026-06-07T20:30:36Z [DEBUG] → AdaptiveScheduler.Record(duration=610.705039ms, err=<nil>)
+2026-06-07T20:30:36Z [DEBUG] ← SearchAgent.processQuery(deadlock в горутинах примеры) = <nil>
+2026-06-07T20:30:36Z [DEBUG] → SearchAgent.processQuery(query=оптимальное количество горутин)
+2026-06-07T20:30:36Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:36Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:36Z [DEBUG] → SearchAgent.processQueryInternal(query=оптимальное количество горутин)
+2026-06-07T20:30:36Z [DEBUG] → LongTermMemory.RecallWithTopK(query=оптимальное количество горутин, topK=5)
+2026-06-07T20:30:36Z [DEBUG] ← LongTermMemory.RecallWithTopK(гонка данных в горутинах обнаружение, 5) = (len=5, <nil>)
+2026-06-07T20:30:36Z [DEBUG] ← LongTermMemory.Recall(гонка данных в горутинах обнаружение) = (len=5, <nil>)
+2026-06-07T20:30:36Z [DEBUG] ← SearchAgent.processQueryInternal(гонка данных в горутинах обнаружение) = <nil>
+2026-06-07T20:30:36Z [DEBUG] → AdaptiveScheduler.Record(duration=681.959326ms, err=<nil>)
+2026-06-07T20:30:36Z [DEBUG] ← SearchAgent.processQuery(гонка данных в горутинах обнаружение) = <nil>
+2026-06-07T20:30:36Z [DEBUG] → SearchAgent.processQuery(query=как измерить производительность горутин)
+2026-06-07T20:30:36Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:36Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:36Z [DEBUG] → SearchAgent.processQueryInternal(query=как измерить производительность горутин)
+2026-06-07T20:30:36Z [DEBUG] → LongTermMemory.RecallWithTopK(query=как измерить производительность горутин, topK=5)
+2026-06-07T20:30:36Z [DEBUG] ← LongTermMemory.RecallWithTopK(оптимальное количество горутин, 5) = (len=5, <nil>)
+2026-06-07T20:30:36Z [DEBUG] ← LongTermMemory.Recall(оптимальное количество горутин) = (len=5, <nil>)
+2026-06-07T20:30:36Z [DEBUG] ← SearchAgent.processQueryInternal(оптимальное количество горутин) = <nil>
+2026-06-07T20:30:36Z [DEBUG] → AdaptiveScheduler.Record(duration=567.604147ms, err=<nil>)
+2026-06-07T20:30:36Z [DEBUG] ← SearchAgent.processQuery(оптимальное количество горутин) = <nil>
+2026-06-07T20:30:36Z [DEBUG] → SearchAgent.processQuery(query=worker pool на горутинах Go)
+2026-06-07T20:30:36Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:36Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:36Z [DEBUG] → SearchAgent.processQueryInternal(query=worker pool на горутинах Go)
+2026-06-07T20:30:36Z [DEBUG] → LongTermMemory.RecallWithTopK(query=worker pool на горутинах Go, topK=5)
+2026-06-07T20:30:36Z [DEBUG] ← LongTermMemory.RecallWithTopK(профилирование горутин pprof, 5) = (len=5, <nil>)
+2026-06-07T20:30:36Z [DEBUG] ← LongTermMemory.Recall(профилирование горутин pprof) = (len=5, <nil>)
+2026-06-07T20:30:36Z [DEBUG] ← SearchAgent.processQueryInternal(профилирование горутин pprof) = <nil>
+2026-06-07T20:30:36Z [DEBUG] → AdaptiveScheduler.Record(duration=669.205804ms, err=<nil>)
+2026-06-07T20:30:36Z [DEBUG] ← SearchAgent.processQuery(профилирование горутин pprof) = <nil>
+2026-06-07T20:30:36Z [DEBUG] → SearchAgent.processQuery(query=горутины для параллельной обработки данных)
+2026-06-07T20:30:36Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:36Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:36Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины для параллельной обработки данных)
+2026-06-07T20:30:36Z [DEBUG] → LongTermMemory.RecallWithTopK(query=горутины для параллельной обработки данных, topK=5)
+2026-06-07T20:30:37Z [DEBUG] ← LongTermMemory.RecallWithTopK(как измерить производительность горутин, 5) = (len=5, <nil>)
+2026-06-07T20:30:37Z [DEBUG] ← LongTermMemory.Recall(как измерить производительность горутин) = (len=5, <nil>)
+2026-06-07T20:30:37Z [DEBUG] ← SearchAgent.processQueryInternal(как измерить производительность горутин) = <nil>
+2026-06-07T20:30:37Z [DEBUG] → AdaptiveScheduler.Record(duration=878.489072ms, err=<nil>)
+2026-06-07T20:30:37Z [DEBUG] ← SearchAgent.processQuery(как измерить производительность горутин) = <nil>
+2026-06-07T20:30:37Z [DEBUG] → SearchAgent.processQuery(query=что такое горутины в Go простыми словами)
+2026-06-07T20:30:37Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:37Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:37Z [DEBUG] → SearchAgent.processQueryInternal(query=что такое горутины в Go простыми словами)
+2026-06-07T20:30:37Z [DEBUG] → LongTermMemory.RecallWithTopK(query=что такое горутины в Go простыми словами, topK=5)
+2026-06-07T20:30:37Z [DEBUG] ← LongTermMemory.RecallWithTopK(горутины для параллельной обработки данных, 5) = (len=5, <nil>)
+2026-06-07T20:30:37Z [DEBUG] ← LongTermMemory.Recall(горутины для параллельной обработки данных) = (len=5, <nil>)
+2026-06-07T20:30:37Z [DEBUG] ← SearchAgent.processQueryInternal(горутины для параллельной обработки данных) = <nil>
+2026-06-07T20:30:37Z [DEBUG] → AdaptiveScheduler.Record(duration=656.607772ms, err=<nil>)
+2026-06-07T20:30:37Z [DEBUG] ← SearchAgent.processQuery(горутины для параллельной обработки данных) = <nil>
+2026-06-07T20:30:37Z [DEBUG] ← LongTermMemory.RecallWithTopK(worker pool на горутинах Go, 5) = (len=5, <nil>)
+2026-06-07T20:30:37Z [DEBUG] ← LongTermMemory.Recall(worker pool на горутинах Go) = (len=5, <nil>)
+2026-06-07T20:30:37Z [DEBUG] ← SearchAgent.processQueryInternal(worker pool на горутинах Go) = <nil>
+2026-06-07T20:30:37Z [DEBUG] → AdaptiveScheduler.Record(duration=666.670617ms, err=<nil>)
+2026-06-07T20:30:37Z [DEBUG] ← SearchAgent.processQuery(worker pool на горутинах Go) = <nil>
+2026-06-07T20:30:38Z [DEBUG] ← LongTermMemory.RecallWithTopK(что такое горутины в Go простыми словами, 5) = (len=5, <nil>)
+2026-06-07T20:30:38Z [DEBUG] ← LongTermMemory.Recall(что такое горутины в Go простыми словами) = (len=5, <nil>)
+2026-06-07T20:30:38Z [DEBUG] ← SearchAgent.processQueryInternal(что такое горутины в Go простыми словами) = <nil>
+2026-06-07T20:30:38Z [DEBUG] → AdaptiveScheduler.Record(duration=665.780723ms, err=<nil>)
+2026-06-07T20:30:38Z [DEBUG] ← SearchAgent.processQuery(что такое горутины в Go простыми словами) = <nil>
+2026-06-07T20:30:38Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:30:38Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Практическое использование и производительность, subtopic=Примеры применения)
+2026-06-07T20:30:38Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Основные понятия и механизм работы горутин, subtopic=Определение и назначение горутин)
+2026-06-07T20:30:38Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Примеры применения, topK=5)
+2026-06-07T20:30:38Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Определение и назначение горутин, topK=5)
+2026-06-07T20:30:38Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Синхронизация и взаимодействие горутин, subtopic=Мьютексы и WaitGroup)
+2026-06-07T20:30:38Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Мьютексы и WaitGroup, topK=5)
+2026-06-07T20:30:38Z [DEBUG] ← LongTermMemory.RecallWithTopK(Мьютексы и WaitGroup, 5) = (len=5, <nil>)
+2026-06-07T20:30:38Z [DEBUG] ← LongTermMemory.Recall(Мьютексы и WaitGroup) = (len=5, <nil>)
+2026-06-07T20:30:38Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:30:38Z [DEBUG] ← LongTermMemory.RecallWithTopK(Определение и назначение горутин, 5) = (len=5, <nil>)
+2026-06-07T20:30:38Z [DEBUG] ← LongTermMemory.Recall(Определение и назначение горутин) = (len=5, <nil>)
+2026-06-07T20:30:38Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:30:38Z [DEBUG] ← LongTermMemory.RecallWithTopK(Примеры применения, 5) = (len=5, <nil>)
+2026-06-07T20:30:38Z [DEBUG] ← LongTermMemory.Recall(Примеры применения) = (len=5, <nil>)
+2026-06-07T20:30:38Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:30:43Z [DEBUG] ← llm.Complete = (len=2579, nil)
+2026-06-07T20:30:43Z [DEBUG] → SaveFactTool.Execute(args=map[fact:Секция: Основные понятия и механизм работы горутин
+Подтема: Определение и назначение горутин
+Горутины (goroutines) — это ключевой элемент конкурентного программирования в Go, представляющий собой легковесные потоки выполнения, управляемые рантаймом языка, а не операционной системой. В отличие от традиционных системных потоков, горутины значительно дешевле: они требуют меньше памяти (начальный стек составляет несколько килобайт, динамически растёт и сжимается по мере необходимости), быстрее создаются и имеют низкие накладные расходы на переключение контекста. Каждая горутина выполняется в общем адресном пространстве программы, что упрощает обмен данными, но также требует синхронизации. Запуск горутины осуществляется ключевым словом `go` перед вызовом функции или метода. Основное назначение — обеспечить конкурентное (и при наличии многоядерного процессора — параллельное) выполнение задач, повышая производительность и отзывчивость приложений. Горутины планируются собственным планировщиком Go, который эффективно распределяет их по системным потокам (обычно количество потоков равно числу ядер CPU). Для синхронизации и ожидания завершения горутин используются такие механизмы, как `sync.WaitGroup`, каналы и `select`. Таким образом, горутины являются фундаментом для построения высокопроизводительных, масштабируемых и отказоустойчивых приложений на Go, предоставляя простую модель конкурентности без необходимости управления потоками на уровне ОС.])
+2026-06-07T20:30:43Z [DEBUG] → LongTermMemory.Save(key=fact_24948cf4-ab36-499d-837e-a796b76162d3_1780864243033816721, value_len=2670)
+2026-06-07T20:30:43Z [DEBUG] ← llm.Complete = (len=2363, nil)
+2026-06-07T20:30:43Z [DEBUG] → SaveFactTool.Execute(args=map[fact:Секция: Практическое использование и производительность
+Подтема: Примеры применения
+Горутины в Go представляют собой легковесные потоки выполнения, запускаемые ключевым словом `go`. Они позволяют конкурентно выполнять функции или методы в общем адресном пространстве, что делает их эффективным инструментом для параллельных задач. Примеры применения включают запуск нескольких горутин для параллельной обработки данных, например, загрузки файлов или выполнения рабочих задач. Для синхронизации и ожидания завершения горутин часто используется `sync.WaitGroup`, как показано в примере с функцией `worker`, где `wg.Add(1)` добавляет счетчик, а `wg.Done()` уменьшает его, позволяя главной горутине дождаться завершения всех через `wg.Wait()`. Каналы служат для обмена данными между горутинами, обеспечивая безопасную коммуникацию. Буферизированные каналы позволяют отправлять данные без немедленного получения, что повышает гибкость. Визуализация связей и эксперименты с кодом, такие как изменение буфера каналов или количества горутин, помогают глубже понять их поведение. Горутины значительно легче системных потоков: их стек начинается с 2-4 КБ и динамически растет, что позволяет запускать тысячи горутин без значительных накладных расходов. Это делает их идеальными для высоконагруженных систем, где требуется эффективное использование ресурсов.])
+2026-06-07T20:30:43Z [DEBUG] → LongTermMemory.Save(key=fact_ca8969cc-8ff5-4b8f-a569-497748bf1c66_1780864243118962527, value_len=2440)
+2026-06-07T20:30:43Z [DEBUG] ← LongTermMemory.Save(fact_24948cf4-ab36-499d-837e-a796b76162d3_1780864243033816721, len=2670) = <nil>
+2026-06-07T20:30:43Z [DEBUG] ← SaveFactTool.Execute = ("Факт сохранён (ключ: fact_24948cf4-ab36-499d-837e-a796b76162d3_1780864243033816721)", <nil>)
+2026-06-07T20:30:43Z [DEBUG] ← AnalystAgent.GenerateSubReport(Основные понятия и механизм работы горутин/Определение и назначение горутин) = (complete=true, len=2498, nil)
+2026-06-07T20:30:43Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Основные понятия и механизм работы горутин, subtopic=Запуск и завершение горутин)
+2026-06-07T20:30:43Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Запуск и завершение горутин, topK=5)
+2026-06-07T20:30:44Z [DEBUG] ← LongTermMemory.RecallWithTopK(Запуск и завершение горутин, 5) = (len=5, <nil>)
+2026-06-07T20:30:44Z [DEBUG] ← LongTermMemory.Recall(Запуск и завершение горутин) = (len=5, <nil>)
+2026-06-07T20:30:44Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:30:44Z [DEBUG] ← LongTermMemory.Save(fact_ca8969cc-8ff5-4b8f-a569-497748bf1c66_1780864243118962527, len=2440) = <nil>
+2026-06-07T20:30:44Z [DEBUG] ← SaveFactTool.Execute = ("Факт сохранён (ключ: fact_ca8969cc-8ff5-4b8f-a569-497748bf1c66_1780864243118962527)", <nil>)
+2026-06-07T20:30:44Z [DEBUG] ← AnalystAgent.GenerateSubReport(Практическое использование и производительность/Примеры применения) = (complete=true, len=2282, nil)
+2026-06-07T20:30:44Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Основные понятия и механизм работы горутин, subtopic=Планировщик горутин (GMP))
+2026-06-07T20:30:44Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Планировщик горутин (GMP), topK=5)
+2026-06-07T20:30:45Z [DEBUG] ← LongTermMemory.RecallWithTopK(Планировщик горутин (GMP), 5) = (len=5, <nil>)
+2026-06-07T20:30:45Z [DEBUG] ← LongTermMemory.Recall(Планировщик горутин (GMP)) = (len=5, <nil>)
+2026-06-07T20:30:45Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:30:49Z [DEBUG] ← llm.Complete = (len=1459, nil)
+2026-06-07T20:30:49Z [DEBUG] ← AnalystAgent.GenerateSubReport(Синхронизация и взаимодействие горутин/Мьютексы и WaitGroup) = (complete=false, len=822, nil)
+2026-06-07T20:30:49Z [DEBUG] → SearchAgent.Run(queries=[sync.Mutex в Go примеры использования, deadlock, RWMutex sync.WaitGroup в Go: распространенные ошибки, копирование, Add внутри горутины Мьютексы или каналы: когда выбирать в Go])
+2026-06-07T20:30:49Z [DEBUG] → SearchAgent.processQuery(query=Мьютексы или каналы: когда выбирать в Go)
+2026-06-07T20:30:49Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:49Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:49Z [DEBUG] → SearchAgent.processQueryInternal(query=Мьютексы или каналы: когда выбирать в Go)
+2026-06-07T20:30:49Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Мьютексы или каналы: когда выбирать в Go, topK=5)
+2026-06-07T20:30:49Z [DEBUG] → SearchAgent.processQuery(query=sync.Mutex в Go примеры использования, deadlock, RWMutex)
+2026-06-07T20:30:49Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:49Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:49Z [DEBUG] → SearchAgent.processQueryInternal(query=sync.Mutex в Go примеры использования, deadlock, RWMutex)
+2026-06-07T20:30:49Z [DEBUG] → LongTermMemory.RecallWithTopK(query=sync.Mutex в Go примеры использования, deadlock, RWMutex, topK=5)
+2026-06-07T20:30:49Z [DEBUG] → SearchAgent.processQuery(query=sync.WaitGroup в Go: распространенные ошибки, копирование, Add внутри горутины)
+2026-06-07T20:30:49Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:49Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:49Z [DEBUG] → SearchAgent.processQueryInternal(query=sync.WaitGroup в Go: распространенные ошибки, копирование, Add внутри горутины)
+2026-06-07T20:30:49Z [DEBUG] → LongTermMemory.RecallWithTopK(query=sync.WaitGroup в Go: распространенные ошибки, копирование, Add внутри горутины, topK=5)
+2026-06-07T20:30:50Z [DEBUG] ← LongTermMemory.RecallWithTopK(sync.WaitGroup в Go: распространенные ошибки, копирование, Add внутри горутины, 5) = (len=5, <nil>)
+2026-06-07T20:30:50Z [DEBUG] ← LongTermMemory.Recall(sync.WaitGroup в Go: распространенные ошибки, копирование, Add внутри горутины) = (len=5, <nil>)
+2026-06-07T20:30:50Z [DEBUG] ← SearchAgent.processQueryInternal(sync.WaitGroup в Go: распространенные ошибки, копирование, Add внутри горутины) = <nil>
+2026-06-07T20:30:50Z [DEBUG] → AdaptiveScheduler.Record(duration=650.598026ms, err=<nil>)
+2026-06-07T20:30:50Z [DEBUG] ← SearchAgent.processQuery(sync.WaitGroup в Go: распространенные ошибки, копирование, Add внутри горутины) = <nil>
+2026-06-07T20:30:50Z [DEBUG] ← LongTermMemory.RecallWithTopK(sync.Mutex в Go примеры использования, deadlock, RWMutex, 5) = (len=5, <nil>)
+2026-06-07T20:30:50Z [DEBUG] ← LongTermMemory.Recall(sync.Mutex в Go примеры использования, deadlock, RWMutex) = (len=5, <nil>)
+2026-06-07T20:30:50Z [DEBUG] ← SearchAgent.processQueryInternal(sync.Mutex в Go примеры использования, deadlock, RWMutex) = <nil>
+2026-06-07T20:30:50Z [DEBUG] → AdaptiveScheduler.Record(duration=728.911101ms, err=<nil>)
+2026-06-07T20:30:50Z [DEBUG] ← SearchAgent.processQuery(sync.Mutex в Go примеры использования, deadlock, RWMutex) = <nil>
+2026-06-07T20:30:50Z [DEBUG] ← LongTermMemory.RecallWithTopK(Мьютексы или каналы: когда выбирать в Go, 5) = (len=5, <nil>)
+2026-06-07T20:30:50Z [DEBUG] ← LongTermMemory.Recall(Мьютексы или каналы: когда выбирать в Go) = (len=5, <nil>)
+2026-06-07T20:30:50Z [DEBUG] ← SearchAgent.processQueryInternal(Мьютексы или каналы: когда выбирать в Go) = <nil>
+2026-06-07T20:30:50Z [DEBUG] → AdaptiveScheduler.Record(duration=1.394773139s, err=<nil>)
+2026-06-07T20:30:50Z [DEBUG] ← SearchAgent.processQuery(Мьютексы или каналы: когда выбирать в Go) = <nil>
+2026-06-07T20:30:50Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:30:50Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Синхронизация и взаимодействие горутин, subtopic=Мьютексы и WaitGroup)
+2026-06-07T20:30:50Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Мьютексы и WaitGroup, topK=5)
+2026-06-07T20:30:50Z [DEBUG] ← llm.Complete = (len=1993, nil)
+2026-06-07T20:30:50Z [DEBUG] ← AnalystAgent.GenerateSubReport(Основные понятия и механизм работы горутин/Планировщик горутин (GMP)) = (complete=false, len=1139, nil)
+2026-06-07T20:30:50Z [DEBUG] → SearchAgent.Run(queries=[go scheduler GMP model explain goroutine scheduler M:N threading G M P в Go планировщик горутин как работает планировщик горутин в Go Go runtime scheduler work stealing системный поток и логический процессор в Go планировщике])
+2026-06-07T20:30:50Z [DEBUG] → SearchAgent.processQuery(query=системный поток и логический процессор в Go планировщике)
+2026-06-07T20:30:50Z [DEBUG] → SearchAgent.processQuery(query=go scheduler GMP model explain)
+2026-06-07T20:30:50Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:50Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:50Z [DEBUG] → SearchAgent.processQueryInternal(query=go scheduler GMP model explain)
+2026-06-07T20:30:50Z [DEBUG] → LongTermMemory.RecallWithTopK(query=go scheduler GMP model explain, topK=5)
+2026-06-07T20:30:50Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:50Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:50Z [DEBUG] → SearchAgent.processQueryInternal(query=системный поток и логический процессор в Go планировщике)
+2026-06-07T20:30:50Z [DEBUG] → LongTermMemory.RecallWithTopK(query=системный поток и логический процессор в Go планировщике, topK=5)
+2026-06-07T20:30:50Z [DEBUG] → SearchAgent.processQuery(query=G M P в Go планировщик горутин)
+2026-06-07T20:30:50Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:50Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:50Z [DEBUG] → SearchAgent.processQueryInternal(query=G M P в Go планировщик горутин)
+2026-06-07T20:30:50Z [DEBUG] → LongTermMemory.RecallWithTopK(query=G M P в Go планировщик горутин, topK=5)
+2026-06-07T20:30:51Z [DEBUG] ← LongTermMemory.RecallWithTopK(Мьютексы и WaitGroup, 5) = (len=5, <nil>)
+2026-06-07T20:30:51Z [DEBUG] ← LongTermMemory.Recall(Мьютексы и WaitGroup) = (len=5, <nil>)
+2026-06-07T20:30:51Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:30:51Z [DEBUG] ← LongTermMemory.RecallWithTopK(go scheduler GMP model explain, 5) = (len=5, <nil>)
+2026-06-07T20:30:51Z [DEBUG] ← LongTermMemory.Recall(go scheduler GMP model explain) = (len=5, <nil>)
+2026-06-07T20:30:51Z [DEBUG] ← SearchAgent.processQueryInternal(go scheduler GMP model explain) = <nil>
+2026-06-07T20:30:51Z [DEBUG] → AdaptiveScheduler.Record(duration=712.103356ms, err=<nil>)
+2026-06-07T20:30:51Z [DEBUG] ← SearchAgent.processQuery(go scheduler GMP model explain) = <nil>
+2026-06-07T20:30:51Z [DEBUG] → SearchAgent.processQuery(query=как работает планировщик горутин в Go)
+2026-06-07T20:30:51Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:51Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:51Z [DEBUG] → SearchAgent.processQueryInternal(query=как работает планировщик горутин в Go)
+2026-06-07T20:30:51Z [DEBUG] → LongTermMemory.RecallWithTopK(query=как работает планировщик горутин в Go, topK=5)
+2026-06-07T20:30:51Z [DEBUG] ← LongTermMemory.RecallWithTopK(G M P в Go планировщик горутин, 5) = (len=5, <nil>)
+2026-06-07T20:30:51Z [DEBUG] ← LongTermMemory.Recall(G M P в Go планировщик горутин) = (len=5, <nil>)
+2026-06-07T20:30:51Z [DEBUG] ← SearchAgent.processQueryInternal(G M P в Go планировщик горутин) = <nil>
+2026-06-07T20:30:51Z [DEBUG] → AdaptiveScheduler.Record(duration=762.53119ms, err=<nil>)
+2026-06-07T20:30:51Z [DEBUG] ← SearchAgent.processQuery(G M P в Go планировщик горутин) = <nil>
+2026-06-07T20:30:51Z [DEBUG] → SearchAgent.processQuery(query=Go runtime scheduler work stealing)
+2026-06-07T20:30:51Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:51Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:51Z [DEBUG] → SearchAgent.processQueryInternal(query=Go runtime scheduler work stealing)
+2026-06-07T20:30:51Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Go runtime scheduler work stealing, topK=5)
+2026-06-07T20:30:51Z [DEBUG] ← LongTermMemory.RecallWithTopK(системный поток и логический процессор в Go планировщике, 5) = (len=5, <nil>)
+2026-06-07T20:30:51Z [DEBUG] ← LongTermMemory.Recall(системный поток и логический процессор в Go планировщике) = (len=5, <nil>)
+2026-06-07T20:30:51Z [DEBUG] ← SearchAgent.processQueryInternal(системный поток и логический процессор в Go планировщике) = <nil>
+2026-06-07T20:30:51Z [DEBUG] → AdaptiveScheduler.Record(duration=791.966663ms, err=<nil>)
+2026-06-07T20:30:51Z [DEBUG] ← SearchAgent.processQuery(системный поток и логический процессор в Go планировщике) = <nil>
+2026-06-07T20:30:51Z [DEBUG] → SearchAgent.processQuery(query=goroutine scheduler M:N threading)
+2026-06-07T20:30:51Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:51Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:51Z [DEBUG] → SearchAgent.processQueryInternal(query=goroutine scheduler M:N threading)
+2026-06-07T20:30:51Z [DEBUG] → LongTermMemory.RecallWithTopK(query=goroutine scheduler M:N threading, topK=5)
+2026-06-07T20:30:52Z [DEBUG] ← LongTermMemory.RecallWithTopK(goroutine scheduler M:N threading, 5) = (len=5, <nil>)
+2026-06-07T20:30:52Z [DEBUG] ← LongTermMemory.Recall(goroutine scheduler M:N threading) = (len=5, <nil>)
+2026-06-07T20:30:52Z [DEBUG] ← SearchAgent.processQueryInternal(goroutine scheduler M:N threading) = <nil>
+2026-06-07T20:30:52Z [DEBUG] → AdaptiveScheduler.Record(duration=661.613489ms, err=<nil>)
+2026-06-07T20:30:52Z [DEBUG] ← SearchAgent.processQuery(goroutine scheduler M:N threading) = <nil>
+2026-06-07T20:30:52Z [DEBUG] ← LongTermMemory.RecallWithTopK(Go runtime scheduler work stealing, 5) = (len=5, <nil>)
+2026-06-07T20:30:52Z [DEBUG] ← LongTermMemory.Recall(Go runtime scheduler work stealing) = (len=5, <nil>)
+2026-06-07T20:30:52Z [DEBUG] ← SearchAgent.processQueryInternal(Go runtime scheduler work stealing) = <nil>
+2026-06-07T20:30:52Z [DEBUG] → AdaptiveScheduler.Record(duration=707.490229ms, err=<nil>)
+2026-06-07T20:30:52Z [DEBUG] ← SearchAgent.processQuery(Go runtime scheduler work stealing) = <nil>
+2026-06-07T20:30:52Z [DEBUG] ← LongTermMemory.RecallWithTopK(как работает планировщик горутин в Go, 5) = (len=5, <nil>)
+2026-06-07T20:30:52Z [DEBUG] ← LongTermMemory.Recall(как работает планировщик горутин в Go) = (len=5, <nil>)
+2026-06-07T20:30:52Z [DEBUG] ← SearchAgent.processQueryInternal(как работает планировщик горутин в Go) = <nil>
+2026-06-07T20:30:52Z [DEBUG] → AdaptiveScheduler.Record(duration=781.861044ms, err=<nil>)
+2026-06-07T20:30:52Z [DEBUG] ← SearchAgent.processQuery(как работает планировщик горутин в Go) = <nil>
+2026-06-07T20:30:52Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:30:52Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Основные понятия и механизм работы горутин, subtopic=Планировщик горутин (GMP))
+2026-06-07T20:30:52Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Планировщик горутин (GMP), topK=5)
+2026-06-07T20:30:52Z [DEBUG] ← LongTermMemory.RecallWithTopK(Планировщик горутин (GMP), 5) = (len=5, <nil>)
+2026-06-07T20:30:52Z [DEBUG] ← LongTermMemory.Recall(Планировщик горутин (GMP)) = (len=5, <nil>)
+2026-06-07T20:30:52Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:30:55Z [DEBUG] ← llm.Complete = (len=1569, nil)
+2026-06-07T20:30:55Z [DEBUG] → SaveFactTool.Execute(args=map[fact:Секция: Основные понятия и механизм работы горутин
+Подтема: Запуск и завершение горутин
+Горутины в Go запускаются с помощью ключевого слова `go` перед вызовом функции или метода. Это создает легковесный поток выполнения, управляемый рантаймом. Запуск происходит немедленно, но порядок выполнения горутин не гарантирован. Для ожидания завершения горутин используются механизмы синхронизации, такие как `sync.WaitGroup` (вызов `wg.Add(1)` перед запуском и `wg.Done()` в горутине, затем `wg.Wait()` в главной горутине) или каналы. Без явного ожидания главная горутина (функция `main`) может завершиться до окончания работы запущенных горутин, что приведет к их преждевременному завершению. Использование `time.Sleep` для ожидания является плохой практикой, так как не гарантирует завершения всех горутин и неэффективно. Каждая горутина имеет свой динамически изменяемый стек, начальный размер которого составляет несколько килобайт.])
+2026-06-07T20:30:55Z [DEBUG] → LongTermMemory.Save(key=fact_786b25e3-8e57-471e-befa-ee56d2237f2e_1780864255373948050, value_len=1650)
+2026-06-07T20:30:56Z [DEBUG] ← LongTermMemory.Save(fact_786b25e3-8e57-471e-befa-ee56d2237f2e_1780864255373948050, len=1650) = <nil>
+2026-06-07T20:30:56Z [DEBUG] ← SaveFactTool.Execute = ("Факт сохранён (ключ: fact_786b25e3-8e57-471e-befa-ee56d2237f2e_1780864255373948050)", <nil>)
+2026-06-07T20:30:56Z [DEBUG] ← AnalystAgent.GenerateSubReport(Основные понятия и механизм работы горутин/Запуск и завершение горутин) = (complete=true, len=1488, nil)
+2026-06-07T20:30:56Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Синхронизация и взаимодействие горутин, subtopic=Каналы для передачи данных)
+2026-06-07T20:30:56Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Каналы для передачи данных, topK=5)
+2026-06-07T20:30:56Z [DEBUG] ← LongTermMemory.RecallWithTopK(Каналы для передачи данных, 5) = (len=5, <nil>)
+2026-06-07T20:30:56Z [DEBUG] ← LongTermMemory.Recall(Каналы для передачи данных) = (len=5, <nil>)
+2026-06-07T20:30:56Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:30:57Z [DEBUG] ← llm.Complete = (len=1599, nil)
+2026-06-07T20:30:57Z [DEBUG] ← AnalystAgent.GenerateSubReport(Основные понятия и механизм работы горутин/Планировщик горутин (GMP)) = (complete=false, len=814, nil)
+2026-06-07T20:30:57Z [DEBUG] → SearchAgent.Run(queries=[Go scheduler GMP model explained как работает планировщик горутин Go GMP goroutine scheduler M P G work stealing Go runtime scheduler architecture планировщик Go: модель GMP, локальные очереди, системные потоки])
+2026-06-07T20:30:57Z [DEBUG] → SearchAgent.processQuery(query=планировщик Go: модель GMP, локальные очереди, системные потоки)
+2026-06-07T20:30:57Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:57Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:57Z [DEBUG] → SearchAgent.processQueryInternal(query=планировщик Go: модель GMP, локальные очереди, системные потоки)
+2026-06-07T20:30:57Z [DEBUG] → LongTermMemory.RecallWithTopK(query=планировщик Go: модель GMP, локальные очереди, системные потоки, topK=5)
+2026-06-07T20:30:57Z [DEBUG] → SearchAgent.processQuery(query=как работает планировщик горутин Go GMP)
+2026-06-07T20:30:57Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:57Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:57Z [DEBUG] → SearchAgent.processQueryInternal(query=как работает планировщик горутин Go GMP)
+2026-06-07T20:30:57Z [DEBUG] → LongTermMemory.RecallWithTopK(query=как работает планировщик горутин Go GMP, topK=5)
+2026-06-07T20:30:57Z [DEBUG] → SearchAgent.processQuery(query=goroutine scheduler M P G work stealing)
+2026-06-07T20:30:57Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:57Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:57Z [DEBUG] → SearchAgent.processQueryInternal(query=goroutine scheduler M P G work stealing)
+2026-06-07T20:30:57Z [DEBUG] → LongTermMemory.RecallWithTopK(query=goroutine scheduler M P G work stealing, topK=5)
+2026-06-07T20:30:58Z [DEBUG] ← LongTermMemory.RecallWithTopK(goroutine scheduler M P G work stealing, 5) = (len=5, <nil>)
+2026-06-07T20:30:58Z [DEBUG] ← LongTermMemory.Recall(goroutine scheduler M P G work stealing) = (len=5, <nil>)
+2026-06-07T20:30:58Z [DEBUG] ← SearchAgent.processQueryInternal(goroutine scheduler M P G work stealing) = <nil>
+2026-06-07T20:30:58Z [DEBUG] → AdaptiveScheduler.Record(duration=631.069674ms, err=<nil>)
+2026-06-07T20:30:58Z [DEBUG] ← SearchAgent.processQuery(goroutine scheduler M P G work stealing) = <nil>
+2026-06-07T20:30:58Z [DEBUG] → SearchAgent.processQuery(query=Go scheduler GMP model explained)
+2026-06-07T20:30:58Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:58Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:58Z [DEBUG] → SearchAgent.processQueryInternal(query=Go scheduler GMP model explained)
+2026-06-07T20:30:58Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Go scheduler GMP model explained, topK=5)
+2026-06-07T20:30:58Z [DEBUG] ← LongTermMemory.RecallWithTopK(планировщик Go: модель GMP, локальные очереди, системные потоки, 5) = (len=5, <nil>)
+2026-06-07T20:30:58Z [DEBUG] ← LongTermMemory.Recall(планировщик Go: модель GMP, локальные очереди, системные потоки) = (len=5, <nil>)
+2026-06-07T20:30:58Z [DEBUG] ← SearchAgent.processQueryInternal(планировщик Go: модель GMP, локальные очереди, системные потоки) = <nil>
+2026-06-07T20:30:58Z [DEBUG] → AdaptiveScheduler.Record(duration=701.190313ms, err=<nil>)
+2026-06-07T20:30:58Z [DEBUG] ← SearchAgent.processQuery(планировщик Go: модель GMP, локальные очереди, системные потоки) = <nil>
+2026-06-07T20:30:58Z [DEBUG] → SearchAgent.processQuery(query=Go runtime scheduler architecture)
+2026-06-07T20:30:58Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:30:58Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:30:58Z [DEBUG] → SearchAgent.processQueryInternal(query=Go runtime scheduler architecture)
+2026-06-07T20:30:58Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Go runtime scheduler architecture, topK=5)
+2026-06-07T20:30:58Z [DEBUG] ← LongTermMemory.RecallWithTopK(как работает планировщик горутин Go GMP, 5) = (len=5, <nil>)
+2026-06-07T20:30:58Z [DEBUG] ← LongTermMemory.Recall(как работает планировщик горутин Go GMP) = (len=5, <nil>)
+2026-06-07T20:30:58Z [DEBUG] ← SearchAgent.processQueryInternal(как работает планировщик горутин Go GMP) = <nil>
+2026-06-07T20:30:58Z [DEBUG] → AdaptiveScheduler.Record(duration=769.941001ms, err=<nil>)
+2026-06-07T20:30:58Z [DEBUG] ← SearchAgent.processQuery(как работает планировщик горутин Go GMP) = <nil>
+2026-06-07T20:30:59Z [DEBUG] ← LongTermMemory.RecallWithTopK(Go runtime scheduler architecture, 5) = (len=5, <nil>)
+2026-06-07T20:30:59Z [DEBUG] ← LongTermMemory.Recall(Go runtime scheduler architecture) = (len=5, <nil>)
+2026-06-07T20:30:59Z [DEBUG] ← SearchAgent.processQueryInternal(Go runtime scheduler architecture) = <nil>
+2026-06-07T20:30:59Z [DEBUG] → AdaptiveScheduler.Record(duration=651.637102ms, err=<nil>)
+2026-06-07T20:30:59Z [DEBUG] ← SearchAgent.processQuery(Go runtime scheduler architecture) = <nil>
+2026-06-07T20:30:59Z [DEBUG] ← LongTermMemory.RecallWithTopK(Go scheduler GMP model explained, 5) = (len=5, <nil>)
+2026-06-07T20:30:59Z [DEBUG] ← LongTermMemory.Recall(Go scheduler GMP model explained) = (len=5, <nil>)
+2026-06-07T20:30:59Z [DEBUG] ← SearchAgent.processQueryInternal(Go scheduler GMP model explained) = <nil>
+2026-06-07T20:30:59Z [DEBUG] → AdaptiveScheduler.Record(duration=985.621137ms, err=<nil>)
+2026-06-07T20:30:59Z [DEBUG] ← SearchAgent.processQuery(Go scheduler GMP model explained) = <nil>
+2026-06-07T20:30:59Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:30:59Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Основные понятия и механизм работы горутин, subtopic=Планировщик горутин (GMP))
+2026-06-07T20:30:59Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Планировщик горутин (GMP), topK=5)
+2026-06-07T20:30:59Z [DEBUG] ← LongTermMemory.RecallWithTopK(Планировщик горутин (GMP), 5) = (len=5, <nil>)
+2026-06-07T20:30:59Z [DEBUG] ← LongTermMemory.Recall(Планировщик горутин (GMP)) = (len=5, <nil>)
+2026-06-07T20:30:59Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:00Z [DEBUG] ← llm.Complete = (len=1872, nil)
+2026-06-07T20:31:00Z [DEBUG] ← AnalystAgent.GenerateSubReport(Синхронизация и взаимодействие горутин/Мьютексы и WaitGroup) = (complete=false, len=976, nil)
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.Run(queries=[sync.Mutex в Go примеры использования sync.RWMutex в Go примеры WaitGroup в Go best practices и частые ошибки отличие WaitGroup от мьютекса в Go синхронизация горутин примеры синхронизации горутин с мьютексом и WaitGroup Go])
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.processQuery(query=примеры синхронизации горутин с мьютексом и WaitGroup Go)
+2026-06-07T20:31:00Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:00Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.processQuery(query=sync.RWMutex в Go примеры)
+2026-06-07T20:31:00Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:00Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.processQueryInternal(query=sync.RWMutex в Go примеры)
+2026-06-07T20:31:00Z [DEBUG] → LongTermMemory.RecallWithTopK(query=sync.RWMutex в Go примеры, topK=5)
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.processQueryInternal(query=примеры синхронизации горутин с мьютексом и WaitGroup Go)
+2026-06-07T20:31:00Z [DEBUG] → LongTermMemory.RecallWithTopK(query=примеры синхронизации горутин с мьютексом и WaitGroup Go, topK=5)
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.processQuery(query=sync.Mutex в Go примеры использования)
+2026-06-07T20:31:00Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:00Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.processQueryInternal(query=sync.Mutex в Go примеры использования)
+2026-06-07T20:31:00Z [DEBUG] → LongTermMemory.RecallWithTopK(query=sync.Mutex в Go примеры использования, topK=5)
+2026-06-07T20:31:00Z [DEBUG] ← LongTermMemory.RecallWithTopK(sync.RWMutex в Go примеры, 5) = (len=5, <nil>)
+2026-06-07T20:31:00Z [DEBUG] ← LongTermMemory.Recall(sync.RWMutex в Go примеры) = (len=5, <nil>)
+2026-06-07T20:31:00Z [DEBUG] ← SearchAgent.processQueryInternal(sync.RWMutex в Go примеры) = <nil>
+2026-06-07T20:31:00Z [DEBUG] → AdaptiveScheduler.Record(duration=656.800288ms, err=<nil>)
+2026-06-07T20:31:00Z [DEBUG] ← SearchAgent.processQuery(sync.RWMutex в Go примеры) = <nil>
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.processQuery(query=WaitGroup в Go best practices и частые ошибки)
+2026-06-07T20:31:00Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:00Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.processQueryInternal(query=WaitGroup в Go best practices и частые ошибки)
+2026-06-07T20:31:00Z [DEBUG] → LongTermMemory.RecallWithTopK(query=WaitGroup в Go best practices и частые ошибки, topK=5)
+2026-06-07T20:31:00Z [DEBUG] ← LongTermMemory.RecallWithTopK(примеры синхронизации горутин с мьютексом и WaitGroup Go, 5) = (len=5, <nil>)
+2026-06-07T20:31:00Z [DEBUG] ← LongTermMemory.Recall(примеры синхронизации горутин с мьютексом и WaitGroup Go) = (len=5, <nil>)
+2026-06-07T20:31:00Z [DEBUG] ← SearchAgent.processQueryInternal(примеры синхронизации горутин с мьютексом и WaitGroup Go) = <nil>
+2026-06-07T20:31:00Z [DEBUG] → AdaptiveScheduler.Record(duration=741.815091ms, err=<nil>)
+2026-06-07T20:31:00Z [DEBUG] ← SearchAgent.processQuery(примеры синхронизации горутин с мьютексом и WaitGroup Go) = <nil>
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.processQuery(query=отличие WaitGroup от мьютекса в Go синхронизация горутин)
+2026-06-07T20:31:00Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:00Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:00Z [DEBUG] → SearchAgent.processQueryInternal(query=отличие WaitGroup от мьютекса в Go синхронизация горутин)
+2026-06-07T20:31:00Z [DEBUG] → LongTermMemory.RecallWithTopK(query=отличие WaitGroup от мьютекса в Go синхронизация горутин, topK=5)
+2026-06-07T20:31:01Z [DEBUG] ← LongTermMemory.RecallWithTopK(sync.Mutex в Go примеры использования, 5) = (len=5, <nil>)
+2026-06-07T20:31:01Z [DEBUG] ← LongTermMemory.Recall(sync.Mutex в Go примеры использования) = (len=5, <nil>)
+2026-06-07T20:31:01Z [DEBUG] ← SearchAgent.processQueryInternal(sync.Mutex в Go примеры использования) = <nil>
+2026-06-07T20:31:01Z [DEBUG] → AdaptiveScheduler.Record(duration=814.200643ms, err=<nil>)
+2026-06-07T20:31:01Z [DEBUG] ← SearchAgent.processQuery(sync.Mutex в Go примеры использования) = <nil>
+2026-06-07T20:31:01Z [DEBUG] ← LongTermMemory.RecallWithTopK(WaitGroup в Go best practices и частые ошибки, 5) = (len=5, <nil>)
+2026-06-07T20:31:01Z [DEBUG] ← LongTermMemory.Recall(WaitGroup в Go best practices и частые ошибки) = (len=5, <nil>)
+2026-06-07T20:31:01Z [DEBUG] ← SearchAgent.processQueryInternal(WaitGroup в Go best practices и частые ошибки) = <nil>
+2026-06-07T20:31:01Z [DEBUG] → AdaptiveScheduler.Record(duration=764.852468ms, err=<nil>)
+2026-06-07T20:31:01Z [DEBUG] ← SearchAgent.processQuery(WaitGroup в Go best practices и частые ошибки) = <nil>
+2026-06-07T20:31:01Z [DEBUG] ← LongTermMemory.RecallWithTopK(отличие WaitGroup от мьютекса в Go синхронизация горутин, 5) = (len=5, <nil>)
+2026-06-07T20:31:01Z [DEBUG] ← LongTermMemory.Recall(отличие WaitGroup от мьютекса в Go синхронизация горутин) = (len=5, <nil>)
+2026-06-07T20:31:01Z [DEBUG] ← SearchAgent.processQueryInternal(отличие WaitGroup от мьютекса в Go синхронизация горутин) = <nil>
+2026-06-07T20:31:01Z [DEBUG] → AdaptiveScheduler.Record(duration=717.513283ms, err=<nil>)
+2026-06-07T20:31:01Z [DEBUG] ← SearchAgent.processQuery(отличие WaitGroup от мьютекса в Go синхронизация горутин) = <nil>
+2026-06-07T20:31:01Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:31:01Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Синхронизация и взаимодействие горутин, subtopic=Мьютексы и WaitGroup)
+2026-06-07T20:31:01Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Мьютексы и WaitGroup, topK=5)
+2026-06-07T20:31:02Z [DEBUG] ← LongTermMemory.RecallWithTopK(Мьютексы и WaitGroup, 5) = (len=5, <nil>)
+2026-06-07T20:31:02Z [DEBUG] ← LongTermMemory.Recall(Мьютексы и WaitGroup) = (len=5, <nil>)
+2026-06-07T20:31:02Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:04Z [DEBUG] ← llm.Complete = (len=1485, nil)
+2026-06-07T20:31:04Z [DEBUG] ← AnalystAgent.GenerateSubReport(Синхронизация и взаимодействие горутин/Каналы для передачи данных) = (complete=false, len=544, nil)
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.Run(queries=[каналы в Go типы и принцип работы буферизированные и небуферизированные каналы Go примеры оператор <- в каналах Go закрытие каналов в Go и select паттерны синхронизации горутин через каналы Go])
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.processQuery(query=паттерны синхронизации горутин через каналы Go)
+2026-06-07T20:31:04Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:04Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.processQueryInternal(query=паттерны синхронизации горутин через каналы Go)
+2026-06-07T20:31:04Z [DEBUG] → LongTermMemory.RecallWithTopK(query=паттерны синхронизации горутин через каналы Go, topK=5)
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.processQuery(query=буферизированные и небуферизированные каналы Go примеры)
+2026-06-07T20:31:04Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:04Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.processQueryInternal(query=буферизированные и небуферизированные каналы Go примеры)
+2026-06-07T20:31:04Z [DEBUG] → LongTermMemory.RecallWithTopK(query=буферизированные и небуферизированные каналы Go примеры, topK=5)
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.processQuery(query=оператор <- в каналах Go)
+2026-06-07T20:31:04Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:04Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.processQueryInternal(query=оператор <- в каналах Go)
+2026-06-07T20:31:04Z [DEBUG] → LongTermMemory.RecallWithTopK(query=оператор <- в каналах Go, topK=5)
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.processQuery(query=каналы в Go типы и принцип работы)
+2026-06-07T20:31:04Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:04Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.processQueryInternal(query=каналы в Go типы и принцип работы)
+2026-06-07T20:31:04Z [DEBUG] → LongTermMemory.RecallWithTopK(query=каналы в Go типы и принцип работы, topK=5)
+2026-06-07T20:31:04Z [DEBUG] ← LongTermMemory.RecallWithTopK(оператор <- в каналах Go, 5) = (len=5, <nil>)
+2026-06-07T20:31:04Z [DEBUG] ← LongTermMemory.Recall(оператор <- в каналах Go) = (len=5, <nil>)
+2026-06-07T20:31:04Z [DEBUG] ← SearchAgent.processQueryInternal(оператор <- в каналах Go) = <nil>
+2026-06-07T20:31:04Z [DEBUG] → AdaptiveScheduler.Record(duration=686.406044ms, err=<nil>)
+2026-06-07T20:31:04Z [DEBUG] ← SearchAgent.processQuery(оператор <- в каналах Go) = <nil>
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.processQuery(query=закрытие каналов в Go и select)
+2026-06-07T20:31:04Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:04Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:04Z [DEBUG] → SearchAgent.processQueryInternal(query=закрытие каналов в Go и select)
+2026-06-07T20:31:04Z [DEBUG] → LongTermMemory.RecallWithTopK(query=закрытие каналов в Go и select, topK=5)
+2026-06-07T20:31:05Z [DEBUG] ← LongTermMemory.RecallWithTopK(паттерны синхронизации горутин через каналы Go, 5) = (len=5, <nil>)
+2026-06-07T20:31:05Z [DEBUG] ← LongTermMemory.Recall(паттерны синхронизации горутин через каналы Go) = (len=5, <nil>)
+2026-06-07T20:31:05Z [DEBUG] ← SearchAgent.processQueryInternal(паттерны синхронизации горутин через каналы Go) = <nil>
+2026-06-07T20:31:05Z [DEBUG] → AdaptiveScheduler.Record(duration=862.941797ms, err=<nil>)
+2026-06-07T20:31:05Z [DEBUG] ← SearchAgent.processQuery(паттерны синхронизации горутин через каналы Go) = <nil>
+2026-06-07T20:31:05Z [DEBUG] ← LongTermMemory.RecallWithTopK(каналы в Go типы и принцип работы, 5) = (len=5, <nil>)
+2026-06-07T20:31:05Z [DEBUG] ← LongTermMemory.Recall(каналы в Go типы и принцип работы) = (len=5, <nil>)
+2026-06-07T20:31:05Z [DEBUG] ← SearchAgent.processQueryInternal(каналы в Go типы и принцип работы) = <nil>
+2026-06-07T20:31:05Z [DEBUG] → AdaptiveScheduler.Record(duration=862.848904ms, err=<nil>)
+2026-06-07T20:31:05Z [DEBUG] ← SearchAgent.processQuery(каналы в Go типы и принцип работы) = <nil>
+2026-06-07T20:31:05Z [DEBUG] ← llm.Complete = (len=1342, nil)
+2026-06-07T20:31:05Z [DEBUG] → SaveFactTool.Execute(args=map[fact:Секция: Синхронизация и взаимодействие горутин
+Подтема: Мьютексы и WaitGroup
+Мьютексы и WaitGroup являются ключевыми механизмами синхронизации горутин в Go. WaitGroup используется для ожидания завершения группы горутин: перед запуском каждой горутины вызывается `wg.Add(1)`, внутри горутины — `wg.Done()`, а в главной горутине — `wg.Wait()`. Это позволяет избежать преждевременного завершения программы. Мьютексы (`sync.Mutex`) решают проблему гонки данных (data race), возникающую при одновременном доступе нескольких горутин к общим данным. Мьютекс блокирует доступ к критической секции с помощью методов `Lock()` и `Unlock()`, гарантируя, что только одна горутина может изменять данные в каждый момент времени. Оба механизма являются базовыми примитивами синхронизации и широко применяются на практике.])
+2026-06-07T20:31:05Z [DEBUG] → LongTermMemory.Save(key=fact_2ac45739-0589-4641-a093-88c4634e6ed3_1780864265178457941, value_len=1395)
+2026-06-07T20:31:05Z [DEBUG] ← llm.Complete = (len=2920, nil)
+2026-06-07T20:31:05Z [DEBUG] → SaveFactTool.Execute(args=map[fact:Секция: Основные понятия и механизм работы горутин
+Подтема: Планировщик горутин (GMP)
+Планировщик горутин в Go, известный как GMP (Goroutine, Machine, Processor), является ключевым компонентом рантайма, обеспечивающим эффективное выполнение легковесных горутин на ограниченном числе системных потоков (M). Модель GMP включает три основных элемента: G (goroutine) — легковесный поток выполнения с собственным стеком; M (machine) — системный поток ОС, который выполняет горутины; P (processor) — логический процессор, который управляет очередью горутин и связывает G с M. Количество P обычно равно числу ядер CPU (устанавливается переменной GOMAXPROCS). Планировщик использует стратегию work-stealing: если у P заканчиваются горутины в локальной очереди, он может украсть их из глобальной очереди или из очереди другого P. Это обеспечивает равномерную загрузку всех ядер. Также планировщик поддерживает асинхронный системный вызов: когда горутина блокируется на системном вызове, M освобождается и может выполнять другие горутины, а заблокированная горутина переводится в ожидание. После завершения системного вызова горутина возвращается в очередь. Планировщик не является вытесняющим в классическом смысле: горутины могут выполняться до тех пор, пока не произойдет блокировка (например, ввод-вывод, канал, мьютекс) или явный вызов runtime.Gosched(). Однако начиная с Go 1.14, планировщик стал частично вытесняющим: он может прерывать долго выполняющиеся горутины при помощи сигналов ОС, что предотвращает зависание программы. Таким образом, GMP-планировщик обеспечивает высокую производительность и масштабируемость, позволяя запускать миллионы горутин без значительных накладных расходов.])
+2026-06-07T20:31:05Z [DEBUG] → LongTermMemory.Save(key=fact_b102abdb-9e95-4594-80e1-af686168fa89_1780864265316537217, value_len=2993)
+2026-06-07T20:31:05Z [DEBUG] ← LongTermMemory.RecallWithTopK(закрытие каналов в Go и select, 5) = (len=5, <nil>)
+2026-06-07T20:31:05Z [DEBUG] ← LongTermMemory.Recall(закрытие каналов в Go и select) = (len=5, <nil>)
+2026-06-07T20:31:05Z [DEBUG] ← SearchAgent.processQueryInternal(закрытие каналов в Go и select) = <nil>
+2026-06-07T20:31:05Z [DEBUG] → AdaptiveScheduler.Record(duration=655.120693ms, err=<nil>)
+2026-06-07T20:31:05Z [DEBUG] ← SearchAgent.processQuery(закрытие каналов в Go и select) = <nil>
+2026-06-07T20:31:05Z [DEBUG] ← LongTermMemory.RecallWithTopK(буферизированные и небуферизированные каналы Go примеры, 5) = (len=5, <nil>)
+2026-06-07T20:31:05Z [DEBUG] ← LongTermMemory.Recall(буферизированные и небуферизированные каналы Go примеры) = (len=5, <nil>)
+2026-06-07T20:31:05Z [DEBUG] ← SearchAgent.processQueryInternal(буферизированные и небуферизированные каналы Go примеры) = <nil>
+2026-06-07T20:31:05Z [DEBUG] → AdaptiveScheduler.Record(duration=1.656006888s, err=<nil>)
+2026-06-07T20:31:05Z [DEBUG] ← SearchAgent.processQuery(буферизированные и небуферизированные каналы Go примеры) = <nil>
+2026-06-07T20:31:05Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:31:05Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Синхронизация и взаимодействие горутин, subtopic=Каналы для передачи данных)
+2026-06-07T20:31:05Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Каналы для передачи данных, topK=5)
+2026-06-07T20:31:05Z [DEBUG] ← LongTermMemory.Save(fact_2ac45739-0589-4641-a093-88c4634e6ed3_1780864265178457941, len=1395) = <nil>
+2026-06-07T20:31:05Z [DEBUG] ← SaveFactTool.Execute = ("Факт сохранён (ключ: fact_2ac45739-0589-4641-a093-88c4634e6ed3_1780864265178457941)", <nil>)
+2026-06-07T20:31:05Z [DEBUG] ← AnalystAgent.GenerateSubReport(Синхронизация и взаимодействие горутин/Мьютексы и WaitGroup) = (complete=true, len=1261, nil)
+2026-06-07T20:31:05Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Практическое использование и производительность, subtopic=Типичные ошибки и ловушки)
+2026-06-07T20:31:05Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Типичные ошибки и ловушки, topK=5)
+2026-06-07T20:31:06Z [DEBUG] ← LongTermMemory.RecallWithTopK(Каналы для передачи данных, 5) = (len=5, <nil>)
+2026-06-07T20:31:06Z [DEBUG] ← LongTermMemory.Recall(Каналы для передачи данных) = (len=5, <nil>)
+2026-06-07T20:31:06Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:06Z [DEBUG] ← LongTermMemory.Save(fact_b102abdb-9e95-4594-80e1-af686168fa89_1780864265316537217, len=2993) = <nil>
+2026-06-07T20:31:06Z [DEBUG] ← SaveFactTool.Execute = ("Факт сохранён (ключ: fact_b102abdb-9e95-4594-80e1-af686168fa89_1780864265316537217)", <nil>)
+2026-06-07T20:31:06Z [DEBUG] ← AnalystAgent.GenerateSubReport(Основные понятия и механизм работы горутин/Планировщик горутин (GMP)) = (complete=true, len=2839, nil)
+2026-06-07T20:31:06Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Синхронизация и взаимодействие горутин, subtopic=Контекст и атомарные операции)
+2026-06-07T20:31:06Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Контекст и атомарные операции, topK=5)
+2026-06-07T20:31:07Z [DEBUG] ← LongTermMemory.RecallWithTopK(Контекст и атомарные операции, 5) = (len=5, <nil>)
+2026-06-07T20:31:07Z [DEBUG] ← LongTermMemory.Recall(Контекст и атомарные операции) = (len=5, <nil>)
+2026-06-07T20:31:07Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:07Z [DEBUG] ← LongTermMemory.RecallWithTopK(Типичные ошибки и ловушки, 5) = (len=5, <nil>)
+2026-06-07T20:31:07Z [DEBUG] ← LongTermMemory.Recall(Типичные ошибки и ловушки) = (len=5, <nil>)
+2026-06-07T20:31:07Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:14Z [DEBUG] ← llm.Complete = (len=2282, nil)
+2026-06-07T20:31:14Z [DEBUG] ← AnalystAgent.GenerateSubReport(Синхронизация и взаимодействие горутин/Контекст и атомарные операции) = (complete=false, len=1418, nil)
+2026-06-07T20:31:14Z [DEBUG] → SearchAgent.Run(queries=[контекст в Go context отмена таймаут пример атомарные операции Go sync atomic примеры использование контекста с горутинами Go атомарные счетчики Go sync atomic])
+2026-06-07T20:31:14Z [DEBUG] → SearchAgent.processQuery(query=атомарные счетчики Go sync atomic)
+2026-06-07T20:31:14Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:14Z [DEBUG] → SearchAgent.processQuery(query=контекст в Go context отмена таймаут пример)
+2026-06-07T20:31:14Z [DEBUG] → SearchAgent.processQuery(query=использование контекста с горутинами Go)
+2026-06-07T20:31:14Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:14Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:14Z [DEBUG] → SearchAgent.processQueryInternal(query=использование контекста с горутинами Go)
+2026-06-07T20:31:14Z [DEBUG] → LongTermMemory.RecallWithTopK(query=использование контекста с горутинами Go, topK=5)
+2026-06-07T20:31:14Z [DEBUG] → SearchAgent.processQuery(query=атомарные операции Go sync atomic примеры)
+2026-06-07T20:31:14Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:14Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:14Z [DEBUG] → SearchAgent.processQueryInternal(query=атомарные операции Go sync atomic примеры)
+2026-06-07T20:31:14Z [DEBUG] → LongTermMemory.RecallWithTopK(query=атомарные операции Go sync atomic примеры, topK=5)
+2026-06-07T20:31:14Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:14Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:14Z [DEBUG] → SearchAgent.processQueryInternal(query=атомарные счетчики Go sync atomic)
+2026-06-07T20:31:14Z [DEBUG] → LongTermMemory.RecallWithTopK(query=атомарные счетчики Go sync atomic, topK=5)
+2026-06-07T20:31:14Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:14Z [DEBUG] → SearchAgent.processQueryInternal(query=контекст в Go context отмена таймаут пример)
+2026-06-07T20:31:14Z [DEBUG] → LongTermMemory.RecallWithTopK(query=контекст в Go context отмена таймаут пример, topK=5)
+2026-06-07T20:31:15Z [DEBUG] ← LongTermMemory.RecallWithTopK(контекст в Go context отмена таймаут пример, 5) = (len=5, <nil>)
+2026-06-07T20:31:15Z [DEBUG] ← LongTermMemory.Recall(контекст в Go context отмена таймаут пример) = (len=5, <nil>)
+2026-06-07T20:31:15Z [DEBUG] ← SearchAgent.processQueryInternal(контекст в Go context отмена таймаут пример) = <nil>
+2026-06-07T20:31:15Z [DEBUG] → AdaptiveScheduler.Record(duration=661.141055ms, err=<nil>)
+2026-06-07T20:31:15Z [DEBUG] ← SearchAgent.processQuery(контекст в Go context отмена таймаут пример) = <nil>
+2026-06-07T20:31:15Z [DEBUG] ← LongTermMemory.RecallWithTopK(использование контекста с горутинами Go, 5) = (len=5, <nil>)
+2026-06-07T20:31:15Z [DEBUG] ← LongTermMemory.Recall(использование контекста с горутинами Go) = (len=5, <nil>)
+2026-06-07T20:31:15Z [DEBUG] ← SearchAgent.processQueryInternal(использование контекста с горутинами Go) = <nil>
+2026-06-07T20:31:15Z [DEBUG] → AdaptiveScheduler.Record(duration=683.503849ms, err=<nil>)
+2026-06-07T20:31:15Z [DEBUG] ← SearchAgent.processQuery(использование контекста с горутинами Go) = <nil>
+2026-06-07T20:31:15Z [DEBUG] ← LongTermMemory.RecallWithTopK(атомарные операции Go sync atomic примеры, 5) = (len=5, <nil>)
+2026-06-07T20:31:15Z [DEBUG] ← LongTermMemory.Recall(атомарные операции Go sync atomic примеры) = (len=5, <nil>)
+2026-06-07T20:31:15Z [DEBUG] ← SearchAgent.processQueryInternal(атомарные операции Go sync atomic примеры) = <nil>
+2026-06-07T20:31:15Z [DEBUG] → AdaptiveScheduler.Record(duration=749.82083ms, err=<nil>)
+2026-06-07T20:31:15Z [DEBUG] ← SearchAgent.processQuery(атомарные операции Go sync atomic примеры) = <nil>
+2026-06-07T20:31:15Z [DEBUG] ← LongTermMemory.RecallWithTopK(атомарные счетчики Go sync atomic, 5) = (len=5, <nil>)
+2026-06-07T20:31:15Z [DEBUG] ← LongTermMemory.Recall(атомарные счетчики Go sync atomic) = (len=5, <nil>)
+2026-06-07T20:31:15Z [DEBUG] ← SearchAgent.processQueryInternal(атомарные счетчики Go sync atomic) = <nil>
+2026-06-07T20:31:15Z [DEBUG] → AdaptiveScheduler.Record(duration=928.011524ms, err=<nil>)
+2026-06-07T20:31:15Z [DEBUG] ← SearchAgent.processQuery(атомарные счетчики Go sync atomic) = <nil>
+2026-06-07T20:31:15Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:31:15Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Синхронизация и взаимодействие горутин, subtopic=Контекст и атомарные операции)
+2026-06-07T20:31:15Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Контекст и атомарные операции, topK=5)
+2026-06-07T20:31:16Z [DEBUG] ← LongTermMemory.RecallWithTopK(Контекст и атомарные операции, 5) = (len=5, <nil>)
+2026-06-07T20:31:16Z [DEBUG] ← LongTermMemory.Recall(Контекст и атомарные операции) = (len=5, <nil>)
+2026-06-07T20:31:16Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:20Z [DEBUG] ← llm.Complete = (len=1514, nil)
+2026-06-07T20:31:20Z [DEBUG] ← AnalystAgent.GenerateSubReport(Синхронизация и взаимодействие горутин/Контекст и атомарные операции) = (complete=false, len=721, nil)
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.Run(queries=[Go context package примеры использования Go sync/atomic атомарные операции примеры Go context.WithCancel отмена горутин Go atomic.AddInt64 счетчик горутин Go context.WithTimeout таймаут горутины Go atomic.Value безопасное чтение запись])
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQuery(query=Go atomic.Value безопасное чтение запись)
+2026-06-07T20:31:20Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:20Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQueryInternal(query=Go atomic.Value безопасное чтение запись)
+2026-06-07T20:31:20Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Go atomic.Value безопасное чтение запись, topK=5)
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQuery(query=Go atomic.AddInt64 счетчик горутин)
+2026-06-07T20:31:20Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:20Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQueryInternal(query=Go atomic.AddInt64 счетчик горутин)
+2026-06-07T20:31:20Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Go atomic.AddInt64 счетчик горутин, topK=5)
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQuery(query=Go context.WithCancel отмена горутин)
+2026-06-07T20:31:20Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:20Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQueryInternal(query=Go context.WithCancel отмена горутин)
+2026-06-07T20:31:20Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Go context.WithCancel отмена горутин, topK=5)
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQuery(query=Go context.WithTimeout таймаут горутины)
+2026-06-07T20:31:20Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:20Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQueryInternal(query=Go context.WithTimeout таймаут горутины)
+2026-06-07T20:31:20Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Go context.WithTimeout таймаут горутины, topK=5)
+2026-06-07T20:31:20Z [DEBUG] ← LongTermMemory.RecallWithTopK(Go atomic.AddInt64 счетчик горутин, 5) = (len=5, <nil>)
+2026-06-07T20:31:20Z [DEBUG] ← LongTermMemory.Recall(Go atomic.AddInt64 счетчик горутин) = (len=5, <nil>)
+2026-06-07T20:31:20Z [DEBUG] ← SearchAgent.processQueryInternal(Go atomic.AddInt64 счетчик горутин) = <nil>
+2026-06-07T20:31:20Z [DEBUG] → AdaptiveScheduler.Record(duration=645.624184ms, err=<nil>)
+2026-06-07T20:31:20Z [DEBUG] ← SearchAgent.processQuery(Go atomic.AddInt64 счетчик горутин) = <nil>
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQuery(query=Go context package примеры использования)
+2026-06-07T20:31:20Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:20Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQueryInternal(query=Go context package примеры использования)
+2026-06-07T20:31:20Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Go context package примеры использования, topK=5)
+2026-06-07T20:31:20Z [DEBUG] ← LongTermMemory.RecallWithTopK(Go context.WithCancel отмена горутин, 5) = (len=5, <nil>)
+2026-06-07T20:31:20Z [DEBUG] ← LongTermMemory.Recall(Go context.WithCancel отмена горутин) = (len=5, <nil>)
+2026-06-07T20:31:20Z [DEBUG] ← SearchAgent.processQueryInternal(Go context.WithCancel отмена горутин) = <nil>
+2026-06-07T20:31:20Z [DEBUG] → AdaptiveScheduler.Record(duration=721.827715ms, err=<nil>)
+2026-06-07T20:31:20Z [DEBUG] ← SearchAgent.processQuery(Go context.WithCancel отмена горутин) = <nil>
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQuery(query=Go sync/atomic атомарные операции примеры)
+2026-06-07T20:31:20Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:20Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:20Z [DEBUG] → SearchAgent.processQueryInternal(query=Go sync/atomic атомарные операции примеры)
+2026-06-07T20:31:20Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Go sync/atomic атомарные операции примеры, topK=5)
+2026-06-07T20:31:20Z [DEBUG] ← LongTermMemory.RecallWithTopK(Go context.WithTimeout таймаут горутины, 5) = (len=5, <nil>)
+2026-06-07T20:31:20Z [DEBUG] ← LongTermMemory.Recall(Go context.WithTimeout таймаут горутины) = (len=5, <nil>)
+2026-06-07T20:31:20Z [DEBUG] ← SearchAgent.processQueryInternal(Go context.WithTimeout таймаут горутины) = <nil>
+2026-06-07T20:31:20Z [DEBUG] → AdaptiveScheduler.Record(duration=740.457559ms, err=<nil>)
+2026-06-07T20:31:20Z [DEBUG] ← SearchAgent.processQuery(Go context.WithTimeout таймаут горутины) = <nil>
+2026-06-07T20:31:20Z [DEBUG] ← LongTermMemory.RecallWithTopK(Go atomic.Value безопасное чтение запись, 5) = (len=5, <nil>)
+2026-06-07T20:31:20Z [DEBUG] ← LongTermMemory.Recall(Go atomic.Value безопасное чтение запись) = (len=5, <nil>)
+2026-06-07T20:31:20Z [DEBUG] ← SearchAgent.processQueryInternal(Go atomic.Value безопасное чтение запись) = <nil>
+2026-06-07T20:31:20Z [DEBUG] → AdaptiveScheduler.Record(duration=748.890512ms, err=<nil>)
+2026-06-07T20:31:20Z [DEBUG] ← SearchAgent.processQuery(Go atomic.Value безопасное чтение запись) = <nil>
+2026-06-07T20:31:21Z [DEBUG] ← LongTermMemory.RecallWithTopK(Go context package примеры использования, 5) = (len=5, <nil>)
+2026-06-07T20:31:21Z [DEBUG] ← LongTermMemory.Recall(Go context package примеры использования) = (len=5, <nil>)
+2026-06-07T20:31:21Z [DEBUG] ← SearchAgent.processQueryInternal(Go context package примеры использования) = <nil>
+2026-06-07T20:31:21Z [DEBUG] → AdaptiveScheduler.Record(duration=730.730689ms, err=<nil>)
+2026-06-07T20:31:21Z [DEBUG] ← SearchAgent.processQuery(Go context package примеры использования) = <nil>
+2026-06-07T20:31:21Z [DEBUG] ← llm.Complete = (len=2698, nil)
+2026-06-07T20:31:21Z [DEBUG] ← AnalystAgent.GenerateSubReport(Синхронизация и взаимодействие горутин/Каналы для передачи данных) = (complete=false, len=1491, nil)
+2026-06-07T20:31:21Z [DEBUG] → SearchAgent.Run(queries=[каналы в Go: создание и использование буферизированные и небуферизированные каналы Go передача данных через каналы в горутинах Golang синхронизация горутин с помощью каналов примеры использования каналов в Go close канала и range по каналу в Go])
+2026-06-07T20:31:21Z [DEBUG] → SearchAgent.processQuery(query=close канала и range по каналу в Go)
+2026-06-07T20:31:21Z [DEBUG] → SearchAgent.processQuery(query=каналы в Go: создание и использование)
+2026-06-07T20:31:21Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:21Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:21Z [DEBUG] → SearchAgent.processQueryInternal(query=каналы в Go: создание и использование)
+2026-06-07T20:31:21Z [DEBUG] → LongTermMemory.RecallWithTopK(query=каналы в Go: создание и использование, topK=5)
+2026-06-07T20:31:21Z [DEBUG] → SearchAgent.processQuery(query=синхронизация горутин с помощью каналов)
+2026-06-07T20:31:21Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:21Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:21Z [DEBUG] → SearchAgent.processQueryInternal(query=синхронизация горутин с помощью каналов)
+2026-06-07T20:31:21Z [DEBUG] → LongTermMemory.RecallWithTopK(query=синхронизация горутин с помощью каналов, topK=5)
+2026-06-07T20:31:21Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:21Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:21Z [DEBUG] → SearchAgent.processQueryInternal(query=close канала и range по каналу в Go)
+2026-06-07T20:31:21Z [DEBUG] → LongTermMemory.RecallWithTopK(query=close канала и range по каналу в Go, topK=5)
+2026-06-07T20:31:21Z [DEBUG] → SearchAgent.processQuery(query=передача данных через каналы в горутинах Golang)
+2026-06-07T20:31:21Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:21Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:21Z [DEBUG] → SearchAgent.processQueryInternal(query=передача данных через каналы в горутинах Golang)
+2026-06-07T20:31:21Z [DEBUG] → LongTermMemory.RecallWithTopK(query=передача данных через каналы в горутинах Golang, topK=5)
+2026-06-07T20:31:21Z [DEBUG] ← LongTermMemory.RecallWithTopK(Go sync/atomic атомарные операции примеры, 5) = (len=5, <nil>)
+2026-06-07T20:31:21Z [DEBUG] ← LongTermMemory.Recall(Go sync/atomic атомарные операции примеры) = (len=5, <nil>)
+2026-06-07T20:31:21Z [DEBUG] ← SearchAgent.processQueryInternal(Go sync/atomic атомарные операции примеры) = <nil>
+2026-06-07T20:31:21Z [DEBUG] → AdaptiveScheduler.Record(duration=822.724008ms, err=<nil>)
+2026-06-07T20:31:21Z [DEBUG] ← SearchAgent.processQuery(Go sync/atomic атомарные операции примеры) = <nil>
+2026-06-07T20:31:21Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:31:21Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Синхронизация и взаимодействие горутин, subtopic=Контекст и атомарные операции)
+2026-06-07T20:31:21Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Контекст и атомарные операции, topK=5)
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.RecallWithTopK(передача данных через каналы в горутинах Golang, 5) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.Recall(передача данных через каналы в горутинах Golang) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← SearchAgent.processQueryInternal(передача данных через каналы в горутинах Golang) = <nil>
+2026-06-07T20:31:22Z [DEBUG] → AdaptiveScheduler.Record(duration=752.900524ms, err=<nil>)
+2026-06-07T20:31:22Z [DEBUG] ← SearchAgent.processQuery(передача данных через каналы в горутинах Golang) = <nil>
+2026-06-07T20:31:22Z [DEBUG] → SearchAgent.processQuery(query=буферизированные и небуферизированные каналы Go)
+2026-06-07T20:31:22Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:22Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:22Z [DEBUG] → SearchAgent.processQueryInternal(query=буферизированные и небуферизированные каналы Go)
+2026-06-07T20:31:22Z [DEBUG] → LongTermMemory.RecallWithTopK(query=буферизированные и небуферизированные каналы Go, topK=5)
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.RecallWithTopK(каналы в Go: создание и использование, 5) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.Recall(каналы в Go: создание и использование) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← SearchAgent.processQueryInternal(каналы в Go: создание и использование) = <nil>
+2026-06-07T20:31:22Z [DEBUG] → AdaptiveScheduler.Record(duration=858.703656ms, err=<nil>)
+2026-06-07T20:31:22Z [DEBUG] ← SearchAgent.processQuery(каналы в Go: создание и использование) = <nil>
+2026-06-07T20:31:22Z [DEBUG] → SearchAgent.processQuery(query=примеры использования каналов в Go)
+2026-06-07T20:31:22Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:22Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:22Z [DEBUG] → SearchAgent.processQueryInternal(query=примеры использования каналов в Go)
+2026-06-07T20:31:22Z [DEBUG] → LongTermMemory.RecallWithTopK(query=примеры использования каналов в Go, topK=5)
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.RecallWithTopK(close канала и range по каналу в Go, 5) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.Recall(close канала и range по каналу в Go) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← SearchAgent.processQueryInternal(close канала и range по каналу в Go) = <nil>
+2026-06-07T20:31:22Z [DEBUG] → AdaptiveScheduler.Record(duration=892.61673ms, err=<nil>)
+2026-06-07T20:31:22Z [DEBUG] ← SearchAgent.processQuery(close канала и range по каналу в Go) = <nil>
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.RecallWithTopK(Контекст и атомарные операции, 5) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.Recall(Контекст и атомарные операции) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.RecallWithTopK(синхронизация горутин с помощью каналов, 5) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.Recall(синхронизация горутин с помощью каналов) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← SearchAgent.processQueryInternal(синхронизация горутин с помощью каналов) = <nil>
+2026-06-07T20:31:22Z [DEBUG] → AdaptiveScheduler.Record(duration=1.081543173s, err=<nil>)
+2026-06-07T20:31:22Z [DEBUG] ← SearchAgent.processQuery(синхронизация горутин с помощью каналов) = <nil>
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.RecallWithTopK(буферизированные и небуферизированные каналы Go, 5) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← LongTermMemory.Recall(буферизированные и небуферизированные каналы Go) = (len=5, <nil>)
+2026-06-07T20:31:22Z [DEBUG] ← SearchAgent.processQueryInternal(буферизированные и небуферизированные каналы Go) = <nil>
+2026-06-07T20:31:22Z [DEBUG] → AdaptiveScheduler.Record(duration=673.50586ms, err=<nil>)
+2026-06-07T20:31:22Z [DEBUG] ← SearchAgent.processQuery(буферизированные и небуферизированные каналы Go) = <nil>
+2026-06-07T20:31:23Z [DEBUG] ← LongTermMemory.RecallWithTopK(примеры использования каналов в Go, 5) = (len=5, <nil>)
+2026-06-07T20:31:23Z [DEBUG] ← LongTermMemory.Recall(примеры использования каналов в Go) = (len=5, <nil>)
+2026-06-07T20:31:23Z [DEBUG] ← SearchAgent.processQueryInternal(примеры использования каналов в Go) = <nil>
+2026-06-07T20:31:23Z [DEBUG] → AdaptiveScheduler.Record(duration=742.748499ms, err=<nil>)
+2026-06-07T20:31:23Z [DEBUG] ← SearchAgent.processQuery(примеры использования каналов в Go) = <nil>
+2026-06-07T20:31:23Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:31:23Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Синхронизация и взаимодействие горутин, subtopic=Каналы для передачи данных)
+2026-06-07T20:31:23Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Каналы для передачи данных, topK=5)
+2026-06-07T20:31:23Z [DEBUG] ← LongTermMemory.RecallWithTopK(Каналы для передачи данных, 5) = (len=5, <nil>)
+2026-06-07T20:31:23Z [DEBUG] ← LongTermMemory.Recall(Каналы для передачи данных) = (len=5, <nil>)
+2026-06-07T20:31:23Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:27Z [DEBUG] ← llm.Complete = (len=2667, nil)
+2026-06-07T20:31:27Z [DEBUG] ← AnalystAgent.GenerateSubReport(Практическое использование и производительность/Типичные ошибки и ловушки) = (complete=false, len=1398, nil)
+2026-06-07T20:31:27Z [DEBUG] → SearchAgent.Run(queries=[типичные ошибки горутин Go захват переменных цикла паника в горутине Go recover deadlock горутины Go каналы примеры неправильное использование WaitGroup Go гонка данных Go горутины примеры утечка горутины Go причины и предотвращение болтающаяся горутина Go goroutine leak синхронизация горутин Go time.Sleep ошибка])
+2026-06-07T20:31:27Z [DEBUG] → SearchAgent.processQuery(query=синхронизация горутин Go time.Sleep ошибка)
+2026-06-07T20:31:27Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:27Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:27Z [DEBUG] → SearchAgent.processQueryInternal(query=синхронизация горутин Go time.Sleep ошибка)
+2026-06-07T20:31:27Z [DEBUG] → LongTermMemory.RecallWithTopK(query=синхронизация горутин Go time.Sleep ошибка, topK=5)
+2026-06-07T20:31:27Z [DEBUG] → SearchAgent.processQuery(query=типичные ошибки горутин Go захват переменных цикла)
+2026-06-07T20:31:27Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:27Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:27Z [DEBUG] → SearchAgent.processQueryInternal(query=типичные ошибки горутин Go захват переменных цикла)
+2026-06-07T20:31:27Z [DEBUG] → LongTermMemory.RecallWithTopK(query=типичные ошибки горутин Go захват переменных цикла, topK=5)
+2026-06-07T20:31:27Z [DEBUG] → SearchAgent.processQuery(query=паника в горутине Go recover)
+2026-06-07T20:31:27Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:27Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:27Z [DEBUG] → SearchAgent.processQueryInternal(query=паника в горутине Go recover)
+2026-06-07T20:31:27Z [DEBUG] → LongTermMemory.RecallWithTopK(query=паника в горутине Go recover, topK=5)
+2026-06-07T20:31:27Z [DEBUG] → SearchAgent.processQuery(query=deadlock горутины Go каналы примеры)
+2026-06-07T20:31:27Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:27Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:27Z [DEBUG] → SearchAgent.processQueryInternal(query=deadlock горутины Go каналы примеры)
+2026-06-07T20:31:27Z [DEBUG] → LongTermMemory.RecallWithTopK(query=deadlock горутины Go каналы примеры, topK=5)
+2026-06-07T20:31:28Z [DEBUG] ← llm.Complete = (len=1500, nil)
+2026-06-07T20:31:28Z [DEBUG] ← AnalystAgent.GenerateSubReport(Синхронизация и взаимодействие горутин/Контекст и атомарные операции) = (complete=false, len=851, nil)
+2026-06-07T20:31:28Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Практическое использование и производительность, subtopic=Оптимизация и профилирование)
+2026-06-07T20:31:28Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Оптимизация и профилирование, topK=5)
+2026-06-07T20:31:28Z [DEBUG] ← LongTermMemory.RecallWithTopK(deadlock горутины Go каналы примеры, 5) = (len=5, <nil>)
+2026-06-07T20:31:28Z [DEBUG] ← LongTermMemory.Recall(deadlock горутины Go каналы примеры) = (len=5, <nil>)
+2026-06-07T20:31:28Z [DEBUG] ← SearchAgent.processQueryInternal(deadlock горутины Go каналы примеры) = <nil>
+2026-06-07T20:31:28Z [DEBUG] → AdaptiveScheduler.Record(duration=826.398174ms, err=<nil>)
+2026-06-07T20:31:28Z [DEBUG] ← SearchAgent.processQuery(deadlock горутины Go каналы примеры) = <nil>
+2026-06-07T20:31:28Z [DEBUG] → SearchAgent.processQuery(query=неправильное использование WaitGroup Go)
+2026-06-07T20:31:28Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:28Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:28Z [DEBUG] → SearchAgent.processQueryInternal(query=неправильное использование WaitGroup Go)
+2026-06-07T20:31:28Z [DEBUG] → LongTermMemory.RecallWithTopK(query=неправильное использование WaitGroup Go, topK=5)
+2026-06-07T20:31:28Z [DEBUG] ← LongTermMemory.RecallWithTopK(синхронизация горутин Go time.Sleep ошибка, 5) = (len=5, <nil>)
+2026-06-07T20:31:28Z [DEBUG] ← LongTermMemory.Recall(синхронизация горутин Go time.Sleep ошибка) = (len=5, <nil>)
+2026-06-07T20:31:28Z [DEBUG] ← SearchAgent.processQueryInternal(синхронизация горутин Go time.Sleep ошибка) = <nil>
+2026-06-07T20:31:28Z [DEBUG] → AdaptiveScheduler.Record(duration=863.07316ms, err=<nil>)
+2026-06-07T20:31:28Z [DEBUG] ← SearchAgent.processQuery(синхронизация горутин Go time.Sleep ошибка) = <nil>
+2026-06-07T20:31:28Z [DEBUG] → SearchAgent.processQuery(query=гонка данных Go горутины примеры)
+2026-06-07T20:31:28Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:28Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:28Z [DEBUG] → SearchAgent.processQueryInternal(query=гонка данных Go горутины примеры)
+2026-06-07T20:31:28Z [DEBUG] → LongTermMemory.RecallWithTopK(query=гонка данных Go горутины примеры, topK=5)
+2026-06-07T20:31:28Z [DEBUG] ← LongTermMemory.RecallWithTopK(паника в горутине Go recover, 5) = (len=5, <nil>)
+2026-06-07T20:31:28Z [DEBUG] ← LongTermMemory.Recall(паника в горутине Go recover) = (len=5, <nil>)
+2026-06-07T20:31:28Z [DEBUG] ← SearchAgent.processQueryInternal(паника в горутине Go recover) = <nil>
+2026-06-07T20:31:28Z [DEBUG] → AdaptiveScheduler.Record(duration=978.954148ms, err=<nil>)
+2026-06-07T20:31:28Z [DEBUG] ← SearchAgent.processQuery(паника в горутине Go recover) = <nil>
+2026-06-07T20:31:28Z [DEBUG] → SearchAgent.processQuery(query=утечка горутины Go причины и предотвращение)
+2026-06-07T20:31:28Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:28Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:28Z [DEBUG] → SearchAgent.processQueryInternal(query=утечка горутины Go причины и предотвращение)
+2026-06-07T20:31:28Z [DEBUG] → LongTermMemory.RecallWithTopK(query=утечка горутины Go причины и предотвращение, topK=5)
+2026-06-07T20:31:28Z [DEBUG] ← LongTermMemory.RecallWithTopK(неправильное использование WaitGroup Go, 5) = (len=5, <nil>)
+2026-06-07T20:31:28Z [DEBUG] ← LongTermMemory.Recall(неправильное использование WaitGroup Go) = (len=5, <nil>)
+2026-06-07T20:31:28Z [DEBUG] ← SearchAgent.processQueryInternal(неправильное использование WaitGroup Go) = <nil>
+2026-06-07T20:31:28Z [DEBUG] → AdaptiveScheduler.Record(duration=670.956852ms, err=<nil>)
+2026-06-07T20:31:28Z [DEBUG] ← SearchAgent.processQuery(неправильное использование WaitGroup Go) = <nil>
+2026-06-07T20:31:28Z [DEBUG] → SearchAgent.processQuery(query=болтающаяся горутина Go goroutine leak)
+2026-06-07T20:31:28Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:28Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:28Z [DEBUG] → SearchAgent.processQueryInternal(query=болтающаяся горутина Go goroutine leak)
+2026-06-07T20:31:28Z [DEBUG] → LongTermMemory.RecallWithTopK(query=болтающаяся горутина Go goroutine leak, topK=5)
+2026-06-07T20:31:29Z [DEBUG] ← LongTermMemory.RecallWithTopK(гонка данных Go горутины примеры, 5) = (len=5, <nil>)
+2026-06-07T20:31:29Z [DEBUG] ← LongTermMemory.Recall(гонка данных Go горутины примеры) = (len=5, <nil>)
+2026-06-07T20:31:29Z [DEBUG] ← SearchAgent.processQueryInternal(гонка данных Go горутины примеры) = <nil>
+2026-06-07T20:31:29Z [DEBUG] → AdaptiveScheduler.Record(duration=762.617502ms, err=<nil>)
+2026-06-07T20:31:29Z [DEBUG] ← SearchAgent.processQuery(гонка данных Go горутины примеры) = <nil>
+2026-06-07T20:31:29Z [DEBUG] ← LongTermMemory.RecallWithTopK(утечка горутины Go причины и предотвращение, 5) = (len=5, <nil>)
+2026-06-07T20:31:29Z [DEBUG] ← LongTermMemory.Recall(утечка горутины Go причины и предотвращение) = (len=5, <nil>)
+2026-06-07T20:31:29Z [DEBUG] ← SearchAgent.processQueryInternal(утечка горутины Go причины и предотвращение) = <nil>
+2026-06-07T20:31:29Z [DEBUG] → AdaptiveScheduler.Record(duration=698.943136ms, err=<nil>)
+2026-06-07T20:31:29Z [DEBUG] ← SearchAgent.processQuery(утечка горутины Go причины и предотвращение) = <nil>
+2026-06-07T20:31:29Z [DEBUG] ← LongTermMemory.RecallWithTopK(типичные ошибки горутин Go захват переменных цикла, 5) = (len=5, <nil>)
+2026-06-07T20:31:29Z [DEBUG] ← LongTermMemory.Recall(типичные ошибки горутин Go захват переменных цикла) = (len=5, <nil>)
+2026-06-07T20:31:29Z [DEBUG] ← SearchAgent.processQueryInternal(типичные ошибки горутин Go захват переменных цикла) = <nil>
+2026-06-07T20:31:29Z [DEBUG] → AdaptiveScheduler.Record(duration=1.956170109s, err=<nil>)
+2026-06-07T20:31:29Z [DEBUG] ← SearchAgent.processQuery(типичные ошибки горутин Go захват переменных цикла) = <nil>
+2026-06-07T20:31:29Z [DEBUG] ← LongTermMemory.RecallWithTopK(болтающаяся горутина Go goroutine leak, 5) = (len=5, <nil>)
+2026-06-07T20:31:29Z [DEBUG] ← LongTermMemory.Recall(болтающаяся горутина Go goroutine leak) = (len=5, <nil>)
+2026-06-07T20:31:29Z [DEBUG] ← SearchAgent.processQueryInternal(болтающаяся горутина Go goroutine leak) = <nil>
+2026-06-07T20:31:29Z [DEBUG] → AdaptiveScheduler.Record(duration=820.286523ms, err=<nil>)
+2026-06-07T20:31:29Z [DEBUG] ← SearchAgent.processQuery(болтающаяся горутина Go goroutine leak) = <nil>
+2026-06-07T20:31:29Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:31:29Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Практическое использование и производительность, subtopic=Типичные ошибки и ловушки)
+2026-06-07T20:31:29Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Типичные ошибки и ловушки, topK=5)
+2026-06-07T20:31:29Z [DEBUG] ← LongTermMemory.RecallWithTopK(Оптимизация и профилирование, 5) = (len=5, <nil>)
+2026-06-07T20:31:29Z [DEBUG] ← LongTermMemory.Recall(Оптимизация и профилирование) = (len=5, <nil>)
+2026-06-07T20:31:29Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:30Z [DEBUG] ← LongTermMemory.RecallWithTopK(Типичные ошибки и ловушки, 5) = (len=5, <nil>)
+2026-06-07T20:31:30Z [DEBUG] ← LongTermMemory.Recall(Типичные ошибки и ловушки) = (len=5, <nil>)
+2026-06-07T20:31:30Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:32Z [DEBUG] ← llm.Complete = (len=1983, nil)
+2026-06-07T20:31:32Z [DEBUG] → SaveFactTool.Execute(args=map[fact:Секция: Синхронизация и взаимодействие горутин
+Подтема: Каналы для передачи данных
+Каналы в Go представляют собой механизм для безопасной передачи данных между горутинами, реализующий принцип «не общайтесь через разделяемую память; разделяйте память через общение». Каналы делятся на небуферизированные и буферизированные. Небуферизированный канал блокирует отправителя до тех пор, пока получатель не примет данные, и наоборот, что обеспечивает синхронизацию. Буферизированный канал позволяет отправителю поместить данные в буфер без немедленного получения, что повышает гибкость, но требует внимательного управления буфером. Каналы могут быть однонаправленными (только для отправки или только для получения), что повышает типобезопасность. Конструкция select позволяет горутине ожидать несколько каналов, выбирая первый готовый к операции. Важно помнить, что отправка в закрытый канал вызывает панику, а чтение из закрытого канала возвращает нулевое значение. Каналы являются основным инструментом для организации конвейеров (pipeline), где каждая горутина обрабатывает данные и передает результат в следующий канал.])
+2026-06-07T20:31:32Z [DEBUG] → LongTermMemory.Save(key=fact_9e815477-2457-4796-b35b-32272722f0be_1780864292413899738, value_len=2056)
+2026-06-07T20:31:33Z [DEBUG] ← LongTermMemory.Save(fact_9e815477-2457-4796-b35b-32272722f0be_1780864292413899738, len=2056) = <nil>
+2026-06-07T20:31:33Z [DEBUG] ← SaveFactTool.Execute = ("Факт сохранён (ключ: fact_9e815477-2457-4796-b35b-32272722f0be_1780864292413899738)", <nil>)
+2026-06-07T20:31:33Z [DEBUG] ← AnalystAgent.GenerateSubReport(Синхронизация и взаимодействие горутин/Каналы для передачи данных) = (complete=true, len=1902, nil)
+2026-06-07T20:31:39Z [DEBUG] ← llm.Complete = (len=1869, nil)
+2026-06-07T20:31:39Z [DEBUG] ← AnalystAgent.GenerateSubReport(Практическое использование и производительность/Оптимизация и профилирование) = (complete=false, len=868, nil)
+2026-06-07T20:31:39Z [DEBUG] → SearchAgent.Run(queries=[профилирование горутин Go pprof оптимизация производительности горутин Go Go горутины профилирование производительности примеры инструменты профилирования горутин Go trace])
+2026-06-07T20:31:39Z [DEBUG] → SearchAgent.processQuery(query=инструменты профилирования горутин Go trace)
+2026-06-07T20:31:39Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:39Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:39Z [DEBUG] → SearchAgent.processQueryInternal(query=инструменты профилирования горутин Go trace)
+2026-06-07T20:31:39Z [DEBUG] → LongTermMemory.RecallWithTopK(query=инструменты профилирования горутин Go trace, topK=5)
+2026-06-07T20:31:39Z [DEBUG] → SearchAgent.processQuery(query=профилирование горутин Go pprof)
+2026-06-07T20:31:39Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:39Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:39Z [DEBUG] → SearchAgent.processQueryInternal(query=профилирование горутин Go pprof)
+2026-06-07T20:31:39Z [DEBUG] → LongTermMemory.RecallWithTopK(query=профилирование горутин Go pprof, topK=5)
+2026-06-07T20:31:39Z [DEBUG] → SearchAgent.processQuery(query=оптимизация производительности горутин Go)
+2026-06-07T20:31:39Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:39Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:39Z [DEBUG] → SearchAgent.processQueryInternal(query=оптимизация производительности горутин Go)
+2026-06-07T20:31:39Z [DEBUG] → LongTermMemory.RecallWithTopK(query=оптимизация производительности горутин Go, topK=5)
+2026-06-07T20:31:39Z [DEBUG] → SearchAgent.processQuery(query=Go горутины профилирование производительности примеры)
+2026-06-07T20:31:39Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T20:31:39Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T20:31:39Z [DEBUG] → SearchAgent.processQueryInternal(query=Go горутины профилирование производительности примеры)
+2026-06-07T20:31:39Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Go горутины профилирование производительности примеры, topK=5)
+2026-06-07T20:31:39Z [DEBUG] ← LongTermMemory.RecallWithTopK(оптимизация производительности горутин Go, 5) = (len=5, <nil>)
+2026-06-07T20:31:39Z [DEBUG] ← LongTermMemory.Recall(оптимизация производительности горутин Go) = (len=5, <nil>)
+2026-06-07T20:31:39Z [DEBUG] ← SearchAgent.processQueryInternal(оптимизация производительности горутин Go) = <nil>
+2026-06-07T20:31:39Z [DEBUG] → AdaptiveScheduler.Record(duration=762.160541ms, err=<nil>)
+2026-06-07T20:31:39Z [DEBUG] ← SearchAgent.processQuery(оптимизация производительности горутин Go) = <nil>
+2026-06-07T20:31:39Z [DEBUG] ← LongTermMemory.RecallWithTopK(профилирование горутин Go pprof, 5) = (len=5, <nil>)
+2026-06-07T20:31:39Z [DEBUG] ← LongTermMemory.Recall(профилирование горутин Go pprof) = (len=5, <nil>)
+2026-06-07T20:31:39Z [DEBUG] ← SearchAgent.processQueryInternal(профилирование горутин Go pprof) = <nil>
+2026-06-07T20:31:39Z [DEBUG] → AdaptiveScheduler.Record(duration=783.189089ms, err=<nil>)
+2026-06-07T20:31:39Z [DEBUG] ← SearchAgent.processQuery(профилирование горутин Go pprof) = <nil>
+2026-06-07T20:31:40Z [DEBUG] ← LongTermMemory.RecallWithTopK(инструменты профилирования горутин Go trace, 5) = (len=5, <nil>)
+2026-06-07T20:31:40Z [DEBUG] ← LongTermMemory.Recall(инструменты профилирования горутин Go trace) = (len=5, <nil>)
+2026-06-07T20:31:40Z [DEBUG] ← SearchAgent.processQueryInternal(инструменты профилирования горутин Go trace) = <nil>
+2026-06-07T20:31:40Z [DEBUG] → AdaptiveScheduler.Record(duration=842.909255ms, err=<nil>)
+2026-06-07T20:31:40Z [DEBUG] ← SearchAgent.processQuery(инструменты профилирования горутин Go trace) = <nil>
+2026-06-07T20:31:40Z [DEBUG] ← LongTermMemory.RecallWithTopK(Go горутины профилирование производительности примеры, 5) = (len=5, <nil>)
+2026-06-07T20:31:40Z [DEBUG] ← LongTermMemory.Recall(Go горутины профилирование производительности примеры) = (len=5, <nil>)
+2026-06-07T20:31:40Z [DEBUG] ← SearchAgent.processQueryInternal(Go горутины профилирование производительности примеры) = <nil>
+2026-06-07T20:31:40Z [DEBUG] → AdaptiveScheduler.Record(duration=1.65680924s, err=<nil>)
+2026-06-07T20:31:40Z [DEBUG] ← SearchAgent.processQuery(Go горутины профилирование производительности примеры) = <nil>
+2026-06-07T20:31:40Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T20:31:40Z [DEBUG] → AnalystAgent.GenerateSubReport(section=Практическое использование и производительность, subtopic=Оптимизация и профилирование)
+2026-06-07T20:31:40Z [DEBUG] → LongTermMemory.RecallWithTopK(query=Оптимизация и профилирование, topK=5)
+2026-06-07T20:31:41Z [DEBUG] ← LongTermMemory.RecallWithTopK(Оптимизация и профилирование, 5) = (len=5, <nil>)
+2026-06-07T20:31:41Z [DEBUG] ← LongTermMemory.Recall(Оптимизация и профилирование) = (len=5, <nil>)
+2026-06-07T20:31:41Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:31:44Z [DEBUG] ← llm.Complete = (len=0, nil)
+2026-06-07T20:31:44Z [DEBUG] ← AnalystAgent.GenerateSubReport(Практическое использование и производительность/Оптимизация и профилирование) = (nil, не удалось распарсить ответ аналитика: , ошибка: unexpected end of JSON input)
+2026-06-07T20:32:09Z [DEBUG] ← llm.Complete = (len=2955, nil)
+2026-06-07T20:32:09Z [DEBUG] → SaveFactTool.Execute(args=map[fact:Секция: Практическое использование и производительность
+Подтема: Типичные ошибки и ловушки
+Анализ типичных ошибок и ловушек при работе с горутинами в Go, основанный на предоставленных источниках, выявляет несколько ключевых проблем. Во-первых, утечка горутин (goroutine leak), подробно описанная в источнике 2, возникает, когда горутины продолжают существовать и потреблять ресурсы после завершения полезной работы. Причины — незакрытые каналы, блокировки на мьютексах или ожидание данных, которые никогда не поступят. Это приводит к росту потребления памяти и потенциальной остановке приложения. Во-вторых, гонка данных (data race), освещённая в источнике 5, происходит при одновременном доступе к общей переменной без синхронизации, что вызывает непредсказуемое поведение. Для предотвращения требуется использование мьютексов или других примитивов синхронизации. В-третьих, отсутствие явного ожидания завершения горутин — распространённая ошибка, когда главная горутина (main) завершается раньше, чем остальные, что приводит к их принудительному завершению (источник 4). Решение — применение sync.WaitGroup или каналов для синхронизации. В-четвёртых, работа с nil-каналами (источник 3): попытка чтения из nil-канала или записи в nil-канал вызывает блокировку навсегда, что является неочевидной ловушкой. Также следует избегать антипаттернов, таких как использование time.Sleep для синхронизации, и учитывать недетерминированный порядок выполнения горутин. Хотя в собранных фактах не рассмотрены все возможные ловушки (например, deadlock, паника в горутинах, захват переменных цикла в замыканиях), представленные данные дают достаточное понимание основных рисков и мер предосторожности.])
+2026-06-07T20:32:09Z [DEBUG] → LongTermMemory.Save(key=fact_cfd02990-cc0e-4be0-b1f3-7caaf6697189_1780864329125556948, value_len=3044)
+2026-06-07T20:32:09Z [DEBUG] ← LongTermMemory.Save(fact_cfd02990-cc0e-4be0-b1f3-7caaf6697189_1780864329125556948, len=3044) = <nil>
+2026-06-07T20:32:09Z [DEBUG] ← SaveFactTool.Execute = ("Факт сохранён (ключ: fact_cfd02990-cc0e-4be0-b1f3-7caaf6697189_1780864329125556948)", <nil>)
+2026-06-07T20:32:09Z [DEBUG] ← AnalystAgent.GenerateSubReport(Практическое использование и производительность/Типичные ошибки и ловушки) = (complete=true, len=2874, nil)
+2026-06-07T20:32:09Z [DEBUG] → CoordinatorAgent.synthesizeSection(name=Практическое использование и производительность, analyses=2)
+2026-06-07T20:32:09Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:32:09Z [DEBUG] → CoordinatorAgent.synthesizeSection(name=Основные понятия и механизм работы горутин, analyses=3)
+2026-06-07T20:32:09Z [DEBUG] → CoordinatorAgent.synthesizeSection(name=Синхронизация и взаимодействие горутин, analyses=3)
+2026-06-07T20:32:09Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:32:09Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:32:18Z [DEBUG] ← llm.Complete = (len=5564, nil)
+2026-06-07T20:32:18Z [DEBUG] → LongTermMemory.Save(key=section_Практическое использование и производительность, value_len=5671)
+2026-06-07T20:32:18Z [DEBUG] ← LongTermMemory.Save(section_Практическое использование и производительность, len=5671) = <nil>
+2026-06-07T20:32:23Z [DEBUG] ← llm.Complete = (len=6804, nil)
+2026-06-07T20:32:23Z [DEBUG] → LongTermMemory.Save(key=section_Основные понятия и механизм работы горутин, value_len=6899)
+2026-06-07T20:32:24Z [DEBUG] ← LongTermMemory.Save(section_Основные понятия и механизм работы горутин, len=6899) = <nil>
+2026-06-07T20:32:30Z [DEBUG] ← llm.Complete = (len=8879, nil)
+2026-06-07T20:32:30Z [DEBUG] → LongTermMemory.Save(key=section_Синхронизация и взаимодействие горутин, value_len=8968)
+2026-06-07T20:32:31Z [DEBUG] ← LongTermMemory.Save(section_Синхронизация и взаимодействие горутин, len=8968) = <nil>
+2026-06-07T20:32:31Z [DEBUG] → CoordinatorAgent.synthesizeFinal(title=Что такое горутины, sections=3)
+2026-06-07T20:32:31Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:32:53Z [DEBUG] ← llm.Complete = (len=28880, nil)
+2026-06-07T20:32:53Z [DEBUG] → LongTermMemory.Save(key=final_1780864373771773049, value_len=28930)
+2026-06-07T20:32:54Z [DEBUG] ← LongTermMemory.Save(final_1780864373771773049, len=28930) = <nil>
+2026-06-07T20:32:54Z [DEBUG] → CriticAgent.Evaluate(report_len=28880)
+2026-06-07T20:32:54Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T20:32:59Z [DEBUG] ← llm.Complete = (len=1515, nil)
+2026-06-07T20:32:59Z [DEBUG] ← CriticAgent.Evaluate = (8, "Отчёт демонстрирует глубокое понимание темы горутин, охватывая ключевые аспекты: определение, механизм работы планировщика GMP, синхронизацию и типичные ошибки. Структура логична, присутствуют введение, основная часть и заключение. Однако есть несколько замечаний: в разделе 2.1 упоминается, что небуферизированные каналы блокируют отправителя до готовности получателя, но не указано, что они также блокируют получателя до отправки; это может ввести в заблуждение. В разделе 3 повторяется определение горутин, которое уже было дано в начале, что избыточно. Также в разделе о практическом использовании отсутствуют конкретные примеры кода, которые могли бы улучшить понимание. Нет ссылок на внешние источники, хотя в конце отчёта это отмечено. В целом, отчёт хороший, но требует небольшой доработки для идеала.", nil)
+2026-06-07T20:32:59Z [DEBUG] ← CoordinatorAgent.Run(что такое горутины) = (len=28880, nil)

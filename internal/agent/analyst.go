@@ -23,17 +23,19 @@ type AnalystAgent struct {
 	llm          *llm.Client
 	memory       *memory.LongTermMemory
 	saveFactTool *tool.SaveFactTool
+	sourceStore  *memory.SourceStore
 	model        string
 	temperature  float64
 }
 
-func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool) *AnalystAgent {
+func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool, sourceStore *memory.SourceStore) *AnalystAgent {
 	return &AnalystAgent{
 		llm:          llmClient,
 		model:        model,
 		temperature:  temperature,
 		memory:       mem,
 		saveFactTool: saveTool,
+		sourceStore:  sourceStore,
 	}
 }
 
@@ -72,7 +74,7 @@ func (a *AnalystAgent) GenerateSubReport(ctx context.Context, sectionName, subto
 
 Задание: составь аналитическую заметку по подтеме.
 Если фактов достаточно — напиши развёрнутый анализ.
-Если фактов явно не хватает (например, их очень мало или они не по теме) — 
+Если фактов явно не хватает (например, их очень мало или они не по теме) —
 укажи complete=false и предложи конкретные поисковые запросы для поиска недостающей информации.
 
 Ответь ТОЛЬКО в формате JSON:
@@ -108,7 +110,7 @@ func (a *AnalystAgent) GenerateSubReport(ctx context.Context, sectionName, subto
 	}
 
 	if sr.Complete && a.saveFactTool != nil {
-		fact := fmt.Sprintf("Секция: %s\nПодтема: %s\n%s", sectionName, subtopicName, sr.Analysis)
+		fact := fmt.Sprintf("Источник: аналитический вывод\nСекция: %s\nПодтема: %s\n%s", sectionName, subtopicName, sr.Analysis)
 		a.saveFactTool.Execute(ctx, map[string]any{"fact": fact})
 	}
 
