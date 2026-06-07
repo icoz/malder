@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,13 @@ import (
 	"github.com/icoz/malder/internal/memory"
 	"github.com/icoz/malder/internal/tool"
 )
+
+type SubReport struct {
+	Analysis   string   `json:"analysis"`
+	Complete   bool     `json:"complete"`
+	GapQueries []string `json:"gap_queries,omitempty"`
+	GapReason  string   `json:"gap_reason,omitempty"`
+}
 
 type AnalystAgent struct {
 	llm          *llm.Client
@@ -29,60 +37,80 @@ func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, m
 	}
 }
 
-func (a *AnalystAgent) GenerateReport(ctx context.Context, topic string) (report string, err error) {
+func (a *AnalystAgent) GenerateSubReport(ctx context.Context, sectionName, subtopicName, topic string) (report *SubReport, err error) {
 	defer func() {
 		if err != nil {
-			log.Debug("← AnalystAgent.GenerateReport(%s) = (\"\", %v)", topic, err)
+			log.Debug("← AnalystAgent.GenerateSubReport(%s/%s) = (nil, %v)", sectionName, subtopicName, err)
 		} else {
-			log.Debug("← AnalystAgent.GenerateReport(%s) = (len=%d, nil)", topic, len(report))
+			log.Debug("← AnalystAgent.GenerateSubReport(%s/%s) = (complete=%v, len=%d, nil)", sectionName, subtopicName, report.Complete, len(report.Analysis))
 		}
 	}()
-	log.Debug("→ AnalystAgent.GenerateReport(topic=%s)", topic)
-	log.Info("AnalystAgent: анализ темы: %s", topic)
+	log.Debug("→ AnalystAgent.GenerateSubReport(section=%s, subtopic=%s)", sectionName, subtopicName)
+	log.Info("AnalystAgent: анализ подтемы %s/%s", sectionName, subtopicName)
 
-	facts, err := a.memory.Recall(ctx, topic)
+	facts, err := a.memory.Recall(ctx, subtopicName)
 	if err != nil {
-		return "", fmt.Errorf("ошибка поиска фактов: %w", err)
-	}
-	if len(facts) == 0 {
-		return "Недостаточно фактов для анализа по теме \"" + topic + "\". Попробуйте уточнить запрос.", nil
+		return nil, fmt.Errorf("ошибка поиска фактов: %w", err)
 	}
 
-	prompt := a.buildPrompt(topic, facts)
-	systemPrompt := "Ты — эксперт-аналитик. Составляй чёткие, структурированные отчёты на русском языке. Используй факты из предоставленного контекста. Если факты противоречивы, укажи это."
-	report, err = a.llm.CompleteSimple(ctx, a.model, systemPrompt, prompt, a.temperature)
-	if err != nil {
-		return "", fmt.Errorf("ошибка LLM: %w", err)
-	}
-
-	if a.saveFactTool != nil {
-		a.saveFactTool.Execute(ctx, map[string]any{
-			"fact": fmt.Sprintf("Отчёт по теме '%s':\n%s", topic, report),
-		})
-	}
-	return report, nil
-}
-
-func (a *AnalystAgent) buildPrompt(topic string, facts []string) string {
 	var factsText strings.Builder
 	for i, f := range facts {
 		fact := f
-		if len(fact) > 2000 {
-			fact = fact[:2000] + "..."
+		if len(fact) > 3000 {
+			fact = fact[:3000] + "..."
 		}
 		factsText.WriteString(fmt.Sprintf("%d. %s\n\n", i+1, fact))
 	}
-	return fmt.Sprintf(`Тема исследования: %s
 
-Найденные факты (из интернета и ранее сохранённые аналитические выводы):
+	systemPrompt := "Ты — эксперт-аналитик, отвечающий только JSON."
+	prompt := fmt.Sprintf(`Исследуемая тема: "%s"
+Секция: "%s"
+Подтема: "%s"
+
+Факты, собранные из интернета по данной подтеме:
 %s
 
-Задание: составь аналитический отчёт по теме. Отчёт должен включать:
-- Краткое введение (актуальность темы)
-- Основную часть (ключевые факты, тренды, аргументы)
-- Заключение (выводы, рекомендации, если применимо)
-- Список источников (укажи ссылки, если они есть в фактах)
+Задание: составь аналитическую заметку по подтеме.
+Если фактов достаточно — напиши развёрнутый анализ.
+Если фактов явно не хватает (например, их очень мало или они не по теме) — 
+укажи complete=false и предложи конкретные поисковые запросы для поиска недостающей информации.
 
-Если фактов недостаточно, честно укажи это в отчёте. Не выдумывай информацию.
-Отчёт пиши на русском языке.`, topic, factsText.String())
+Ответь ТОЛЬКО в формате JSON:
+{
+  "analysis": "текст аналитической заметки на русском языке",
+  "complete": true,
+  "gap_queries": [],
+  "gap_reason": ""
+}
+
+Или, если фактов не хватает:
+{
+  "analysis": "предварительный анализ на основе имеющихся данных",
+  "complete": false,
+  "gap_queries": ["поисковый запрос 1", "поисковый запрос 2"],
+  "gap_reason": "объяснение, каких именно фактов не хватает"
+}
+
+Не пиши ничего кроме JSON.`, topic, sectionName, subtopicName, factsText.String())
+
+	resp, err := a.llm.CompleteSimple(ctx, a.model, systemPrompt, prompt, a.temperature)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка LLM: %w", err)
+	}
+
+	var sr SubReport
+	if err := json.Unmarshal([]byte(resp), &sr); err != nil {
+		return nil, fmt.Errorf("не удалось распарсить ответ аналитика: %s, ошибка: %w", resp, err)
+	}
+
+	if sr.Analysis == "" {
+		return nil, fmt.Errorf("аналитик вернул пустой анализ")
+	}
+
+	if sr.Complete && a.saveFactTool != nil {
+		fact := fmt.Sprintf("Секция: %s\nПодтема: %s\n%s", sectionName, subtopicName, sr.Analysis)
+		a.saveFactTool.Execute(ctx, map[string]any{"fact": fact})
+	}
+
+	return &sr, nil
 }

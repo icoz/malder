@@ -54,6 +54,9 @@ type Config struct {
 
 	MaxIterations int
 
+	MaxConcurrentSubtopics int
+	MaxSubtopicRetries     int
+
 	ServerPort string
 }
 
@@ -69,8 +72,10 @@ func loadConfig() *Config {
 		MaxConcurrentSearch: getEnvInt("MAX_CONCURRENT_SEARCH", 3),
 		MaxPagesPerQuery:    getEnvInt("MAX_PAGES_PER_QUERY", 3),
 		MinFactsForCache:    getEnvInt("MIN_FACTS_FOR_CACHE", 3),
-		MaxIterations:       getEnvInt("MAX_ITERATIONS", 3),
-		ServerPort:          getEnv("SERVER_PORT", "8080"),
+		MaxIterations:          getEnvInt("MAX_ITERATIONS", 3),
+		MaxConcurrentSubtopics: getEnvInt("MAX_CONCURRENT_SUBTOPICS", 3),
+		MaxSubtopicRetries:     getEnvInt("MAX_SUBTOPIC_RETRIES", 2),
+		ServerPort:             getEnv("SERVER_PORT", "8080"),
 	}
 	cfg.LLMEndpointCoordinator = getEnv("LLM_ENDPOINT_COORDINATOR", cfg.LLMEndpoint)
 	cfg.LLMEndpointAnalyst = getEnv("LLM_ENDPOINT_ANALYST", cfg.LLMEndpoint)
@@ -168,14 +173,16 @@ func main() {
 	criticAgent := agent.NewCriticAgent(llmCritic, cfg.LLMModelCritic, cfg.LLMTemperature)
 
 	coordinator := agent.NewCoordinator(agent.CoordinatorConfig{
-		LLM:           llmCoordinator,
-		Model:         cfg.LLMModelCoordinator,
-		Temperature:   cfg.LLMTemperature,
-		Memory:        mem,
-		SearchAgent:   searchAgent,
-		AnalystAgent:  analystAgent,
-		CriticAgent:   criticAgent,
-		MaxIterations: cfg.MaxIterations,
+		LLM:                    llmCoordinator,
+		Model:                  cfg.LLMModelCoordinator,
+		Temperature:            cfg.LLMTemperature,
+		Memory:                 mem,
+		SearchAgent:            searchAgent,
+		AnalystAgent:           analystAgent,
+		CriticAgent:            criticAgent,
+		MaxIterations:          cfg.MaxIterations,
+		MaxConcurrentSubtopics: cfg.MaxConcurrentSubtopics,
+		MaxSubtopicRetries:     cfg.MaxSubtopicRetries,
 	})
 
 	http.HandleFunc("/research", researchHandler(coordinator))
@@ -264,14 +271,16 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 				flusher.Flush()
 			}
 			tempCoord := agent.NewCoordinator(agent.CoordinatorConfig{
-				LLM:           coord.LLM(),
-				Model:         coord.Model(),
-				Temperature:   coord.Temperature(),
-				Memory:        coord.Memory(),
-				SearchAgent:   coord.SearchAgent(),
-				AnalystAgent:  coord.AnalystAgent(),
-				CriticAgent:   coord.CriticAgent(),
-				MaxIterations: coord.MaxIterations(),
+				LLM:                    coord.LLM(),
+				Model:                  coord.Model(),
+				Temperature:            coord.Temperature(),
+				Memory:                 coord.Memory(),
+				SearchAgent:            coord.SearchAgent(),
+				AnalystAgent:           coord.AnalystAgent(),
+				CriticAgent:            coord.CriticAgent(),
+				MaxIterations:          coord.MaxIterations(),
+				MaxConcurrentSubtopics: coord.MaxConcurrentSubtopics(),
+				MaxSubtopicRetries:     coord.MaxSubtopicRetries(),
 			})
 			tempCoord.SetProgressReporter(reporter)
 			result, err := tempCoord.Run(ctx, query)
