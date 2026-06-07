@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/icoz/malder/internal/llm"
 	"github.com/icoz/malder/internal/log"
@@ -17,14 +18,16 @@ type AnalystAgent struct {
 	saveFactTool *tool.SaveFactTool
 	model        string
 	temperature  float64
+	timeout      time.Duration
 }
 
-func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool) *AnalystAgent {
-	log.Debug("→ NewAnalystAgent(model=%s, temp=%.2f)", model, temperature)
+func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, timeout time.Duration, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool) *AnalystAgent {
+	log.Debug("→ NewAnalystAgent(model=%s, temp=%.2f, timeout=%v)", model, temperature, timeout)
 	return &AnalystAgent{
 		llm:          llmClient,
 		model:        model,
 		temperature:  temperature,
+		timeout:      timeout,
 		memory:       mem,
 		saveFactTool: saveTool,
 	}
@@ -51,7 +54,9 @@ func (a *AnalystAgent) GenerateReport(ctx context.Context, topic string) (report
 
 	prompt := a.buildPrompt(topic, facts)
 	systemPrompt := "Ты — эксперт-аналитик. Составляй чёткие, структурированные отчёты на русском языке. Используй факты из предоставленного контекста. Если факты противоречивы, укажи это."
-	report, err = a.llm.CompleteSimple(ctx, a.model, systemPrompt, prompt, a.temperature)
+	llmCtx, cancel := context.WithTimeout(ctx, a.timeout)
+	defer cancel()
+	report, err = a.llm.CompleteSimple(llmCtx, a.model, systemPrompt, prompt, a.temperature)
 	if err != nil {
 		return "", fmt.Errorf("ошибка LLM: %w", err)
 	}

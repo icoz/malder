@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/icoz/malder/internal/llm"
 	"github.com/icoz/malder/internal/log"
@@ -18,14 +19,16 @@ type CriticAgent struct {
 	llm         *llm.Client
 	model       string
 	temperature float64
+	timeout     time.Duration
 }
 
-func NewCriticAgent(llmClient *llm.Client, model string, temperature float64) *CriticAgent {
-	log.Debug("→ NewCriticAgent(model=%s, temp=%.2f)", model, temperature)
+func NewCriticAgent(llmClient *llm.Client, model string, temperature float64, timeout time.Duration) *CriticAgent {
+	log.Debug("→ NewCriticAgent(model=%s, temp=%.2f, timeout=%v)", model, temperature, timeout)
 	return &CriticAgent{
 		llm:         llmClient,
 		model:       model,
 		temperature: temperature,
+		timeout:     timeout,
 	}
 }
 
@@ -64,7 +67,9 @@ func (c *CriticAgent) Evaluate(ctx context.Context, report string) (score int, f
 	log.Info("CriticAgent: оценка отчёта (длина=%d)", len(report))
 	prompt := fmt.Sprintf(criticPromptTemplate, report)
 	systemPrompt := "Ты помощник, отвечающий только JSON. Никаких пояснений до или после JSON."
-	response, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature)
+	llmCtx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+	response, err := c.llm.CompleteSimple(llmCtx, c.model, systemPrompt, prompt, c.temperature)
 	if err != nil {
 		return 0, "", fmt.Errorf("ошибка LLM: %w", err)
 	}

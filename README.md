@@ -43,7 +43,10 @@
 | MALDER_LOG_LEVEL | Уровень журналирования (debug/info/warn/error) | info |
 | MALDER_DEBUG_FILE | Файл для DEBUG-логов | malder_debug.log |
 | LLM_TEMPERATURE | Температура LLM | 0.7 |
-| LLM_TIMEOUT | Таймаут запроса к LLM | 60s |
+| LLM_TIMEOUT | Таймаут запроса к LLM (по умолчанию для всех агентов) | 60s |
+| LLM_TIMEOUT_COORDINATOR | Таймаут для координатора | LLM_TIMEOUT |
+| LLM_TIMEOUT_ANALYST | Таймаут для аналитика | LLM_TIMEOUT |
+| LLM_TIMEOUT_CRITIC | Таймаут для критика | LLM_TIMEOUT |
 | OPENSERP_URL | URL OpenSerp | http://localhost:8080 |
 | MEMORY_PATH | Путь для сохранения памяти | ./data/malder_memory |
 | MAX_CONCURRENT_SEARCH | Параллельных поисков | 3 |

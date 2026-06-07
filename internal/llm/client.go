@@ -15,6 +15,7 @@ import (
 type Client struct {
 	endpoint   string
 	apiKey     string
+	timeout    time.Duration
 	httpClient *http.Client
 }
 
@@ -31,7 +32,8 @@ func NewClient(cfg Config) *Client {
 	return &Client{
 		endpoint:   cfg.Endpoint,
 		apiKey:     cfg.APIKey,
-		httpClient: &http.Client{Timeout: cfg.Timeout},
+		timeout:    cfg.Timeout,
+		httpClient: &http.Client{},
 	}
 }
 
@@ -83,58 +85,87 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 		return "", fmt.Errorf("marshal request: %w", err)
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", c.endpoint+"/v1/chat/completions", bytes.NewReader(jsonData))
-	if err != nil {
-		return "", fmt.Errorf("create request: %w", err)
-	}
-	httpReq.Header.Set("Content-Type", "application/json")
-	if c.apiKey != "" {
-		httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
+	const maxAttempts = 3
+	var lastErr error
+
+	for attempt := 0; attempt < maxAttempts; attempt++ {
+		if attempt > 0 {
+			backoff := c.timeout * time.Duration(1<<(attempt-1))
+			log.Warn("LLM request failed (attempt %d/%d): %v, retrying in %v", attempt, maxAttempts-1, lastErr, backoff)
+			select {
+			case <-time.After(backoff):
+			case <-ctx.Done():
+				return "", ctx.Err()
+			}
+		}
+
+		attemptTimeout := c.timeout * time.Duration(1<<(attempt))
+		attemptCtx, cancel := context.WithTimeout(ctx, attemptTimeout)
+
+		httpReq, err := http.NewRequestWithContext(attemptCtx, "POST", c.endpoint+"/v1/chat/completions", bytes.NewReader(jsonData))
+		if err != nil {
+			cancel()
+			return "", fmt.Errorf("create request: %w", err)
+		}
+		httpReq.Header.Set("Content-Type", "application/json")
+		if c.apiKey != "" {
+			httpReq.Header.Set("Authorization", "Bearer "+c.apiKey)
+		}
+
+		resp, err := c.httpClient.Do(httpReq)
+		cancel()
+		if err != nil {
+			lastErr = fmt.Errorf("http do: %w", err)
+			continue
+		}
+
+		body, err := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if err != nil {
+			lastErr = fmt.Errorf("read body: %w", err)
+			continue
+		}
+
+		if resp.StatusCode >= 500 {
+			lastErr = fmt.Errorf("LLM API error %d: %s", resp.StatusCode, string(body))
+			continue
+		}
+		if resp.StatusCode != http.StatusOK {
+			return "", fmt.Errorf("LLM API error %d: %s", resp.StatusCode, string(body))
+		}
+
+		var chatResp chatResponse
+		if err := json.Unmarshal(body, &chatResp); err != nil {
+			return "", fmt.Errorf("unmarshal response: %w", err)
+		}
+		if chatResp.Error != nil {
+			err := fmt.Errorf("LLM error: %s", chatResp.Error.Message)
+			log.Info("LLM ответ: ошибка=%v", err)
+			log.Debug("← llm.Complete = (\"\", %v)", err)
+			return "", err
+		}
+		if len(chatResp.Choices) == 0 {
+			err := fmt.Errorf("no choices in response")
+			log.Info("LLM ответ: ошибка=%v", err)
+			log.Debug("← llm.Complete = (\"\", %v)", err)
+			return "", err
+		}
+		result := chatResp.Choices[0].Message.Content
+		truncated := result
+		if len(truncated) > 500 {
+			truncated = truncated[:500] + "..."
+		}
+		if chatResp.Usage != nil {
+			log.Info("LLM ответ: длина=%d, токены: input=%d, output=%d, total=%d",
+				len(result), chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens, chatResp.Usage.TotalTokens)
+		} else {
+			log.Info("LLM ответ: длина=%d, начало: %s", len(result), truncated)
+		}
+		log.Debug("← llm.Complete = (len=%d, nil)", len(result))
+		return result, nil
 	}
 
-	resp, err := c.httpClient.Do(httpReq)
-	if err != nil {
-		return "", fmt.Errorf("http do: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("read body: %w", err)
-	}
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("LLM API error %d: %s", resp.StatusCode, string(body))
-	}
-
-	var chatResp chatResponse
-	if err := json.Unmarshal(body, &chatResp); err != nil {
-		return "", fmt.Errorf("unmarshal response: %w", err)
-	}
-	if chatResp.Error != nil {
-		err := fmt.Errorf("LLM error: %s", chatResp.Error.Message)
-		log.Info("LLM ответ: ошибка=%v", err)
-		log.Debug("← llm.Complete = (\"\", %v)", err)
-		return "", err
-	}
-	if len(chatResp.Choices) == 0 {
-		err := fmt.Errorf("no choices in response")
-		log.Info("LLM ответ: ошибка=%v", err)
-		log.Debug("← llm.Complete = (\"\", %v)", err)
-		return "", err
-	}
-	result := chatResp.Choices[0].Message.Content
-	truncated := result
-	if len(truncated) > 500 {
-		truncated = truncated[:500] + "..."
-	}
-	if chatResp.Usage != nil {
-		log.Info("LLM ответ: длина=%d, токены: input=%d, output=%d, total=%d",
-			len(result), chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens, chatResp.Usage.TotalTokens)
-	} else {
-		log.Info("LLM ответ: длина=%d, начало: %s", len(result), truncated)
-	}
-	log.Debug("← llm.Complete = (len=%d, nil)", len(result))
-	return result, nil
+	return "", fmt.Errorf("LLM request failed after %d attempts: %w", maxAttempts, lastErr)
 }
 
 func (c *Client) CompleteSimple(ctx context.Context, model string, systemPrompt, userPrompt string, temperature float64) (string, error) {

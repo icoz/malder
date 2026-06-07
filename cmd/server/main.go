@@ -29,6 +29,10 @@ type Config struct {
 	LLMModelAnalyst     string
 	LLMModelCritic      string
 
+	LLMTimeoutCoordinator time.Duration
+	LLMTimeoutAnalyst     time.Duration
+	LLMTimeoutCritic      time.Duration
+
 	EmbeddingEndpoint string
 	EmbeddingAPIKey   string
 	EmbeddingModel    string
@@ -62,6 +66,9 @@ func loadConfig() *Config {
 	cfg.LLMModelCoordinator = getEnv("LLM_MODEL_COORDINATOR", cfg.LLMModel)
 	cfg.LLMModelAnalyst = getEnv("LLM_MODEL_ANALYST", cfg.LLMModel)
 	cfg.LLMModelCritic = getEnv("LLM_MODEL_CRITIC", cfg.LLMModel)
+	cfg.LLMTimeoutCoordinator = getEnvDuration("LLM_TIMEOUT_COORDINATOR", cfg.LLMTimeout)
+	cfg.LLMTimeoutAnalyst = getEnvDuration("LLM_TIMEOUT_ANALYST", cfg.LLMTimeout)
+	cfg.LLMTimeoutCritic = getEnvDuration("LLM_TIMEOUT_CRITIC", cfg.LLMTimeout)
 	cfg.EmbeddingEndpoint = getEnv("EMBEDDING_ENDPOINT", cfg.LLMEndpoint+"/v1")
 	cfg.EmbeddingAPIKey = getEnv("EMBEDDING_API_KEY", cfg.LLMAPIKey)
 	cfg.EmbeddingModel = getEnv("EMBEDDING_MODEL", "text-embedding-3-small")
@@ -135,14 +142,15 @@ func main() {
 
 	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, cfg.MaxPagesPerQuery)
 
-	analystAgent := agent.NewAnalystAgent(llmClient, cfg.LLMModelAnalyst, cfg.LLMTemperature, mem, saveFactTool)
+	analystAgent := agent.NewAnalystAgent(llmClient, cfg.LLMModelAnalyst, cfg.LLMTemperature, cfg.LLMTimeoutAnalyst, mem, saveFactTool)
 
-	criticAgent := agent.NewCriticAgent(llmClient, cfg.LLMModelCritic, cfg.LLMTemperature)
+	criticAgent := agent.NewCriticAgent(llmClient, cfg.LLMModelCritic, cfg.LLMTemperature, cfg.LLMTimeoutCritic)
 
 	coordinator := agent.NewCoordinator(agent.CoordinatorConfig{
 		LLM:           llmClient,
 		Model:         cfg.LLMModelCoordinator,
 		Temperature:   cfg.LLMTemperature,
+		Timeout:       cfg.LLMTimeoutCoordinator,
 		Memory:        mem,
 		SearchAgent:   searchAgent,
 		AnalystAgent:  analystAgent,
@@ -239,6 +247,7 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 				LLM:           coord.LLM(),
 				Model:         coord.Model(),
 				Temperature:   coord.Temperature(),
+				Timeout:       coord.Timeout(),
 				Memory:        coord.Memory(),
 				SearchAgent:   coord.SearchAgent(),
 				AnalystAgent:  coord.AnalystAgent(),
