@@ -1,0 +1,47 @@
+{{template "base" .}}
+{{define "title"}}{{.Report.Query}} — Malder{{end}}
+{{define "content"}}
+{{$r := .Report}}
+<h1 class="report-title">{{$r.Query}}</h1>
+
+<div class="report-meta">
+<div class="meta-item"><span class="meta-label">Статус:</span> {{statusLabel $r.Status}}</div>
+{{if ne $r.Status "in_progress"}}
+<div class="meta-item"><span class="meta-label">Источников:</span> {{$r.SourceCount}}</div>
+<div class="meta-item"><span class="meta-label">Время:</span> {{durationLabel $r.DurationMs}}</div>
+{{end}}
+<div class="meta-item"><span class="meta-label">Создан:</span> {{russianDate $r.CreatedAt}}</div>
+{{if $r.CompletedAt}}
+<div class="meta-item"><span class="meta-label">Завершён:</span> {{russianDate $r.CompletedAt}}</div>
+{{end}}
+<div class="meta-item"><a href="/api/reports/{{$r.ID}}/raw" class="meta-link">Сырой markdown</a></div>
+</div>
+
+{{if eq $r.Status "in_progress"}}
+<div id="progress" class="progress" data-report-id="{{$r.ID}}">
+<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+<div class="progress-status" id="progress-status">Исследование выполняется...</div>
+</div>
+{{end}}
+
+{{if eq $r.Status "error"}}
+<div class="error-box">
+<strong>Ошибка:</strong> {{$r.Error}}
+</div>
+{{end}}
+
+{{if $r.ReportHTML}}
+<div class="report-content">{{$r.ReportHTML}}</div>
+{{end}}
+
+{{if $r.SourceURLs}}
+<div class="sources">
+<h2>Источники</h2>
+<ol class="source-list">
+{{range $r.SourceURLs}}
+<li><a href="{{.}}" target="_blank" rel="noopener">{{.}}</a></li>
+{{end}}
+</ol>
+</div>
+{{end}}
+{{end}}

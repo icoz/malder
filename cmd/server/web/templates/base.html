@@ -1,0 +1,26 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{block "title" .}}Malder — Глубокое исследование{{end}}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<nav class="nav">
+<div class="nav-inner">
+<a href="/" class="nav-brand">Malder</a>
+<div class="nav-links">
+<a href="/">Исследовать</a>
+<a href="/reports">Отчёты</a>
+</div>
+</div>
+</nav>
+<main class="container">
+{{block "content" .}}{{end}}
+</main>
+<script src="/static/main.js"></script>
+</body>
+</html>
+{{end}}

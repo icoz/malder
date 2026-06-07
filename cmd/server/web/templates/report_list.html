@@ -1,0 +1,31 @@
+{{template "base" .}}
+{{define "title"}}Отчёты — Malder{{end}}
+{{define "content"}}
+<h1>Отчёты</h1>
+{{if .Reports}}
+<table class="report-table">
+<thead>
+<tr>
+<th>Запрос</th>
+<th>Статус</th>
+<th>Источников</th>
+<th>Дата</th>
+<th>Время</th>
+</tr>
+</thead>
+<tbody>
+{{range .Reports}}
+<tr>
+<td><a href="/reports/{{.ID}}">{{.Query}}</a></td>
+<td>{{statusLabel .Status}}</td>
+<td>{{.SourceCount}}</td>
+<td>{{russianDate .CreatedAt}}</td>
+<td>{{durationLabel .DurationMs}}</td>
+</tr>
+{{end}}
+</tbody>
+</table>
+{{else}}
+<p class="empty">Пока нет ни одного отчёта. <a href="/">Начните исследование</a>.</p>
+{{end}}
+{{end}}

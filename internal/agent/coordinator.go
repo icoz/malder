@@ -14,6 +14,11 @@ import (
 
 type ProgressReporter func(event string, data map[string]any)
 
+type ResearchResult struct {
+	Report     string
+	SourceURLs []string
+}
+
 type CoordinatorAgent struct {
 	llm                    *llm.Client
 	model                  string
@@ -83,13 +88,14 @@ func (c *CoordinatorAgent) Model() string                  { return c.model }
 func (c *CoordinatorAgent) Temperature() float64           { return c.temperature }
 func (c *CoordinatorAgent) MaxConcurrentSubtopics() int    { return c.maxConcurrentSubtopics }
 func (c *CoordinatorAgent) MaxSubtopicRetries() int        { return c.maxSubtopicRetries }
+func (c *CoordinatorAgent) SourceStore() *memory.SourceStore { return c.sourceStore }
 
-func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result string, err error) {
+func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *ResearchResult, err error) {
 	defer func() {
 		if err != nil {
-			log.Debug("← CoordinatorAgent.Run(%s) = (\"\", %v)", userQuery, err)
+			log.Debug("← CoordinatorAgent.Run(%s) = (nil, %v)", userQuery, err)
 		} else {
-			log.Debug("← CoordinatorAgent.Run(%s) = (len=%d, nil)", userQuery, len(result))
+			log.Debug("← CoordinatorAgent.Run(%s) = (len=%d, nil)", userQuery, len(result.Report))
 		}
 	}()
 	log.Debug("→ CoordinatorAgent.Run(query=%s, maxIter=%d)", userQuery, c.maxIterations)
@@ -99,7 +105,7 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result st
 	c.report("planning", nil)
 	plan, err := c.createPlan(ctx, userQuery)
 	if err != nil {
-		return "", fmt.Errorf("планирование не удалось: %w", err)
+		return nil, fmt.Errorf("планирование не удалось: %w", err)
 	}
 	log.Info("Coordinator: план исследования — %d секций", len(plan.Sections))
 	for i, s := range plan.Sections {
@@ -127,13 +133,13 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result st
 	c.report("section_synthesis_complete", map[string]any{"sections": len(sectionReports)})
 
 	c.report("critic_loop_start", nil)
-	finalReport, err := c.criticLoop(ctx, plan.Title, sectionReports)
+	result, err = c.criticLoop(ctx, plan.Title, sectionReports)
 	if err != nil {
-		return "", fmt.Errorf("критический цикл не удался: %w", err)
+		return nil, fmt.Errorf("критический цикл не удался: %w", err)
 	}
 
-	c.report("finish", map[string]any{"result": finalReport})
-	return finalReport, nil
+	c.report("finish", map[string]any{"result": result.Report})
+	return result, nil
 }
 
 func (c *CoordinatorAgent) researchSubtopics(ctx context.Context, plan *ResearchPlan) map[string]*SubReport {
@@ -267,16 +273,18 @@ func (c *CoordinatorAgent) synthesizeSections(ctx context.Context, plan *Researc
 	return sectionReports
 }
 
-func (c *CoordinatorAgent) criticLoop(ctx context.Context, title string, sectionReports []string) (string, error) {
+func (c *CoordinatorAgent) criticLoop(ctx context.Context, title string, sectionReports []string) (*ResearchResult, error) {
 	var finalReport string
+	var sourceURLs []string
 	for iteration := 1; iteration <= c.maxIterations; iteration++ {
 		c.report("synthesis_start", map[string]any{"iteration": iteration})
 
-		report, err := c.synthesizeFinal(ctx, title, sectionReports)
+		report, urls, err := c.synthesizeFinal(ctx, title, sectionReports)
 		if err != nil {
-			return "", fmt.Errorf("ошибка синтеза отчёта: %w", err)
+			return nil, fmt.Errorf("ошибка синтеза отчёта: %w", err)
 		}
 		finalReport = report
+		sourceURLs = urls
 		c.report("synthesis_complete", map[string]any{"iteration": iteration, "report_length": len(report)})
 
 		key := fmt.Sprintf("final_%d", time.Now().UnixNano())
@@ -315,7 +323,7 @@ func (c *CoordinatorAgent) criticLoop(ctx context.Context, title string, section
 		c.report("additional_search_complete", nil)
 	}
 
-	return finalReport, nil
+	return &ResearchResult{Report: finalReport, SourceURLs: sourceURLs}, nil
 }
 
 func (c *CoordinatorAgent) createPlan(ctx context.Context, userQuery string) (plan *ResearchPlan, err error) {
@@ -406,7 +414,7 @@ func (c *CoordinatorAgent) synthesizeSection(ctx context.Context, sectionName st
 	return report, nil
 }
 
-func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, sectionReports []string) (string, error) {
+func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, sectionReports []string) (string, []string, error) {
 	log.Debug("→ CoordinatorAgent.synthesizeFinal(title=%s, sections=%d)", title, len(sectionReports))
 
 	var sb string
@@ -416,25 +424,25 @@ func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, se
 
 	// Collect source URLs from memory
 	var sourcesText string
+	var sourceURLs []string
 	if c.memory != nil {
 		facts, err := c.memory.Recall(ctx, title)
 		if err == nil {
 			seen := make(map[string]bool)
-			var urls []string
 			for _, f := range facts {
 				for _, line := range strings.Split(f, "\n") {
 					line = strings.TrimSpace(line)
 					if strings.HasPrefix(line, "Источник:") {
 						url := strings.TrimSpace(strings.TrimPrefix(line, "Источник:"))
 						if strings.HasPrefix(url, "http") && !seen[url] {
-							urls = append(urls, url)
+							sourceURLs = append(sourceURLs, url)
 							seen[url] = true
 						}
 					}
 				}
 			}
-			if len(urls) > 0 {
-				sourcesText = "\nИсточники для цитирования:\n" + strings.Join(urls, "\n")
+			if len(sourceURLs) > 0 {
+				sourcesText = "\nИсточники для цитирования:\n" + strings.Join(sourceURLs, "\n")
 			}
 		}
 	}
@@ -459,9 +467,9 @@ func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, se
 
 	report, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature)
 	if err != nil {
-		return "", fmt.Errorf("ошибка синтеза финального отчёта: %w", err)
+		return "", nil, fmt.Errorf("ошибка синтеза финального отчёта: %w", err)
 	}
-	return report, nil
+	return report, sourceURLs, nil
 }
 
 func (c *CoordinatorAgent) extractQueriesFromFeedback(ctx context.Context, feedback string) (queries []string) {

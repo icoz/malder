@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"embed"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	stdlog "log"
 	"net/http"
 	"os"
@@ -16,7 +19,62 @@ import (
 	"github.com/icoz/malder/internal/memory"
 	"github.com/icoz/malder/internal/scheduler"
 	"github.com/icoz/malder/internal/tool"
+	"github.com/yuin/goldmark"
+	"go.etcd.io/bbolt"
 )
+
+//go:embed web/templates/*.html
+var templateFS embed.FS
+
+//go:embed web/static/*
+var staticFS embed.FS
+
+var mdRenderer = goldmark.New()
+
+func russianDate(ts int64) string {
+	t := time.Unix(0, ts)
+	months := []string{"января", "февраля", "марта", "апреля", "мая", "июня",
+		"июля", "августа", "сентября", "октября", "ноября", "декабря"}
+	return fmt.Sprintf("%d %s %d, %02d:%02d",
+		t.Day(), months[t.Month()-1], t.Year(), t.Hour(), t.Minute())
+}
+
+func russianDatePtr(ts *int64) string {
+	if ts == nil {
+		return ""
+	}
+	return russianDate(*ts)
+}
+
+func statusLabel(s memory.ReportStatus) template.HTML {
+	var cls string
+	switch s {
+	case memory.ReportStatusCompleted:
+		cls = "status-completed"
+		return template.HTML(fmt.Sprintf(`<span class="status-badge %s">Готов</span>`, cls))
+	case memory.ReportStatusInProgress:
+		cls = "status-in_progress"
+		return template.HTML(fmt.Sprintf(`<span class="status-badge %s">Выполняется</span>`, cls))
+	case memory.ReportStatusError:
+		cls = "status-error"
+		return template.HTML(fmt.Sprintf(`<span class="status-badge %s">Ошибка</span>`, cls))
+	default:
+		return template.HTML(s)
+	}
+}
+
+func durationLabel(ms int64) string {
+	if ms == 0 {
+		return "—"
+	}
+	d := time.Duration(ms) * time.Millisecond
+	m := int(d.Minutes())
+	s := int(d.Seconds()) % 60
+	if m > 0 {
+		return fmt.Sprintf("%d мин %d сек", m, s)
+	}
+	return fmt.Sprintf("%d сек", s)
+}
 
 type Config struct {
 	LLMEndpoint    string
@@ -159,11 +217,14 @@ func main() {
 	if sourceStorePath == "" {
 		sourceStorePath = cfg.MemoryPath + "_sources.db"
 	}
-	sourceStore, err := memory.NewSourceStore(sourceStorePath)
+	boltDB, err := bbolt.Open(sourceStorePath, 0600, &bbolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
-		stdlog.Fatalf("Не удалось инициализировать SourceStore: %v", err)
+		stdlog.Fatalf("Не удалось открыть bolt DB: %v", err)
 	}
-	defer sourceStore.Close()
+	defer boltDB.Close()
+
+	sourceStore := memory.NewSourceStore(boltDB)
+	reportStore := memory.NewReportStore(boltDB)
 
 	searchTool := tool.NewSearchTool(cfg.OpenSerpURL, 10*time.Second, getEnv("SEARCH_ENGINE", "duck"))
 	fetchTool := tool.NewFetchPageTool(15 * time.Second)
@@ -198,56 +259,158 @@ func main() {
 		MaxSubtopicRetries:     cfg.MaxSubtopicRetries,
 	})
 
-	http.HandleFunc("/research", researchHandler(coordinator))
-	http.HandleFunc("/research/stream", sseResearchHandler(coordinator))
-	http.HandleFunc("/health", healthHandler)
+	funcMap := template.FuncMap{
+		"russianDate":    russianDate,
+		"russianDatePtr": russianDatePtr,
+		"statusLabel":    statusLabel,
+		"durationLabel":  durationLabel,
+	}
+	tmpls := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "web/templates/*.html"))
+	staticHandler := http.FileServer(http.FS(staticFS))
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", indexHandler(tmpls))
+	mux.HandleFunc("GET /reports", reportListHandler(tmpls, reportStore))
+	mux.HandleFunc("GET /reports/{id}", reportDetailHandler(tmpls, reportStore))
+	mux.HandleFunc("GET /api/reports", apiReportListHandler(reportStore))
+	mux.HandleFunc("GET /api/reports/{id}", apiReportGetHandler(reportStore))
+	mux.HandleFunc("GET /api/reports/{id}/raw", apiReportRawHandler(reportStore))
+	mux.HandleFunc("POST /api/research", apiResearchHandler(coordinator, reportStore))
+	mux.HandleFunc("GET /api/research/stream", apiSSEResearchHandler(coordinator, reportStore))
+	mux.HandleFunc("GET /api/health", healthHandler)
+	mux.Handle("GET /static/", staticHandler)
 
 	addr := ":" + cfg.ServerPort
 	malderlog.Info("Сервер запущен на %s", addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	if err := http.ListenAndServe(addr, mux); err != nil {
 		stdlog.Fatal(err)
 	}
 }
 
-type researchRequest struct {
-	Query string `json:"query"`
-}
-
-type researchResponse struct {
-	Result string `json:"result"`
-	Error  string `json:"error,omitempty"`
-}
-
-func researchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
+func indexHandler(tmpls *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Only POST allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		var req researchRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			writeJSONError(w, "Invalid JSON", http.StatusBadRequest)
-			return
-		}
-		if req.Query == "" {
-			malderlog.Warn("Запрос research: пустой query")
-			writeJSONError(w, "Query cannot be empty", http.StatusBadRequest)
-			return
-		}
-
-		malderlog.Info("Запрос research: query=%q", req.Query)
-		result, err := coord.Run(r.Context(), req.Query)
-		if err != nil {
-			malderlog.Warn("Запрос research: ошибка=%v", err)
-			writeJSONError(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		malderlog.Info("Запрос research: готово, длина=%d", len(result))
-		writeJSON(w, researchResponse{Result: result})
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		tmpls.ExecuteTemplate(w, "index.html", nil)
 	}
 }
 
-func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
+func reportListHandler(tmpls *template.Template, store *memory.ReportStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reports, err := store.List()
+		if err != nil {
+			malderlog.Warn("Список отчётов: ошибка: %v", err)
+			http.Error(w, "Internal error", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		tmpls.ExecuteTemplate(w, "report_list.html", map[string]any{
+			"Reports": reports,
+		})
+	}
+}
+
+func reportDetailHandler(tmpls *template.Template, store *memory.ReportStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		report, err := store.Get(id)
+		if err != nil {
+			http.Error(w, "Отчёт не найден", http.StatusNotFound)
+			return
+		}
+		var htmlContent template.HTML
+		if report.ReportText != "" {
+			var buf bytes.Buffer
+			if err := mdRenderer.Convert([]byte(report.ReportText), &buf); err == nil {
+				htmlContent = template.HTML(buf.String())
+			}
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		tmpls.ExecuteTemplate(w, "report_detail.html", map[string]any{
+			"Report":     report,
+			"ReportHTML": htmlContent,
+		})
+	}
+}
+
+func apiReportListHandler(store *memory.ReportStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reports, err := store.List()
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, reports)
+	}
+}
+
+func apiReportGetHandler(store *memory.ReportStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		report, err := store.Get(id)
+		if err != nil {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+			return
+		}
+		writeJSON(w, http.StatusOK, report)
+	}
+}
+
+func apiReportRawHandler(store *memory.ReportStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		report, err := store.Get(id)
+		if err != nil {
+			http.Error(w, "Not found", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+		w.Write([]byte(report.ReportText))
+	}
+}
+
+type apiResearchRequest struct {
+	Query string `json:"query"`
+}
+
+func apiResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var req apiResearchRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Invalid JSON"})
+			return
+		}
+		if req.Query == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "Query cannot be empty"})
+			return
+		}
+
+		reportID, err := store.Create(req.Query)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+
+		start := time.Now()
+		result, err := coord.Run(r.Context(), req.Query)
+		duration := time.Since(start)
+
+		if err != nil {
+			store.Fail(reportID, err.Error(), duration)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+
+		store.Complete(reportID, result.Report, result.SourceURLs, duration)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"report_id":   reportID,
+			"report":      result.Report,
+			"source_urls": result.SourceURLs,
+			"duration_ms": duration.Milliseconds(),
+		})
+	}
+}
+
+func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		flusher, ok := w.(http.Flusher)
 		if !ok {
@@ -261,15 +424,25 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 
 		query := r.URL.Query().Get("q")
 		if query == "" {
-			malderlog.Warn("Запрос research/stream: пустой query")
 			fmt.Fprintf(w, "event: error\ndata: missing query parameter 'q'\n\n")
 			flusher.Flush()
 			return
 		}
 
-		malderlog.Info("Запрос research/stream: query=%q", query)
+		reportID, err := store.Create(query)
+		if err != nil {
+			fmt.Fprintf(w, "event: error\ndata: %s\n\n", jsonEscape("Failed to create report: "+err.Error()))
+			flusher.Flush()
+			return
+		}
+
+		fmt.Fprintf(w, "event: started\ndata: {\"report_id\":\"%s\"}\n\n", reportID)
+		flusher.Flush()
+
+		malderlog.Info("Запрос research/stream: query=%q, report_id=%s", query, reportID)
+
 		resultChan := make(chan struct {
-			result string
+			result *agent.ResearchResult
 			err    error
 		}, 1)
 
@@ -288,7 +461,7 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 				Model:                  coord.Model(),
 				Temperature:            coord.Temperature(),
 				Memory:                 coord.Memory(),
-				SourceStore:            nil,
+				SourceStore:            coord.SourceStore(),
 				SearchAgent:            coord.SearchAgent(),
 				AnalystAgent:           coord.AnalystAgent(),
 				CriticAgent:            coord.CriticAgent(),
@@ -299,22 +472,25 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 			tempCoord.SetProgressReporter(reporter)
 			result, err := tempCoord.Run(ctx, query)
 			resultChan <- struct {
-				result string
+				result *agent.ResearchResult
 				err    error
 			}{result, err}
 		}()
 
 		select {
 		case <-ctx.Done():
+			store.Fail(reportID, "cancelled", time.Since(time.Now()))
 			fmt.Fprintf(w, "event: cancelled\ndata: {}\n\n")
 			flusher.Flush()
 		case res := <-resultChan:
 			if res.err != nil {
+				store.Fail(reportID, res.err.Error(), time.Since(time.Now()))
 				malderlog.Warn("Запрос research/stream: ошибка=%v", res.err)
 				fmt.Fprintf(w, "event: error\ndata: %s\n\n", jsonEscape(res.err.Error()))
 			} else {
-				malderlog.Info("Запрос research/stream: готово, длина=%d", len(res.result))
-				resultData, _ := json.Marshal(map[string]string{"result": res.result})
+				store.Complete(reportID, res.result.Report, res.result.SourceURLs, time.Since(time.Now()))
+				malderlog.Info("Запрос research/stream: готово, report_id=%s", reportID)
+				resultData, _ := json.Marshal(map[string]string{"report_id": reportID})
 				fmt.Fprintf(w, "event: result\ndata: %s\n\n", resultData)
 			}
 			flusher.Flush()
@@ -327,15 +503,10 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"status":"ok"}`))
 }
 
-func writeJSONError(w http.ResponseWriter, msg string, status int) {
+func writeJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(researchResponse{Error: msg})
-}
-
-func writeJSON(w http.ResponseWriter, resp researchResponse) {
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	json.NewEncoder(w).Encode(data)
 }
 
 func jsonEscape(s string) string {

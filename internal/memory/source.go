@@ -23,23 +23,14 @@ type SourceStore struct {
 	db *bbolt.DB
 }
 
-func NewSourceStore(path string) (*SourceStore, error) {
-	db, err := bbolt.Open(path, 0600, &bbolt.Options{Timeout: 1 * time.Second})
-	if err != nil {
-		return nil, fmt.Errorf("bolt open: %w", err)
-	}
+func NewSourceStore(db *bbolt.DB) *SourceStore {
 	if err := db.Update(func(tx *bbolt.Tx) error {
 		_, err := tx.CreateBucketIfNotExists([]byte("provenance"))
 		return err
 	}); err != nil {
-		db.Close()
-		return nil, fmt.Errorf("bolt init: %w", err)
+		log.Error("SourceStore: не удалось создать bucket: %v", err)
 	}
-	return &SourceStore{db: db}, nil
-}
-
-func (s *SourceStore) Close() error {
-	return s.db.Close()
+	return &SourceStore{db: db}
 }
 
 func (s *SourceStore) Put(p Provenance) error {
