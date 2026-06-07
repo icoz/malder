@@ -25,13 +25,20 @@ type Config struct {
 	LLMTemperature float64
 	LLMTimeout     time.Duration
 
-	LLMModelCoordinator string
-	LLMModelAnalyst     string
-	LLMModelCritic      string
+	LLMEndpointCoordinator string
+	LLMAPIKeyCoordinator   string
+	LLMModelCoordinator    string
+	LLMTimeoutCoordinator  time.Duration
 
-	LLMTimeoutCoordinator time.Duration
-	LLMTimeoutAnalyst     time.Duration
-	LLMTimeoutCritic      time.Duration
+	LLMEndpointAnalyst string
+	LLMAPIKeyAnalyst   string
+	LLMModelAnalyst    string
+	LLMTimeoutAnalyst  time.Duration
+
+	LLMEndpointCritic string
+	LLMAPIKeyCritic   string
+	LLMModelCritic    string
+	LLMTimeoutCritic  time.Duration
 
 	EmbeddingEndpoint string
 	EmbeddingAPIKey   string
@@ -65,6 +72,12 @@ func loadConfig() *Config {
 		MaxIterations:       getEnvInt("MAX_ITERATIONS", 3),
 		ServerPort:          getEnv("SERVER_PORT", "8080"),
 	}
+	cfg.LLMEndpointCoordinator = getEnv("LLM_ENDPOINT_COORDINATOR", cfg.LLMEndpoint)
+	cfg.LLMEndpointAnalyst = getEnv("LLM_ENDPOINT_ANALYST", cfg.LLMEndpoint)
+	cfg.LLMEndpointCritic = getEnv("LLM_ENDPOINT_CRITIC", cfg.LLMEndpoint)
+	cfg.LLMAPIKeyCoordinator = getEnv("LLM_API_KEY_COORDINATOR", cfg.LLMAPIKey)
+	cfg.LLMAPIKeyAnalyst = getEnv("LLM_API_KEY_ANALYST", cfg.LLMAPIKey)
+	cfg.LLMAPIKeyCritic = getEnv("LLM_API_KEY_CRITIC", cfg.LLMAPIKey)
 	cfg.LLMModelCoordinator = getEnv("LLM_MODEL_COORDINATOR", cfg.LLMModel)
 	cfg.LLMModelAnalyst = getEnv("LLM_MODEL_ANALYST", cfg.LLMModel)
 	cfg.LLMModelCritic = getEnv("LLM_MODEL_CRITIC", cfg.LLMModel)
@@ -117,11 +130,17 @@ func main() {
 	malderlog.Info("Запуск malder — LLM: %s, модель: %s, порт: %s, движок: %s, память: %s, эмбеддинги: %s/%s",
 		cfg.LLMEndpoint, cfg.LLMModel, cfg.ServerPort, getEnv("SEARCH_ENGINE", "duck"), cfg.MemoryPath, cfg.EmbeddingEndpoint, cfg.EmbeddingModel)
 
-	llmClient := llm.NewClient(llm.Config{
-		Endpoint: cfg.LLMEndpoint,
-		APIKey:   cfg.LLMAPIKey,
-		Timeout:  cfg.LLMTimeout,
-	})
+	makeLLM := func(endpoint, apiKey string, timeout time.Duration) *llm.Client {
+		return llm.NewClient(llm.Config{
+			Endpoint: endpoint,
+			APIKey:   apiKey,
+			Timeout:  timeout,
+		})
+	}
+
+	llmCoordinator := makeLLM(cfg.LLMEndpointCoordinator, cfg.LLMAPIKeyCoordinator, cfg.LLMTimeoutCoordinator)
+	llmAnalyst := makeLLM(cfg.LLMEndpointAnalyst, cfg.LLMAPIKeyAnalyst, cfg.LLMTimeoutAnalyst)
+	llmCritic := makeLLM(cfg.LLMEndpointCritic, cfg.LLMAPIKeyCritic, cfg.LLMTimeoutCritic)
 
 	mem, err := memory.NewLongTermMemory(cfg.MemoryPath, cfg.EmbeddingEndpoint, cfg.EmbeddingAPIKey, cfg.EmbeddingModel)
 	if err != nil {
@@ -144,15 +163,14 @@ func main() {
 
 	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, cfg.MaxPagesPerQuery, cfg.MinFactsForCache)
 
-	analystAgent := agent.NewAnalystAgent(llmClient, cfg.LLMModelAnalyst, cfg.LLMTemperature, cfg.LLMTimeoutAnalyst, mem, saveFactTool)
+	analystAgent := agent.NewAnalystAgent(llmAnalyst, cfg.LLMModelAnalyst, cfg.LLMTemperature, mem, saveFactTool)
 
-	criticAgent := agent.NewCriticAgent(llmClient, cfg.LLMModelCritic, cfg.LLMTemperature, cfg.LLMTimeoutCritic)
+	criticAgent := agent.NewCriticAgent(llmCritic, cfg.LLMModelCritic, cfg.LLMTemperature)
 
 	coordinator := agent.NewCoordinator(agent.CoordinatorConfig{
-		LLM:           llmClient,
+		LLM:           llmCoordinator,
 		Model:         cfg.LLMModelCoordinator,
 		Temperature:   cfg.LLMTemperature,
-		Timeout:       cfg.LLMTimeoutCoordinator,
 		Memory:        mem,
 		SearchAgent:   searchAgent,
 		AnalystAgent:  analystAgent,
@@ -249,7 +267,6 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 				LLM:           coord.LLM(),
 				Model:         coord.Model(),
 				Temperature:   coord.Temperature(),
-				Timeout:       coord.Timeout(),
 				Memory:        coord.Memory(),
 				SearchAgent:   coord.SearchAgent(),
 				AnalystAgent:  coord.AnalystAgent(),

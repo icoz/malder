@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/icoz/malder/internal/llm"
 	"github.com/icoz/malder/internal/log"
@@ -19,16 +18,13 @@ type CriticAgent struct {
 	llm         *llm.Client
 	model       string
 	temperature float64
-	timeout     time.Duration
 }
 
-func NewCriticAgent(llmClient *llm.Client, model string, temperature float64, timeout time.Duration) *CriticAgent {
-	log.Debug("→ NewCriticAgent(model=%s, temp=%.2f, timeout=%v)", model, temperature, timeout)
+func NewCriticAgent(llmClient *llm.Client, model string, temperature float64) *CriticAgent {
 	return &CriticAgent{
 		llm:         llmClient,
 		model:       model,
 		temperature: temperature,
-		timeout:     timeout,
 	}
 }
 

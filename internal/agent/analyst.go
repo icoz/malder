@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/icoz/malder/internal/llm"
 	"github.com/icoz/malder/internal/log"
@@ -18,16 +17,13 @@ type AnalystAgent struct {
 	saveFactTool *tool.SaveFactTool
 	model        string
 	temperature  float64
-	timeout      time.Duration
 }
 
-func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, timeout time.Duration, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool) *AnalystAgent {
-	log.Debug("→ NewAnalystAgent(model=%s, temp=%.2f, timeout=%v)", model, temperature, timeout)
+func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool) *AnalystAgent {
 	return &AnalystAgent{
 		llm:          llmClient,
 		model:        model,
 		temperature:  temperature,
-		timeout:      timeout,
 		memory:       mem,
 		saveFactTool: saveTool,
 	}

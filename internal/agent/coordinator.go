@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/icoz/malder/internal/llm"
 	"github.com/icoz/malder/internal/log"
@@ -17,7 +16,6 @@ type CoordinatorAgent struct {
 	llm           *llm.Client
 	model         string
 	temperature   float64
-	timeout       time.Duration
 	memory        *memory.LongTermMemory
 	searchAgent   *SearchAgent
 	analystAgent  *AnalystAgent
@@ -30,7 +28,6 @@ type CoordinatorConfig struct {
 	LLM           *llm.Client
 	Model         string
 	Temperature   float64
-	Timeout       time.Duration
 	Memory        *memory.LongTermMemory
 	SearchAgent   *SearchAgent
 	AnalystAgent  *AnalystAgent
@@ -39,18 +36,14 @@ type CoordinatorConfig struct {
 }
 
 func NewCoordinator(cfg CoordinatorConfig) *CoordinatorAgent {
-	log.Debug("→ NewCoordinator(maxIter=%d, timeout=%v)", cfg.MaxIterations, cfg.Timeout)
+	log.Debug("→ NewCoordinator(maxIter=%d)", cfg.MaxIterations)
 	if cfg.MaxIterations == 0 {
 		cfg.MaxIterations = 3
-	}
-	if cfg.Timeout == 0 {
-		cfg.Timeout = 60 * time.Second
 	}
 	return &CoordinatorAgent{
 		llm:           cfg.LLM,
 		model:         cfg.Model,
 		temperature:   cfg.Temperature,
-		timeout:       cfg.Timeout,
 		memory:        cfg.Memory,
 		searchAgent:   cfg.SearchAgent,
 		analystAgent:  cfg.AnalystAgent,
@@ -71,7 +64,6 @@ func (c *CoordinatorAgent) CriticAgent() *CriticAgent      { return c.criticAgen
 func (c *CoordinatorAgent) MaxIterations() int             { return c.maxIterations }
 func (c *CoordinatorAgent) Model() string                  { return c.model }
 func (c *CoordinatorAgent) Temperature() float64           { return c.temperature }
-func (c *CoordinatorAgent) Timeout() time.Duration         { return c.timeout }
 
 func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result string, err error) {
 	defer func() {
