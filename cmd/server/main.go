@@ -29,6 +29,10 @@ type Config struct {
 	LLMModelAnalyst     string
 	LLMModelCritic      string
 
+	EmbeddingEndpoint string
+	EmbeddingAPIKey   string
+	EmbeddingModel    string
+
 	OpenSerpURL string
 
 	MemoryPath string
@@ -58,6 +62,9 @@ func loadConfig() *Config {
 	cfg.LLMModelCoordinator = getEnv("LLM_MODEL_COORDINATOR", cfg.LLMModel)
 	cfg.LLMModelAnalyst = getEnv("LLM_MODEL_ANALYST", cfg.LLMModel)
 	cfg.LLMModelCritic = getEnv("LLM_MODEL_CRITIC", cfg.LLMModel)
+	cfg.EmbeddingEndpoint = getEnv("EMBEDDING_ENDPOINT", cfg.LLMEndpoint+"/v1")
+	cfg.EmbeddingAPIKey = getEnv("EMBEDDING_API_KEY", cfg.LLMAPIKey)
+	cfg.EmbeddingModel = getEnv("EMBEDDING_MODEL", "text-embedding-3-small")
 	return cfg
 }
 
@@ -98,8 +105,8 @@ func getEnvDuration(key string, defaultVal time.Duration) time.Duration {
 func main() {
 	malderlog.Init()
 	cfg := loadConfig()
-	malderlog.Info("Запуск malder — LLM: %s, модель: %s, порт: %s, движок: %s, память: %s",
-		cfg.LLMEndpoint, cfg.LLMModel, cfg.ServerPort, getEnv("SEARCH_ENGINE", "duck"), cfg.MemoryPath)
+	malderlog.Info("Запуск malder — LLM: %s, модель: %s, порт: %s, движок: %s, память: %s, эмбеддинги: %s/%s",
+		cfg.LLMEndpoint, cfg.LLMModel, cfg.ServerPort, getEnv("SEARCH_ENGINE", "duck"), cfg.MemoryPath, cfg.EmbeddingEndpoint, cfg.EmbeddingModel)
 
 	llmClient := llm.NewClient(llm.Config{
 		Endpoint: cfg.LLMEndpoint,
@@ -107,7 +114,7 @@ func main() {
 		Timeout:  cfg.LLMTimeout,
 	})
 
-	mem, err := memory.NewLongTermMemory(cfg.MemoryPath)
+	mem, err := memory.NewLongTermMemory(cfg.MemoryPath, cfg.EmbeddingEndpoint, cfg.EmbeddingAPIKey, cfg.EmbeddingModel)
 	if err != nil {
 		stdlog.Fatalf("Не удалось инициализировать память: %v", err)
 	}

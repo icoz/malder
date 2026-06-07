@@ -144,3 +144,128 @@
 2026-06-07T10:20:26Z [DEBUG] ← LongTermMemory.Recall(что такое горутины) = (len=0, <nil>)
 2026-06-07T10:20:26Z [DEBUG] ← AnalystAgent.GenerateReport(что такое горутины) = (len=163, nil)
 2026-06-07T10:20:26Z [DEBUG] ← CoordinatorAgent.Run(что такое горутины) = (len=163, nil)
+2026-06-07T10:56:22Z [DEBUG] → NewSearchAgent(maxPages=3)
+2026-06-07T10:56:22Z [DEBUG] → NewAnalystAgent(model=deepseek-v4-flash, temp=0.70)
+2026-06-07T10:56:22Z [DEBUG] → NewCriticAgent(model=deepseek-v4-flash, temp=0.70)
+2026-06-07T10:56:22Z [DEBUG] → NewCoordinator(maxIter=3)
+2026-06-07T10:56:48Z [DEBUG] → CoordinatorAgent.Run(query=что такое горутины, maxIter=3)
+2026-06-07T10:56:48Z [DEBUG] → CoordinatorAgent.planQueries(query=что такое горутины)
+2026-06-07T10:56:48Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T10:56:55Z [DEBUG] ← llm.Complete = (len=297, nil)
+2026-06-07T10:56:55Z [DEBUG] ← CoordinatorAgent.planQueries = ([горутины в Go основы и синтаксис как работают горутины примеры кода горутины vs потоки сравнение производительности конкурентность с горутинами и каналами], <nil>)
+2026-06-07T10:56:55Z [DEBUG] → SearchAgent.Run(queries=[горутины в Go основы и синтаксис как работают горутины примеры кода горутины vs потоки сравнение производительности конкурентность с горутинами и каналами])
+2026-06-07T10:56:55Z [DEBUG] → SearchAgent.processQuery(query=конкурентность с горутинами и каналами)
+2026-06-07T10:56:55Z [DEBUG] → SearchAgent.processQuery(query=горутины vs потоки сравнение производительности)
+2026-06-07T10:56:55Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:56:55Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:56:55Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины vs потоки сравнение производительности)
+2026-06-07T10:56:55Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:горутины vs потоки сравнение производительности])
+2026-06-07T10:56:55Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:56:55Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:56:55Z [DEBUG] → SearchAgent.processQueryInternal(query=конкурентность с горутинами и каналами)
+2026-06-07T10:56:55Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:конкурентность с горутинами и каналами])
+2026-06-07T10:56:55Z [DEBUG] → SearchAgent.processQuery(query=как работают горутины примеры кода)
+2026-06-07T10:56:55Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:56:55Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:56:55Z [DEBUG] → SearchAgent.processQueryInternal(query=как работают горутины примеры кода)
+2026-06-07T10:56:55Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:как работают горутины примеры кода])
+2026-06-07T10:57:00Z [DEBUG] ← SearchTool.Execute = (len=2957, nil)
+2026-06-07T10:57:00Z [DEBUG] → SearchAgent.processPage(url=https://golangify.com/goroutines, query=как работают горутины примеры кода)
+2026-06-07T10:57:00Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://golangify.com/goroutines])
+2026-06-07T10:57:00Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/830460, query=как работают горутины примеры кода)
+2026-06-07T10:57:00Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/830460])
+2026-06-07T10:57:00Z [DEBUG] ← SearchTool.Execute = (len=2747, nil)
+2026-06-07T10:57:00Z [DEBUG] → SearchAgent.processPage(url=https://dzen.ru/a/ZW9w_C09HAuGRvpJ, query=горутины vs потоки сравнение производительности)
+2026-06-07T10:57:00Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://dzen.ru/a/ZW9w_C09HAuGRvpJ])
+2026-06-07T10:57:00Z [DEBUG] → SearchAgent.processPage(url=https://pythonlib.ru/post4493, query=горутины vs потоки сравнение производительности)
+2026-06-07T10:57:00Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://pythonlib.ru/post4493])
+2026-06-07T10:57:00Z [DEBUG] ← SearchTool.Execute = (len=2596, nil)
+2026-06-07T10:57:00Z [DEBUG] → SearchAgent.processPage(url=https://nuancesprog.ru/p/29161, query=конкурентность с горутинами и каналами)
+2026-06-07T10:57:00Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://nuancesprog.ru/p/29161])
+2026-06-07T10:57:00Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/962976, query=конкурентность с горутинами и каналами)
+2026-06-07T10:57:00Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/962976])
+2026-06-07T10:57:00Z [DEBUG] ← FetchPageTool.Execute = (len=534, nil)
+2026-06-07T10:57:00Z [DEBUG] → LongTermMemory.Save(key=page_1780829820985055906_7238be2de967a9eb, value_len=719)
+2026-06-07T10:57:01Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T10:57:01Z [DEBUG] → LongTermMemory.Save(key=page_1780829821191870043_-2f5d021633726544, value_len=5181)
+2026-06-07T10:57:01Z [DEBUG] ← LongTermMemory.Save(page_1780829820985055906_7238be2de967a9eb, len=719) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← SearchAgent.processPage(https://dzen.ru/a/ZW9w_C09HAuGRvpJ) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/933464, query=горутины vs потоки сравнение производительности)
+2026-06-07T10:57:01Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/933464])
+2026-06-07T10:57:01Z [DEBUG] ← LongTermMemory.Save(page_1780829821191870043_-2f5d021633726544, len=5181) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← SearchAgent.processPage(https://golangify.com/goroutines) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] → SearchAgent.processPage(url=https://proprogrammer.ru/izuchenie/gorutini-osnovi-i-primenenie-v-go-dlya-nachinayushix, query=как работают горутины примеры кода)
+2026-06-07T10:57:01Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://proprogrammer.ru/izuchenie/gorutini-osnovi-i-primenenie-v-go-dlya-nachinayushix])
+2026-06-07T10:57:01Z [DEBUG] ← FetchPageTool.Execute = (len=6124, nil)
+2026-06-07T10:57:01Z [DEBUG] → LongTermMemory.Save(key=page_1780829821335981601_7732a91b0176e523, value_len=5184)
+2026-06-07T10:57:01Z [DEBUG] ← FetchPageTool.Execute = (len=8515, nil)
+2026-06-07T10:57:01Z [DEBUG] → LongTermMemory.Save(key=page_1780829821342955300_4d3120edf9997040, value_len=5187)
+2026-06-07T10:57:01Z [DEBUG] ← LongTermMemory.Save(page_1780829821335981601_7732a91b0176e523, len=5184) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/830460) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T10:57:01Z [DEBUG] → LongTermMemory.Save(key=page_1780829821456365335_7732a91b0356ffed, value_len=5192)
+2026-06-07T10:57:01Z [DEBUG] ← LongTermMemory.Save(page_1780829821342955300_4d3120edf9997040, len=5187) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← SearchAgent.processPage(https://nuancesprog.ru/p/29161) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] → SearchAgent.processPage(url=https://proglib.io/p/samouchitel-po-go-dlya-nachinayushchih-chast-15-konkurentnost-gorutiny-kanaly-2024-08-20, query=конкурентность с горутинами и каналами)
+2026-06-07T10:57:01Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://proglib.io/p/samouchitel-po-go-dlya-nachinayushchih-chast-15-konkurentnost-gorutiny-kanaly-2024-08-20])
+2026-06-07T10:57:01Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T10:57:01Z [DEBUG] → LongTermMemory.Save(key=page_1780829821543691148_7732a91b032d1ae3, value_len=5208)
+2026-06-07T10:57:01Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T10:57:01Z [DEBUG] → LongTermMemory.Save(key=page_1780829821549944174_-737eef5723b4dd0a, value_len=5236)
+2026-06-07T10:57:01Z [DEBUG] ← LongTermMemory.Save(page_1780829821456365335_7732a91b0356ffed, len=5192) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/962976) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← LongTermMemory.Save(page_1780829821543691148_7732a91b032d1ae3, len=5208) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/933464) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← LongTermMemory.Save(page_1780829821549944174_-737eef5723b4dd0a, len=5236) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← SearchAgent.processPage(https://proprogrammer.ru/izuchenie/gorutini-osnovi-i-primenenie-v-go-dlya-nachinayushix) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:01Z [DEBUG] ← SearchAgent.processQueryInternal(как работают горутины примеры кода) = <nil>
+2026-06-07T10:57:01Z [DEBUG] → AdaptiveScheduler.Record(duration=5.935838709s, err=<nil>)
+2026-06-07T10:57:01Z [DEBUG] ← SearchAgent.processQuery(как работают горутины примеры кода) = <nil>
+2026-06-07T10:57:01Z [DEBUG] → SearchAgent.processQuery(query=горутины в Go основы и синтаксис)
+2026-06-07T10:57:01Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:57:01Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:57:01Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины в Go основы и синтаксис)
+2026-06-07T10:57:01Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:горутины в Go основы и синтаксис])
+2026-06-07T10:57:02Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T10:57:02Z [DEBUG] → LongTermMemory.Save(key=page_1780829822159738433_-720de8a9bf87f7d1, value_len=5266)
+2026-06-07T10:57:02Z [DEBUG] ← LongTermMemory.Save(page_1780829822159738433_-720de8a9bf87f7d1, len=5266) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:02Z [DEBUG] ← SearchAgent.processPage(https://proglib.io/p/samouchitel-po-go-dlya-nachinayushchih-chast-15-konkurentnost-gorutiny-kanaly-2024-08-20) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:02Z [DEBUG] ← SearchAgent.processQueryInternal(конкурентность с горутинами и каналами) = <nil>
+2026-06-07T10:57:02Z [DEBUG] → AdaptiveScheduler.Record(duration=6.457750954s, err=<nil>)
+2026-06-07T10:57:02Z [DEBUG] ← SearchAgent.processQuery(конкурентность с горутинами и каналами) = <nil>
+2026-06-07T10:57:02Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T10:57:02Z [DEBUG] → LongTermMemory.Save(key=page_1780829822237469052_4bcb8c35018d16d2, value_len=5202)
+2026-06-07T10:57:02Z [DEBUG] ← LongTermMemory.Save(page_1780829822237469052_4bcb8c35018d16d2, len=5202) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:02Z [DEBUG] ← SearchAgent.processPage(https://pythonlib.ru/post4493) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:02Z [DEBUG] ← SearchAgent.processQueryInternal(горутины vs потоки сравнение производительности) = <nil>
+2026-06-07T10:57:02Z [DEBUG] → AdaptiveScheduler.Record(duration=6.545933301s, err=<nil>)
+2026-06-07T10:57:02Z [DEBUG] ← SearchAgent.processQuery(горутины vs потоки сравнение производительности) = <nil>
+2026-06-07T10:57:05Z [DEBUG] ← SearchTool.Execute = (len=2543, nil)
+2026-06-07T10:57:05Z [DEBUG] → SearchAgent.processPage(url=https://golangify.com/goroutines, query=горутины в Go основы и синтаксис)
+2026-06-07T10:57:05Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://golangify.com/goroutines])
+2026-06-07T10:57:05Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/830460, query=горутины в Go основы и синтаксис)
+2026-06-07T10:57:05Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/830460])
+2026-06-07T10:57:05Z [DEBUG] ← FetchPageTool.Execute = (len=6124, nil)
+2026-06-07T10:57:05Z [DEBUG] → LongTermMemory.Save(key=page_1780829825678263018_7732a91b0176e523, value_len=5177)
+2026-06-07T10:57:05Z [DEBUG] ← LongTermMemory.Save(page_1780829825678263018_7732a91b0176e523, len=5177) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:05Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/830460) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:05Z [DEBUG] → SearchAgent.processPage(url=https://metanit.com/go/tutorial/7.1.php, query=горутины в Go основы и синтаксис)
+2026-06-07T10:57:05Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://metanit.com/go/tutorial/7.1.php])
+2026-06-07T10:57:05Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T10:57:05Z [DEBUG] → LongTermMemory.Save(key=page_1780829825881388072_11b644ec7bb70623, value_len=5181)
+2026-06-07T10:57:05Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T10:57:05Z [DEBUG] → LongTermMemory.Save(key=page_1780829825939331553_-2f5d021633726544, value_len=5174)
+2026-06-07T10:57:05Z [DEBUG] ← LongTermMemory.Save(page_1780829825881388072_11b644ec7bb70623, len=5181) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:05Z [DEBUG] ← SearchAgent.processPage(https://metanit.com/go/tutorial/7.1.php) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:06Z [DEBUG] ← LongTermMemory.Save(page_1780829825939331553_-2f5d021633726544, len=5174) = chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:06Z [DEBUG] ← SearchAgent.processPage(https://golangify.com/goroutines) = сохранение факта: chromem add: couldn't create embedding of document: error response from the embedding API: 403 Forbidden
+2026-06-07T10:57:06Z [DEBUG] ← SearchAgent.processQueryInternal(горутины в Go основы и синтаксис) = <nil>
+2026-06-07T10:57:06Z [DEBUG] → AdaptiveScheduler.Record(duration=4.312571893s, err=<nil>)
+2026-06-07T10:57:06Z [DEBUG] ← SearchAgent.processQuery(горутины в Go основы и синтаксис) = <nil>
+2026-06-07T10:57:06Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T10:57:06Z [DEBUG] → AnalystAgent.GenerateReport(topic=что такое горутины)
+2026-06-07T10:57:06Z [DEBUG] → LongTermMemory.RecallWithTopK(query=что такое горутины, topK=5)
+2026-06-07T10:57:06Z [DEBUG] ← LongTermMemory.RecallWithTopK(что такое горутины, 5) = (len=0, query chromem: couldn't create embedding of query: error response from the embedding API: 403 Forbidden)
+2026-06-07T10:57:06Z [DEBUG] ← LongTermMemory.Recall(что такое горутины) = (len=0, query chromem: couldn't create embedding of query: error response from the embedding API: 403 Forbidden)
+2026-06-07T10:57:06Z [DEBUG] ← AnalystAgent.GenerateReport(что такое горутины) = ("", ошибка поиска фактов: query chromem: couldn't create embedding of query: error response from the embedding API: 403 Forbidden)
+2026-06-07T10:57:06Z [DEBUG] ← CoordinatorAgent.Run(что такое горутины) = ("", ошибка аналитика на итерации 1: ошибка поиска фактов: query chromem: couldn't create embedding of query: error response from the embedding API: 403 Forbidden)

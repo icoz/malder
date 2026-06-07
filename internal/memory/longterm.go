@@ -10,14 +10,15 @@ import (
 )
 
 type LongTermMemory struct {
-	db    *chromem.DB
-	mu    sync.RWMutex
-	kv    map[string]string
-	path  string
-	count int
+	db        *chromem.DB
+	mu        sync.RWMutex
+	kv        map[string]string
+	path      string
+	count     int
+	embedFunc chromem.EmbeddingFunc
 }
 
-func NewLongTermMemory(persistPath string) (*LongTermMemory, error) {
+func NewLongTermMemory(persistPath, embedEndpoint, embedAPIKey, embedModel string) (*LongTermMemory, error) {
 	var db *chromem.DB
 	var err error
 	if persistPath != "" {
@@ -29,14 +30,15 @@ func NewLongTermMemory(persistPath string) (*LongTermMemory, error) {
 		db = chromem.NewDB()
 	}
 	return &LongTermMemory{
-		db:   db,
-		kv:   make(map[string]string),
-		path: persistPath,
+		db:        db,
+		kv:        make(map[string]string),
+		path:      persistPath,
+		embedFunc: chromem.NewEmbeddingFuncOpenAICompat(embedEndpoint, embedAPIKey, embedModel, nil),
 	}, nil
 }
 
 func (m *LongTermMemory) ensureCollection(ctx context.Context) (*chromem.Collection, error) {
-	return m.db.GetOrCreateCollection("facts", nil, nil)
+	return m.db.GetOrCreateCollection("facts", nil, m.embedFunc)
 }
 
 func (m *LongTermMemory) Save(ctx context.Context, key, value string) (err error) {
@@ -84,7 +86,7 @@ func (m *LongTermMemory) RecallWithTopK(ctx context.Context, query string, topK 
 		log.Debug("← LongTermMemory.RecallWithTopK(%s, %d) = (len=%d, %v)", query, topK, len(facts), err)
 	}()
 	log.Debug("→ LongTermMemory.RecallWithTopK(query=%s, topK=%d)", query, topK)
-	coll := m.db.GetCollection("facts", nil)
+	coll := m.db.GetCollection("facts", m.embedFunc)
 	if coll == nil {
 		return []string{}, nil
 	}

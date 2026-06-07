@@ -36,6 +36,9 @@
 | LLM_MODEL_COORDINATOR | Модель для координатора (планирование) | LLM_MODEL |
 | LLM_MODEL_ANALYST | Модель для аналитика (генерация отчёта) | LLM_MODEL |
 | LLM_MODEL_CRITIC | Модель для критика (оценка) | LLM_MODEL |
+| EMBEDDING_ENDPOINT | URL API эмбеддингов | LLM_ENDPOINT/v1 |
+| EMBEDDING_API_KEY | API ключ для эмбеддингов | LLM_API_KEY |
+| EMBEDDING_MODEL | Модель эмбеддингов | text-embedding-3-small |
 | SEARCH_ENGINE | Поисковый движок (duck/google/yandex/...) | duck |
 | MALDER_LOG_LEVEL | Уровень журналирования (debug/info/warn/error) | info |
 | MALDER_DEBUG_FILE | Файл для DEBUG-логов | malder_debug.log |
