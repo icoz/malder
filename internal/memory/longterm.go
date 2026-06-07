@@ -10,10 +10,11 @@ import (
 )
 
 type LongTermMemory struct {
-	db   *chromem.DB
-	mu   sync.RWMutex
-	kv   map[string]string
-	path string
+	db    *chromem.DB
+	mu    sync.RWMutex
+	kv    map[string]string
+	path  string
+	count int
 }
 
 func NewLongTermMemory(persistPath string) (*LongTermMemory, error) {
@@ -46,6 +47,7 @@ func (m *LongTermMemory) Save(ctx context.Context, key, value string) (err error
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.kv[key] = value
+	m.count = len(m.kv)
 	coll, err := m.ensureCollection(ctx)
 	if err != nil {
 		return fmt.Errorf("chromem get collection: %w", err)
@@ -56,6 +58,7 @@ func (m *LongTermMemory) Save(ctx context.Context, key, value string) (err error
 	}); err != nil {
 		return fmt.Errorf("chromem add: %w", err)
 	}
+	log.Info("Память: сохранён факт, всего фактов: %d", m.count)
 	return nil
 }
 
