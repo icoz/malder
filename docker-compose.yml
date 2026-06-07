@@ -1,8 +1,8 @@
 services:
   openserp:
     image: openserp/openserp:latest
-    ports:
-      - "8081:8080"
+    expose:
+      - "8080"
     environment:
       - ENGINE=yandex
     restart: unless-stopped
