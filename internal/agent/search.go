@@ -3,7 +3,7 @@ package agent
 import (
 	"context"
 	"fmt"
-	"regexp"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,8 +12,6 @@ import (
 	"github.com/icoz/malder/internal/scheduler"
 	"github.com/icoz/malder/internal/tool"
 )
-
-var linkRegex = regexp.MustCompile(`Ссылка:\s*(https?://[^\s\n]+)`)
 
 type SearchAgent struct {
 	searchTool       *tool.SearchTool
@@ -165,13 +163,23 @@ func (s *SearchAgent) processPage(ctx context.Context, pageURL, query string) (e
 	return nil
 }
 
-func extractLinks(result string) []string {
-	matches := linkRegex.FindAllStringSubmatch(result, -1)
-	links := make([]string, 0, len(matches))
-	for _, m := range matches {
-		if len(m) >= 2 {
-			links = append(links, m[1])
+func extractLinks(md string) []string {
+	var links []string
+	for {
+		start := strings.Index(md, "](")
+		if start == -1 {
+			break
 		}
+		urlStart := start + 2
+		end := strings.Index(md[urlStart:], ")")
+		if end == -1 {
+			break
+		}
+		url := md[urlStart : urlStart+end]
+		if strings.HasPrefix(url, "http://") || strings.HasPrefix(url, "https://") {
+			links = append(links, url)
+		}
+		md = md[urlStart+end+1:]
 	}
 	return links
 }

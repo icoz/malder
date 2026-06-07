@@ -2,7 +2,6 @@ package tool
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -42,37 +41,7 @@ func (t *SearchTool) Description() string {
 	return `Ищет информацию в интернете через Яндекс. Возвращает список результатов (заголовок, ссылка, сниппет).
 Аргументы:
   - query (строка, обязательный): поисковый запрос.
-  - num (целое, необязательный): количество результатов (по умолчанию 5, максимум 10).`
-}
-
-type searchEnvelope struct {
-	Query struct {
-		Text             string   `json:"text"`
-		EnginesRequested []string `json:"engines_requested"`
-	} `json:"query"`
-	Meta struct {
-		RequestID     string   `json:"request_id"`
-		RequestedAt   string   `json:"requested_at"`
-		TookMs        int      `json:"took_ms"`
-		EnginesFailed []string `json:"engines_failed"`
-		Version       string   `json:"version"`
-	} `json:"meta"`
-	Results []struct {
-		ID         string `json:"id"`
-		Rank       int    `json:"rank"`
-		Type       string `json:"type"`
-		Title      string `json:"title"`
-		URL        string `json:"url"`
-		DisplayURL string `json:"display_url"`
-		Snippet    string `json:"snippet"`
-		Domain     string `json:"domain"`
-		Engine     string `json:"engine"`
-	} `json:"results"`
-	Pagination *struct {
-		Page     int  `json:"page"`
-		HasMore  bool `json:"has_more"`
-		NextStop int  `json:"next_start"`
-	} `json:"pagination,omitempty"`
+  - limit (целое, необязательный): количество результатов (по умолчанию 10, максимум 100).`
 }
 
 func (t *SearchTool) Execute(ctx context.Context, args map[string]any) (result string, err error) {
@@ -117,7 +86,7 @@ func (t *SearchTool) Execute(ctx context.Context, args map[string]any) (result s
 		engine = e
 	}
 
-	reqURL := fmt.Sprintf("%s/%s/search?text=%s&limit=%d",
+	reqURL := fmt.Sprintf("%s/%s/search?text=%s&limit=%d&format=markdown",
 		t.endpoint, url.PathEscape(engine), url.QueryEscape(query), limit)
 
 	reqStart := time.Now()
@@ -143,25 +112,5 @@ func (t *SearchTool) Execute(ctx context.Context, args map[string]any) (result s
 		return "", fmt.Errorf("OpenSerp вернул код %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	var envelope searchEnvelope
-	if err := json.Unmarshal(bodyBytes, &envelope); err != nil {
-		return "", fmt.Errorf("ошибка парсинга JSON: %w", err)
-	}
-	if len(envelope.Results) == 0 {
-		return fmt.Sprintf("По запросу '%s' ничего не найдено.", query), nil
-	}
-
-	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf("Результаты поиска по запросу '%s':\n\n", query))
-	for i, res := range envelope.Results {
-		displayURL := res.DisplayURL
-		if displayURL == "" {
-			displayURL = res.URL
-		}
-		builder.WriteString(fmt.Sprintf("%d. %s\n", i+1, res.Title))
-		builder.WriteString(fmt.Sprintf("   Ссылка: %s\n", res.URL))
-		builder.WriteString(fmt.Sprintf("   Домен: %s\n", res.Domain))
-		builder.WriteString(fmt.Sprintf("   Краткое описание: %s\n\n", res.Snippet))
-	}
-	return builder.String(), nil
+	return string(bodyBytes), nil
 }
