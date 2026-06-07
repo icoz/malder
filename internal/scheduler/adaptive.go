@@ -76,9 +76,13 @@ func (s *AdaptiveScheduler) Record(duration time.Duration, err error) {
 		if errors.Is(err, tool.ErrTooManyRequests) {
 			s.consecutive429++
 			s.last429Time = time.Now()
+			log.Warn("Планировщик: получен 429 (всего подряд: %d, параллелизм: %d)", s.consecutive429, s.maxConcurrent)
 		} else {
 			s.consecutive429 = 0
 		}
+	} else if s.consecutive429 > 0 {
+		log.Info("Планировщик: восстановление после 429 (последних было %d)", s.consecutive429)
+		s.consecutive429 = 0
 	} else {
 		s.consecutive429 = 0
 	}
@@ -127,9 +131,12 @@ func (s *AdaptiveScheduler) adjust() {
 			newVal = s.maxConcurrentLimit
 		}
 		if newVal != s.maxConcurrent {
-			log.Info("Адаптивный планировщик: изменяем параллелизм с %d на %d (avg=%v, errors=%.2f%%)",
-				s.maxConcurrent, newVal, avgLatency, errorRate*100)
+			log.Info("Планировщик: параллелизм %d → %d (avg=%v, errors=%.2f%%, окно=%d)",
+				s.maxConcurrent, newVal, avgLatency, errorRate*100, len(s.latencies))
 			s.maxConcurrent = newVal
+		} else {
+			log.Info("Планировщик: попытка изменения заблокирована лимитами (тек: %d, avg=%v, err=%.2f%%)",
+				s.maxConcurrent, avgLatency, errorRate*100)
 		}
 	}
 	s.errorCount = 0
@@ -148,6 +155,7 @@ func (s *AdaptiveScheduler) WaitIfNeeded(ctx context.Context) (err error) {
 			backoff = 30 * time.Second
 		}
 		s.mu.Unlock()
+		log.Info("Планировщик: backoff %v после %d последовательных 429", backoff, s.consecutive429)
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
