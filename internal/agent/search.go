@@ -109,15 +109,19 @@ func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) (e
 	}
 
 	links := extractLinks(searchResult)
-	if len(links) == 0 {
+	totalLinks := len(links)
+	if totalLinks == 0 {
 		log.Info("SearchAgent: для запроса '%s' нет ссылок", query)
 		return nil
 	}
 	if len(links) > s.maxPagesPerQuery {
 		links = links[:s.maxPagesPerQuery]
 	}
+	log.Info("SearchAgent: запрос '%s' — найдено ссылок: %d, обрабатываем: %d", query, totalLinks, len(links))
 
 	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var loadErrors int
 	sem := make(chan struct{}, 2)
 	for _, link := range links {
 		wg.Add(1)
@@ -127,11 +131,15 @@ func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) (e
 			sem <- struct{}{}
 			defer func() { <-sem }()
 			if err := s.processPage(ctx, url, query); err != nil {
+				mu.Lock()
+				loadErrors++
+				mu.Unlock()
 				log.Warn("Ошибка загрузки %s: %v", url, err)
 			}
 		}(link)
 	}
 	wg.Wait()
+	log.Info("SearchAgent: запрос '%s' — загружено: %d, ошибок: %d", query, len(links)-loadErrors, loadErrors)
 	return nil
 }
 
