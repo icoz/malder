@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/icoz/malder/internal/log"
 	"github.com/PuerkitoBio/goquery"
 )
 
@@ -34,7 +35,15 @@ func (t *FetchPageTool) Description() string {
 Возвращает текст страницы или сообщение об ошибке.`
 }
 
-func (t *FetchPageTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+func (t *FetchPageTool) Execute(ctx context.Context, args map[string]any) (result string, err error) {
+	defer func() {
+		if err != nil {
+			log.Debug("← FetchPageTool.Execute = (\"\", %v)", err)
+		} else {
+			log.Debug("← FetchPageTool.Execute = (len=%d, nil)", len(result))
+		}
+	}()
+	log.Debug("→ FetchPageTool.Execute(args=%v)", args)
 	urlRaw, ok := args["url"]
 	if !ok {
 		return "", fmt.Errorf("отсутствует обязательный аргумент 'url'")

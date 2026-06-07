@@ -3,10 +3,10 @@ package scheduler
 import (
 	"context"
 	"errors"
-	"log"
 	"sync"
 	"time"
 
+	"github.com/icoz/malder/internal/log"
 	"github.com/icoz/malder/internal/tool"
 )
 
@@ -67,6 +67,7 @@ func NewAdaptiveScheduler(cfg Config) *AdaptiveScheduler {
 }
 
 func (s *AdaptiveScheduler) Record(duration time.Duration, err error) {
+	log.Debug("→ AdaptiveScheduler.Record(duration=%v, err=%v)", duration, err)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.totalCount++
@@ -126,7 +127,7 @@ func (s *AdaptiveScheduler) adjust() {
 			newVal = s.maxConcurrentLimit
 		}
 		if newVal != s.maxConcurrent {
-			log.Printf("Адаптивный планировщик: изменяем параллелизм с %d на %d (avg=%v, errors=%.2f%%)",
+			log.Info("Адаптивный планировщик: изменяем параллелизм с %d на %d (avg=%v, errors=%.2f%%)",
 				s.maxConcurrent, newVal, avgLatency, errorRate*100)
 			s.maxConcurrent = newVal
 		}
@@ -135,7 +136,11 @@ func (s *AdaptiveScheduler) adjust() {
 	s.totalCount = 0
 }
 
-func (s *AdaptiveScheduler) WaitIfNeeded(ctx context.Context) error {
+func (s *AdaptiveScheduler) WaitIfNeeded(ctx context.Context) (err error) {
+	defer func() {
+		log.Debug("← AdaptiveScheduler.WaitIfNeeded = %v", err)
+	}()
+	log.Debug("→ AdaptiveScheduler.WaitIfNeeded")
 	s.mu.Lock()
 	if s.consecutive429 > 0 {
 		backoff := time.Duration(1<<uint(s.consecutive429-1)) * time.Second

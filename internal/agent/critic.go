@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/icoz/malder/internal/llm"
+	"github.com/icoz/malder/internal/log"
 )
 
 type CritiqueResult struct {
@@ -21,6 +21,7 @@ type CriticAgent struct {
 }
 
 func NewCriticAgent(llmClient *llm.Client, model string, temperature float64) *CriticAgent {
+	log.Debug("→ NewCriticAgent(model=%s, temp=%.2f)", model, temperature)
 	return &CriticAgent{
 		llm:         llmClient,
 		model:       model,
@@ -51,8 +52,16 @@ const criticPromptTemplate = `Ты — строгий, но справедлив
 %s
 --- КОНЕЦ ОТЧЁТА ---`
 
-func (c *CriticAgent) Evaluate(ctx context.Context, report string) (int, string, error) {
-	log.Println("CriticAgent: оценка отчёта")
+func (c *CriticAgent) Evaluate(ctx context.Context, report string) (score int, feedback string, err error) {
+	defer func() {
+		if err != nil {
+			log.Debug("← CriticAgent.Evaluate = (0, \"\", %v)", err)
+		} else {
+			log.Debug("← CriticAgent.Evaluate = (%d, %q, nil)", score, feedback)
+		}
+	}()
+	log.Debug("→ CriticAgent.Evaluate(report_len=%d)", len(report))
+	log.Info("CriticAgent: оценка отчёта (длина=%d)", len(report))
 	prompt := fmt.Sprintf(criticPromptTemplate, report)
 	systemPrompt := "Ты помощник, отвечающий только JSON. Никаких пояснений до или после JSON."
 	response, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature)
@@ -61,7 +70,7 @@ func (c *CriticAgent) Evaluate(ctx context.Context, report string) (int, string,
 	}
 	var result CritiqueResult
 	if err := json.Unmarshal([]byte(response), &result); err != nil {
-		log.Printf("Невалидный JSON, возвращаем оценку по умолчанию: %s", err)
+		log.Warn("Невалидный JSON, возвращаем оценку по умолчанию: %s", err)
 		return 5, response, nil
 	}
 	if result.Score < 0 {

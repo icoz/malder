@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/icoz/malder/internal/log"
 	"github.com/google/uuid"
 )
 
@@ -30,7 +31,11 @@ func (t *SaveFactTool) Description() string {
 Пример: {"fact": "Go был создан в Google в 2007 году."}`
 }
 
-func (t *SaveFactTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+func (t *SaveFactTool) Execute(ctx context.Context, args map[string]any) (result string, err error) {
+	defer func() {
+		log.Debug("← SaveFactTool.Execute = (%q, %v)", result, err)
+	}()
+	log.Debug("→ SaveFactTool.Execute(args=%v)", args)
 	factRaw, ok := args["fact"]
 	if !ok {
 		return "", fmt.Errorf("отсутствует обязательный аргумент 'fact'")

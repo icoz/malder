@@ -3,11 +3,11 @@ package agent
 import (
 	"context"
 	"fmt"
-	"log"
 	"regexp"
 	"sync"
 	"time"
 
+	"github.com/icoz/malder/internal/log"
 	"github.com/icoz/malder/internal/memory"
 	"github.com/icoz/malder/internal/scheduler"
 	"github.com/icoz/malder/internal/tool"
@@ -30,6 +30,7 @@ func NewSearchAgent(
 	sched *scheduler.AdaptiveScheduler,
 	maxPagesPerQuery int,
 ) *SearchAgent {
+	log.Debug("→ NewSearchAgent(maxPages=%d)", maxPagesPerQuery)
 	if maxPagesPerQuery <= 0 {
 		maxPagesPerQuery = 3
 	}
@@ -42,12 +43,16 @@ func NewSearchAgent(
 	}
 }
 
-func (s *SearchAgent) Run(ctx context.Context, queries []string) error {
+func (s *SearchAgent) Run(ctx context.Context, queries []string) (err error) {
+	defer func() {
+		log.Debug("← SearchAgent.Run = %v", err)
+	}()
+	log.Debug("→ SearchAgent.Run(queries=%v)", queries)
 	if len(queries) == 0 {
 		return nil
 	}
 	currentLimit := s.scheduler.GetMaxConcurrent()
-	log.Printf("SearchAgent: запуск с параллелизмом %d, запросов: %d", currentLimit, len(queries))
+	log.Info("SearchAgent: запуск с параллелизмом %d, запросов: %d", currentLimit, len(queries))
 	sem := make(chan struct{}, currentLimit)
 	var wg sync.WaitGroup
 	errCh := make(chan error, len(queries))
@@ -77,18 +82,26 @@ func (s *SearchAgent) Run(ctx context.Context, queries []string) error {
 	return nil
 }
 
-func (s *SearchAgent) processQuery(ctx context.Context, query string) error {
+func (s *SearchAgent) processQuery(ctx context.Context, query string) (err error) {
+	defer func() {
+		log.Debug("← SearchAgent.processQuery(%s) = %v", query, err)
+	}()
+	log.Debug("→ SearchAgent.processQuery(query=%s)", query)
 	if err := s.scheduler.WaitIfNeeded(ctx); err != nil {
 		return err
 	}
 	start := time.Now()
-	err := s.processQueryInternal(ctx, query)
+	err = s.processQueryInternal(ctx, query)
 	duration := time.Since(start)
 	s.scheduler.Record(duration, err)
 	return err
 }
 
-func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) error {
+func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) (err error) {
+	defer func() {
+		log.Debug("← SearchAgent.processQueryInternal(%s) = %v", query, err)
+	}()
+	log.Debug("→ SearchAgent.processQueryInternal(query=%s)", query)
 	searchResult, err := s.searchTool.Execute(ctx, map[string]any{"query": query, "num": s.maxPagesPerQuery + 2})
 	if err != nil {
 		return fmt.Errorf("поиск не удался: %w", err)
@@ -96,7 +109,7 @@ func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) er
 
 	links := extractLinks(searchResult)
 	if len(links) == 0 {
-		log.Printf("SearchAgent: для запроса '%s' нет ссылок", query)
+		log.Info("SearchAgent: для запроса '%s' нет ссылок", query)
 		return nil
 	}
 	if len(links) > s.maxPagesPerQuery {
@@ -112,7 +125,7 @@ func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) er
 			sem <- struct{}{}
 			defer func() { <-sem }()
 			if err := s.processPage(ctx, url, query); err != nil {
-				log.Printf("Ошибка загрузки %s: %v", url, err)
+				log.Warn("Ошибка загрузки %s: %v", url, err)
 			}
 		}(link)
 	}
@@ -120,7 +133,11 @@ func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) er
 	return nil
 }
 
-func (s *SearchAgent) processPage(ctx context.Context, pageURL, query string) error {
+func (s *SearchAgent) processPage(ctx context.Context, pageURL, query string) (err error) {
+	defer func() {
+		log.Debug("← SearchAgent.processPage(%s) = %v", pageURL, err)
+	}()
+	log.Debug("→ SearchAgent.processPage(url=%s, query=%s)", pageURL, query)
 	content, err := s.fetchTool.Execute(ctx, map[string]any{"url": pageURL})
 	if err != nil {
 		return fmt.Errorf("fetch_page: %w", err)
@@ -134,7 +151,7 @@ func (s *SearchAgent) processPage(ctx context.Context, pageURL, query string) er
 	if err := s.memory.Save(ctx, key, fact); err != nil {
 		return fmt.Errorf("сохранение факта: %w", err)
 	}
-	log.Printf("SearchAgent: сохранена страница %s (%d символов)", pageURL, len(content))
+	log.Info("SearchAgent: сохранена страница %s (%d символов)", pageURL, len(content))
 	return nil
 }
 

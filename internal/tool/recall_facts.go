@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/icoz/malder/internal/log"
 	"github.com/icoz/malder/internal/memory"
 )
 
@@ -26,7 +27,11 @@ func (t *RecallFactsTool) Description() string {
 Возвращает список найденных фактов.`
 }
 
-func (t *RecallFactsTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+func (t *RecallFactsTool) Execute(ctx context.Context, args map[string]any) (result string, err error) {
+	defer func() {
+		log.Debug("← RecallFactsTool.Execute = (len=%d, %v)", len(result), err)
+	}()
+	log.Debug("→ RecallFactsTool.Execute(args=%v)", args)
 	queryRaw, ok := args["query"]
 	if !ok {
 		return "", fmt.Errorf("нет query")

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   openserp:
     image: openserp/openserp:latest
@@ -24,6 +22,8 @@ services:
       - LLM_TIMEOUT=60s
       - OPENSERP_URL=http://openserp:8080
       - MEMORY_PATH=/data
+      - MALDER_LOG_LEVEL=${MALDER_LOG_LEVEL:-warn}
+      - MALDER_DEBUG_FILE=${MALDER_DEBUG_FILE:-/data/malder_debug.log}
       - MAX_CONCURRENT_SEARCH=3
       - MAX_PAGES_PER_QUERY=3
       - MAX_ITERATIONS=3

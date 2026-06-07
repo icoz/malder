@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/icoz/malder/internal/log"
 	"github.com/philippgille/chromem-go"
 )
 
@@ -37,7 +38,11 @@ func (m *LongTermMemory) ensureCollection(ctx context.Context) (*chromem.Collect
 	return m.db.GetOrCreateCollection("facts", nil, nil)
 }
 
-func (m *LongTermMemory) Save(ctx context.Context, key, value string) error {
+func (m *LongTermMemory) Save(ctx context.Context, key, value string) (err error) {
+	defer func() {
+		log.Debug("← LongTermMemory.Save(%s, len=%d) = %v", key, len(value), err)
+	}()
+	log.Debug("→ LongTermMemory.Save(key=%s, value_len=%d)", key, len(value))
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.kv[key] = value
@@ -54,18 +59,28 @@ func (m *LongTermMemory) Save(ctx context.Context, key, value string) error {
 	return nil
 }
 
-func (m *LongTermMemory) Load(key string) (string, bool) {
+func (m *LongTermMemory) Load(key string) (val string, ok bool) {
+	defer func() {
+		log.Debug("← LongTermMemory.Load(%s) = (%q, %v)", key, val, ok)
+	}()
+	log.Debug("→ LongTermMemory.Load(key=%s)", key)
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	val, ok := m.kv[key]
-	return val, ok
+	val, ok = m.kv[key]
+	return
 }
 
-func (m *LongTermMemory) Recall(ctx context.Context, query string) ([]string, error) {
-	return m.RecallWithTopK(ctx, query, 5)
+func (m *LongTermMemory) Recall(ctx context.Context, query string) (facts []string, err error) {
+	facts, err = m.RecallWithTopK(ctx, query, 5)
+	log.Debug("← LongTermMemory.Recall(%s) = (len=%d, %v)", query, len(facts), err)
+	return
 }
 
-func (m *LongTermMemory) RecallWithTopK(ctx context.Context, query string, topK int) ([]string, error) {
+func (m *LongTermMemory) RecallWithTopK(ctx context.Context, query string, topK int) (facts []string, err error) {
+	defer func() {
+		log.Debug("← LongTermMemory.RecallWithTopK(%s, %d) = (len=%d, %v)", query, topK, len(facts), err)
+	}()
+	log.Debug("→ LongTermMemory.RecallWithTopK(query=%s, topK=%d)", query, topK)
 	coll := m.db.GetCollection("facts", nil)
 	if coll == nil {
 		return []string{}, nil
@@ -74,7 +89,7 @@ func (m *LongTermMemory) RecallWithTopK(ctx context.Context, query string, topK 
 	if err != nil {
 		return nil, fmt.Errorf("query chromem: %w", err)
 	}
-	facts := make([]string, len(results))
+	facts = make([]string, len(results))
 	for i, res := range results {
 		facts[i] = res.Content
 	}

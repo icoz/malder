@@ -8,6 +8,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/icoz/malder/internal/log"
 )
 
 type Client struct {
@@ -55,6 +57,14 @@ type chatResponse struct {
 }
 
 func (c *Client) Complete(ctx context.Context, model string, messages []ChatMessage, temperature float64) (string, error) {
+	log.Debug("→ llm.Complete(model=%s, messages=%d, temp=%.2f)", model, len(messages), temperature)
+
+	var totalLen int
+	for _, m := range messages {
+		totalLen += len(m.Content)
+	}
+	log.Info("LLM запрос: модель=%s, сообщений=%d, символов=%d, temp=%.2f", model, len(messages), totalLen, temperature)
+
 	reqBody := chatRequest{
 		Model:       model,
 		Messages:    messages,
@@ -94,12 +104,25 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 		return "", fmt.Errorf("unmarshal response: %w", err)
 	}
 	if chatResp.Error != nil {
-		return "", fmt.Errorf("LLM error: %s", chatResp.Error.Message)
+		err := fmt.Errorf("LLM error: %s", chatResp.Error.Message)
+		log.Info("LLM ответ: ошибка=%v", err)
+		log.Debug("← llm.Complete = (\"\", %v)", err)
+		return "", err
 	}
 	if len(chatResp.Choices) == 0 {
-		return "", fmt.Errorf("no choices in response")
+		err := fmt.Errorf("no choices in response")
+		log.Info("LLM ответ: ошибка=%v", err)
+		log.Debug("← llm.Complete = (\"\", %v)", err)
+		return "", err
 	}
-	return chatResp.Choices[0].Message.Content, nil
+	result := chatResp.Choices[0].Message.Content
+	truncated := result
+	if len(truncated) > 500 {
+		truncated = truncated[:500] + "..."
+	}
+	log.Info("LLM ответ: длина=%d, начало: %s", len(result), truncated)
+	log.Debug("← llm.Complete = (len=%d, nil)", len(result))
+	return result, nil
 }
 
 func (c *Client) CompleteSimple(ctx context.Context, model string, systemPrompt, userPrompt string, temperature float64) (string, error) {

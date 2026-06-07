@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
+	stdlog "log"
 	"net/http"
 	"os"
 	"strconv"
@@ -12,6 +12,7 @@ import (
 
 	"github.com/icoz/malder/internal/agent"
 	"github.com/icoz/malder/internal/llm"
+	malderlog "github.com/icoz/malder/internal/log"
 	"github.com/icoz/malder/internal/memory"
 	"github.com/icoz/malder/internal/scheduler"
 	"github.com/icoz/malder/internal/tool"
@@ -95,8 +96,9 @@ func getEnvDuration(key string, defaultVal time.Duration) time.Duration {
 }
 
 func main() {
+	malderlog.Init()
 	cfg := loadConfig()
-	log.Printf("Запуск malder с конфигурацией: %+v", cfg)
+	malderlog.Info("Запуск malder с конфигурацией: %+v", cfg)
 
 	llmClient := llm.NewClient(llm.Config{
 		Endpoint: cfg.LLMEndpoint,
@@ -106,7 +108,7 @@ func main() {
 
 	mem, err := memory.NewLongTermMemory(cfg.MemoryPath)
 	if err != nil {
-		log.Fatalf("Не удалось инициализировать память: %v", err)
+		stdlog.Fatalf("Не удалось инициализировать память: %v", err)
 	}
 	defer mem.Close()
 
@@ -145,9 +147,9 @@ func main() {
 	http.HandleFunc("/health", healthHandler)
 
 	addr := ":" + cfg.ServerPort
-	log.Printf("Сервер запущен на %s", addr)
+	malderlog.Info("Сервер запущен на %s", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
-		log.Fatal(err)
+		stdlog.Fatal(err)
 	}
 }
 

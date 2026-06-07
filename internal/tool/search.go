@@ -10,6 +10,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/icoz/malder/internal/log"
 )
 
 var ErrTooManyRequests = errors.New("too many requests (429)")
@@ -46,7 +48,15 @@ type searchResponse struct {
 	} `json:"results"`
 }
 
-func (t *SearchTool) Execute(ctx context.Context, args map[string]any) (string, error) {
+func (t *SearchTool) Execute(ctx context.Context, args map[string]any) (result string, err error) {
+	defer func() {
+		if err != nil {
+			log.Debug("← SearchTool.Execute = (\"\", %v)", err)
+		} else {
+			log.Debug("← SearchTool.Execute = (len=%d, nil)", len(result))
+		}
+	}()
+	log.Debug("→ SearchTool.Execute(args=%v)", args)
 	queryRaw, ok := args["query"]
 	if !ok {
 		return "", fmt.Errorf("отсутствует обязательный аргумент 'query'")

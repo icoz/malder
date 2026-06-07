@@ -3,10 +3,10 @@ package agent
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/icoz/malder/internal/llm"
+	"github.com/icoz/malder/internal/log"
 	"github.com/icoz/malder/internal/memory"
 	"github.com/icoz/malder/internal/tool"
 )
@@ -20,6 +20,7 @@ type AnalystAgent struct {
 }
 
 func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool) *AnalystAgent {
+	log.Debug("→ NewAnalystAgent(model=%s, temp=%.2f)", model, temperature)
 	return &AnalystAgent{
 		llm:          llmClient,
 		model:        model,
@@ -29,8 +30,16 @@ func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, m
 	}
 }
 
-func (a *AnalystAgent) GenerateReport(ctx context.Context, topic string) (string, error) {
-	log.Printf("AnalystAgent: анализ темы: %s", topic)
+func (a *AnalystAgent) GenerateReport(ctx context.Context, topic string) (report string, err error) {
+	defer func() {
+		if err != nil {
+			log.Debug("← AnalystAgent.GenerateReport(%s) = (\"\", %v)", topic, err)
+		} else {
+			log.Debug("← AnalystAgent.GenerateReport(%s) = (len=%d, nil)", topic, len(report))
+		}
+	}()
+	log.Debug("→ AnalystAgent.GenerateReport(topic=%s)", topic)
+	log.Info("AnalystAgent: анализ темы: %s", topic)
 
 	facts, err := a.memory.Recall(ctx, topic)
 	if err != nil {
@@ -42,7 +51,7 @@ func (a *AnalystAgent) GenerateReport(ctx context.Context, topic string) (string
 
 	prompt := a.buildPrompt(topic, facts)
 	systemPrompt := "Ты — эксперт-аналитик. Составляй чёткие, структурированные отчёты на русском языке. Используй факты из предоставленного контекста. Если факты противоречивы, укажи это."
-	report, err := a.llm.CompleteSimple(ctx, a.model, systemPrompt, prompt, a.temperature)
+	report, err = a.llm.CompleteSimple(ctx, a.model, systemPrompt, prompt, a.temperature)
 	if err != nil {
 		return "", fmt.Errorf("ошибка LLM: %w", err)
 	}

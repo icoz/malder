@@ -9,7 +9,7 @@ COPY . .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o malder-server ./cmd/server
 
-FROM alpine:3.19
+FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 

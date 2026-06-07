@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/icoz/malder/internal/llm"
+	"github.com/icoz/malder/internal/log"
 	"github.com/icoz/malder/internal/memory"
 )
 
@@ -36,6 +36,7 @@ type CoordinatorConfig struct {
 }
 
 func NewCoordinator(cfg CoordinatorConfig) *CoordinatorAgent {
+	log.Debug("→ NewCoordinator(maxIter=%d)", cfg.MaxIterations)
 	if cfg.MaxIterations == 0 {
 		cfg.MaxIterations = 3
 	}
@@ -64,7 +65,16 @@ func (c *CoordinatorAgent) MaxIterations() int             { return c.maxIterati
 func (c *CoordinatorAgent) Model() string                  { return c.model }
 func (c *CoordinatorAgent) Temperature() float64           { return c.temperature }
 
-func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (string, error) {
+func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result string, err error) {
+	defer func() {
+		if err != nil {
+			log.Debug("← CoordinatorAgent.Run(%s) = (\"\", %v)", userQuery, err)
+		} else {
+			log.Debug("← CoordinatorAgent.Run(%s) = (len=%d, nil)", userQuery, len(result))
+		}
+	}()
+	log.Debug("→ CoordinatorAgent.Run(query=%s, maxIter=%d)", userQuery, c.maxIterations)
+
 	c.report("start", map[string]any{"query": userQuery})
 
 	c.report("planning", nil)
@@ -76,7 +86,7 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (string, e
 
 	c.report("search_start", nil)
 	if err := c.searchAgent.Run(ctx, searchQueries); err != nil {
-		log.Printf("Ошибки при поиске: %v", err)
+		log.Warn("Ошибки при поиске: %v", err)
 	}
 	c.report("search_complete", nil)
 
@@ -97,13 +107,13 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (string, e
 		c.report("critic_start", map[string]any{"iteration": iteration})
 		score, feedback, err := c.criticAgent.Evaluate(ctx, currentReport)
 		if err != nil {
-			log.Printf("Критик вернул ошибку: %v", err)
+			log.Warn("Критик вернул ошибку: %v", err)
 			break
 		}
 		c.report("critic_complete", map[string]any{"score": score, "feedback": feedback})
 
 		if score >= 7 {
-			log.Printf("Оценка %d >= 7, качество достаточное", score)
+			log.Info("Оценка %d >= 7, качество достаточное", score)
 			break
 		}
 
@@ -111,7 +121,7 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (string, e
 		additionalQueries := c.extractQueriesFromFeedback(ctx, feedback)
 		if len(additionalQueries) > 0 {
 			if err := c.searchAgent.Run(ctx, additionalQueries); err != nil {
-				log.Printf("Ошибки при дополнительном поиске: %v", err)
+				log.Warn("Ошибки при дополнительном поиске: %v", err)
 			}
 		}
 		c.report("additional_search_complete", nil)
@@ -121,7 +131,11 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (string, e
 	return currentReport, nil
 }
 
-func (c *CoordinatorAgent) planQueries(ctx context.Context, userQuery string) ([]string, error) {
+func (c *CoordinatorAgent) planQueries(ctx context.Context, userQuery string) (queries []string, err error) {
+	defer func() {
+		log.Debug("← CoordinatorAgent.planQueries = (%v, %v)", queries, err)
+	}()
+	log.Debug("→ CoordinatorAgent.planQueries(query=%s)", userQuery)
 	prompt := fmt.Sprintf(`Ты — планировщик исследовательской системы. 
 Пользователь задал тему: "%s"
 Разбей эту тему на 3–5 конкретных поисковых запросов, которые помогут собрать информацию.
@@ -132,7 +146,6 @@ func (c *CoordinatorAgent) planQueries(ctx context.Context, userQuery string) ([
 	if err != nil {
 		return nil, err
 	}
-	var queries []string
 	if err := json.Unmarshal([]byte(response), &queries); err != nil {
 		return nil, fmt.Errorf("не удалось распарсить JSON: %s, ошибка: %w", response, err)
 	}
@@ -142,7 +155,11 @@ func (c *CoordinatorAgent) planQueries(ctx context.Context, userQuery string) ([
 	return queries, nil
 }
 
-func (c *CoordinatorAgent) extractQueriesFromFeedback(ctx context.Context, feedback string) []string {
+func (c *CoordinatorAgent) extractQueriesFromFeedback(ctx context.Context, feedback string) (queries []string) {
+	defer func() {
+		log.Debug("← CoordinatorAgent.extractQueriesFromFeedback = %v", queries)
+	}()
+	log.Debug("→ CoordinatorAgent.extractQueriesFromFeedback(feedback_len=%d)", len(feedback))
 	prompt := fmt.Sprintf(`Ты – помощник, который превращает замечания критика в конкретные поисковые запросы для интернета. 
 Замечания критика: %s
 Сформулируй 2-3 поисковых запроса, которые помогут найти недостающую информацию.
@@ -151,15 +168,14 @@ func (c *CoordinatorAgent) extractQueriesFromFeedback(ctx context.Context, feedb
 
 	response, err := c.llm.CompleteSimple(ctx, c.model, "Ты полезный помощник.", prompt, c.temperature)
 	if err != nil {
-		log.Printf("Ошибка при генерации доп. запросов: %v", err)
+		log.Warn("Ошибка при генерации доп. запросов: %v", err)
 		return nil
 	}
-	var queries []string
 	if err := json.Unmarshal([]byte(response), &queries); err != nil {
-		log.Printf("Не удалось распарсить JSON: %s", response)
+		log.Warn("Не удалось распарсить JSON: %s", response)
 		return nil
 	}
-	return queries
+	return
 }
 
 func (c *CoordinatorAgent) report(event string, data map[string]any) {
