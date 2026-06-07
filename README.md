@@ -30,7 +30,7 @@
 
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
-| LLM_ENDPOINT | URL LLM API | https://api.modelgate.ru/v1 |
+| LLM_ENDPOINT | URL LLM API | https://api.modelgate.ru |
 | LLM_API_KEY | API ключ | "" |
 | LLM_MODEL | Модель по умолчанию | deepseek-v4-flash |
 | LLM_MODEL_COORDINATOR | Модель для координатора (планирование) | LLM_MODEL |
