@@ -38,10 +38,10 @@ type Logger struct {
 	mu        sync.Mutex
 }
 
-var global = &Logger{level: WARN}
+var global = &Logger{level: INFO}
 
 func Init() {
-	level := WARN
+	level := INFO
 	switch strings.ToLower(os.Getenv("MALDER_LOG_LEVEL")) {
 	case "debug":
 		level = DEBUG

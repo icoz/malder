@@ -43,7 +43,7 @@ type Config struct {
 
 func loadConfig() *Config {
 	cfg := &Config{
-		LLMEndpoint:         getEnv("LLM_ENDPOINT", "https://api.modelgate.ru/v1"),
+		LLMEndpoint:         getEnv("LLM_ENDPOINT", "https://api.modelgate.ru"),
 		LLMAPIKey:           getEnv("LLM_API_KEY", ""),
 		LLMModel:            getEnv("LLM_MODEL", "deepseek-v4-flash"),
 		LLMTemperature:      getEnvFloat("LLM_TEMPERATURE", 0.7),
