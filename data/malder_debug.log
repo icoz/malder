@@ -1,0 +1,146 @@
+2026-06-07T10:16:42Z [DEBUG] → NewSearchAgent(maxPages=3)
+2026-06-07T10:16:42Z [DEBUG] → NewAnalystAgent(model=deepseek-v4-flash, temp=0.70)
+2026-06-07T10:16:42Z [DEBUG] → NewCriticAgent(model=deepseek-v4-flash, temp=0.70)
+2026-06-07T10:16:42Z [DEBUG] → NewCoordinator(maxIter=3)
+2026-06-07T10:19:41Z [DEBUG] → CoordinatorAgent.Run(query=что такое горутины, maxIter=3)
+2026-06-07T10:19:41Z [DEBUG] → CoordinatorAgent.planQueries(query=что такое горутины)
+2026-06-07T10:19:41Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T10:19:45Z [DEBUG] ← llm.Complete = (len=344, nil)
+2026-06-07T10:19:45Z [DEBUG] ← CoordinatorAgent.planQueries = ([горутины в Go определение и синтаксис как работают горутины легковесные потоки отличие горутин от потоков ОС примеры использования горутин в Golang каналы и горутины взаимодействие], <nil>)
+2026-06-07T10:19:45Z [DEBUG] → SearchAgent.Run(queries=[горутины в Go определение и синтаксис как работают горутины легковесные потоки отличие горутин от потоков ОС примеры использования горутин в Golang каналы и горутины взаимодействие])
+2026-06-07T10:19:45Z [DEBUG] → SearchAgent.processQuery(query=каналы и горутины взаимодействие)
+2026-06-07T10:19:45Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:19:45Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:19:45Z [DEBUG] → SearchAgent.processQueryInternal(query=каналы и горутины взаимодействие)
+2026-06-07T10:19:45Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:каналы и горутины взаимодействие])
+2026-06-07T10:19:45Z [DEBUG] → SearchAgent.processQuery(query=как работают горутины легковесные потоки)
+2026-06-07T10:19:45Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:19:45Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:19:45Z [DEBUG] → SearchAgent.processQueryInternal(query=как работают горутины легковесные потоки)
+2026-06-07T10:19:45Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:как работают горутины легковесные потоки])
+2026-06-07T10:19:45Z [DEBUG] → SearchAgent.processQuery(query=горутины в Go определение и синтаксис)
+2026-06-07T10:19:45Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:19:45Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:19:45Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины в Go определение и синтаксис)
+2026-06-07T10:19:45Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:горутины в Go определение и синтаксис])
+2026-06-07T10:19:51Z [DEBUG] ← SearchTool.Execute = (len=4376, nil)
+2026-06-07T10:19:51Z [DEBUG] ← SearchAgent.processQueryInternal(как работают горутины легковесные потоки) = <nil>
+2026-06-07T10:19:51Z [DEBUG] → AdaptiveScheduler.Record(duration=5.896962988s, err=<nil>)
+2026-06-07T10:19:51Z [DEBUG] ← SearchAgent.processQuery(как работают горутины легковесные потоки) = <nil>
+2026-06-07T10:19:51Z [DEBUG] → SearchAgent.processQuery(query=примеры использования горутин в Golang)
+2026-06-07T10:19:51Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:19:51Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:19:51Z [DEBUG] → SearchAgent.processQueryInternal(query=примеры использования горутин в Golang)
+2026-06-07T10:19:51Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:примеры использования горутин в Golang])
+2026-06-07T10:19:51Z [DEBUG] ← SearchTool.Execute = (len=3670, nil)
+2026-06-07T10:19:51Z [DEBUG] ← SearchAgent.processQueryInternal(каналы и горутины взаимодействие) = <nil>
+2026-06-07T10:19:51Z [DEBUG] → AdaptiveScheduler.Record(duration=6.011572808s, err=<nil>)
+2026-06-07T10:19:51Z [DEBUG] ← SearchAgent.processQuery(каналы и горутины взаимодействие) = <nil>
+2026-06-07T10:19:51Z [DEBUG] → SearchAgent.processQuery(query=отличие горутин от потоков ОС)
+2026-06-07T10:19:51Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:19:51Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:19:51Z [DEBUG] → SearchAgent.processQueryInternal(query=отличие горутин от потоков ОС)
+2026-06-07T10:19:51Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:отличие горутин от потоков ОС])
+2026-06-07T10:19:51Z [DEBUG] ← SearchTool.Execute = (len=2771, nil)
+2026-06-07T10:19:51Z [DEBUG] ← SearchAgent.processQueryInternal(горутины в Go определение и синтаксис) = <nil>
+2026-06-07T10:19:51Z [DEBUG] → AdaptiveScheduler.Record(duration=6.198850094s, err=<nil>)
+2026-06-07T10:19:51Z [DEBUG] ← SearchAgent.processQuery(горутины в Go определение и синтаксис) = <nil>
+2026-06-07T10:19:56Z [DEBUG] ← SearchTool.Execute = (len=2677, nil)
+2026-06-07T10:19:56Z [DEBUG] ← SearchAgent.processQueryInternal(примеры использования горутин в Golang) = <nil>
+2026-06-07T10:19:56Z [DEBUG] → AdaptiveScheduler.Record(duration=4.894078086s, err=<nil>)
+2026-06-07T10:19:56Z [DEBUG] ← SearchAgent.processQuery(примеры использования горутин в Golang) = <nil>
+2026-06-07T10:19:56Z [DEBUG] ← SearchTool.Execute = (len=3899, nil)
+2026-06-07T10:19:56Z [DEBUG] ← SearchAgent.processQueryInternal(отличие горутин от потоков ОС) = <nil>
+2026-06-07T10:19:56Z [DEBUG] → AdaptiveScheduler.Record(duration=4.929235465s, err=<nil>)
+2026-06-07T10:19:56Z [DEBUG] ← SearchAgent.processQuery(отличие горутин от потоков ОС) = <nil>
+2026-06-07T10:19:56Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T10:19:56Z [DEBUG] → AnalystAgent.GenerateReport(topic=что такое горутины)
+2026-06-07T10:19:56Z [DEBUG] → LongTermMemory.RecallWithTopK(query=что такое горутины, topK=5)
+2026-06-07T10:19:56Z [DEBUG] ← LongTermMemory.RecallWithTopK(что такое горутины, 5) = (len=0, <nil>)
+2026-06-07T10:19:56Z [DEBUG] ← LongTermMemory.Recall(что такое горутины) = (len=0, <nil>)
+2026-06-07T10:19:56Z [DEBUG] ← AnalystAgent.GenerateReport(что такое горутины) = (len=163, nil)
+2026-06-07T10:19:56Z [DEBUG] → CriticAgent.Evaluate(report_len=163)
+2026-06-07T10:19:56Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T10:20:00Z [DEBUG] ← llm.Complete = (len=487, nil)
+2026-06-07T10:20:00Z [DEBUG] ← CriticAgent.Evaluate = (0, "Отчёт не содержит никакой информации по теме 'горутины'. Это сообщение об ошибке, а не исследовательский отчёт. Полное отсутствие полноты (0 из 40%), точности (0 из 30%), структуры (0 из 20%) и источников (0 из 10%). Требуется предоставить содержательный анализ.", nil)
+2026-06-07T10:20:00Z [DEBUG] → CoordinatorAgent.extractQueriesFromFeedback(feedback_len=453)
+2026-06-07T10:20:00Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T10:20:01Z [DEBUG] ← llm.Complete = (len=202, nil)
+2026-06-07T10:20:01Z [DEBUG] ← CoordinatorAgent.extractQueriesFromFeedback = [горутины в Go примеры использования исследовательский отчёт по горутинам Go горутины Go структура и анализ]
+2026-06-07T10:20:01Z [DEBUG] → SearchAgent.Run(queries=[горутины в Go примеры использования исследовательский отчёт по горутинам Go горутины Go структура и анализ])
+2026-06-07T10:20:01Z [DEBUG] → SearchAgent.processQuery(query=горутины Go структура и анализ)
+2026-06-07T10:20:01Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:20:01Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:20:01Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины Go структура и анализ)
+2026-06-07T10:20:01Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:горутины Go структура и анализ])
+2026-06-07T10:20:01Z [DEBUG] → SearchAgent.processQuery(query=горутины в Go примеры использования)
+2026-06-07T10:20:01Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:20:01Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:20:01Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины в Go примеры использования)
+2026-06-07T10:20:01Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:горутины в Go примеры использования])
+2026-06-07T10:20:01Z [DEBUG] → SearchAgent.processQuery(query=исследовательский отчёт по горутинам Go)
+2026-06-07T10:20:01Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:20:01Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:20:01Z [DEBUG] → SearchAgent.processQueryInternal(query=исследовательский отчёт по горутинам Go)
+2026-06-07T10:20:01Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:исследовательский отчёт по горутинам Go])
+2026-06-07T10:20:06Z [DEBUG] ← SearchTool.Execute = (len=2681, nil)
+2026-06-07T10:20:06Z [DEBUG] ← SearchAgent.processQueryInternal(исследовательский отчёт по горутинам Go) = <nil>
+2026-06-07T10:20:06Z [DEBUG] → AdaptiveScheduler.Record(duration=5.414798805s, err=<nil>)
+2026-06-07T10:20:06Z [DEBUG] ← SearchAgent.processQuery(исследовательский отчёт по горутинам Go) = <nil>
+2026-06-07T10:20:06Z [DEBUG] ← SearchTool.Execute = (len=2707, nil)
+2026-06-07T10:20:06Z [DEBUG] ← SearchAgent.processQueryInternal(горутины Go структура и анализ) = <nil>
+2026-06-07T10:20:06Z [DEBUG] → AdaptiveScheduler.Record(duration=5.444616424s, err=<nil>)
+2026-06-07T10:20:06Z [DEBUG] ← SearchAgent.processQuery(горутины Go структура и анализ) = <nil>
+2026-06-07T10:20:06Z [DEBUG] ← SearchTool.Execute = (len=2717, nil)
+2026-06-07T10:20:06Z [DEBUG] ← SearchAgent.processQueryInternal(горутины в Go примеры использования) = <nil>
+2026-06-07T10:20:06Z [DEBUG] → AdaptiveScheduler.Record(duration=5.666185289s, err=<nil>)
+2026-06-07T10:20:06Z [DEBUG] ← SearchAgent.processQuery(горутины в Go примеры использования) = <nil>
+2026-06-07T10:20:06Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T10:20:06Z [DEBUG] → AnalystAgent.GenerateReport(topic=что такое горутины)
+2026-06-07T10:20:06Z [DEBUG] → LongTermMemory.RecallWithTopK(query=что такое горутины, topK=5)
+2026-06-07T10:20:06Z [DEBUG] ← LongTermMemory.RecallWithTopK(что такое горутины, 5) = (len=0, <nil>)
+2026-06-07T10:20:06Z [DEBUG] ← LongTermMemory.Recall(что такое горутины) = (len=0, <nil>)
+2026-06-07T10:20:06Z [DEBUG] ← AnalystAgent.GenerateReport(что такое горутины) = (len=163, nil)
+2026-06-07T10:20:06Z [DEBUG] → CriticAgent.Evaluate(report_len=163)
+2026-06-07T10:20:06Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T10:20:09Z [DEBUG] ← llm.Complete = (len=453, nil)
+2026-06-07T10:20:09Z [DEBUG] ← CriticAgent.Evaluate = (0, "Отчёт не содержит никакого анализа: он состоит лишь из сообщения о недостатке данных. Полностью отсутствуют полнота, точность, структура и источники. Тема 'горутины' не раскрыта, нет введения, основного содержания или заключения.", nil)
+2026-06-07T10:20:09Z [DEBUG] → CoordinatorAgent.extractQueriesFromFeedback(feedback_len=419)
+2026-06-07T10:20:09Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T10:20:17Z [DEBUG] ← llm.Complete = (len=231, nil)
+2026-06-07T10:20:17Z [DEBUG] ← CoordinatorAgent.extractQueriesFromFeedback = [введение в горутины Go структура анализ полное руководство по горутинам Go с примерами источники информации о горутинах Go]
+2026-06-07T10:20:17Z [DEBUG] → SearchAgent.Run(queries=[введение в горутины Go структура анализ полное руководство по горутинам Go с примерами источники информации о горутинах Go])
+2026-06-07T10:20:17Z [DEBUG] → SearchAgent.processQuery(query=источники информации о горутинах Go)
+2026-06-07T10:20:17Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:20:17Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:20:17Z [DEBUG] → SearchAgent.processQueryInternal(query=источники информации о горутинах Go)
+2026-06-07T10:20:17Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:источники информации о горутинах Go])
+2026-06-07T10:20:17Z [DEBUG] → SearchAgent.processQuery(query=полное руководство по горутинам Go с примерами)
+2026-06-07T10:20:17Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:20:17Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:20:17Z [DEBUG] → SearchAgent.processQueryInternal(query=полное руководство по горутинам Go с примерами)
+2026-06-07T10:20:17Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:полное руководство по горутинам Go с примерами])
+2026-06-07T10:20:22Z [DEBUG] ← SearchTool.Execute = (len=2819, nil)
+2026-06-07T10:20:22Z [DEBUG] ← SearchAgent.processQueryInternal(источники информации о горутинах Go) = <nil>
+2026-06-07T10:20:22Z [DEBUG] → AdaptiveScheduler.Record(duration=4.832046348s, err=<nil>)
+2026-06-07T10:20:22Z [DEBUG] ← SearchAgent.processQuery(источники информации о горутинах Go) = <nil>
+2026-06-07T10:20:22Z [DEBUG] → SearchAgent.processQuery(query=введение в горутины Go структура анализ)
+2026-06-07T10:20:22Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T10:20:22Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T10:20:22Z [DEBUG] → SearchAgent.processQueryInternal(query=введение в горутины Go структура анализ)
+2026-06-07T10:20:22Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:введение в горутины Go структура анализ])
+2026-06-07T10:20:22Z [DEBUG] ← SearchTool.Execute = (len=2708, nil)
+2026-06-07T10:20:22Z [DEBUG] ← SearchAgent.processQueryInternal(полное руководство по горутинам Go с примерами) = <nil>
+2026-06-07T10:20:22Z [DEBUG] → AdaptiveScheduler.Record(duration=4.898888981s, err=<nil>)
+2026-06-07T10:20:22Z [DEBUG] ← SearchAgent.processQuery(полное руководство по горутинам Go с примерами) = <nil>
+2026-06-07T10:20:26Z [DEBUG] ← SearchTool.Execute = (len=2742, nil)
+2026-06-07T10:20:26Z [DEBUG] ← SearchAgent.processQueryInternal(введение в горутины Go структура анализ) = <nil>
+2026-06-07T10:20:26Z [DEBUG] → AdaptiveScheduler.Record(duration=4.324497174s, err=<nil>)
+2026-06-07T10:20:26Z [DEBUG] ← SearchAgent.processQuery(введение в горутины Go структура анализ) = <nil>
+2026-06-07T10:20:26Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T10:20:26Z [DEBUG] → AnalystAgent.GenerateReport(topic=что такое горутины)
+2026-06-07T10:20:26Z [DEBUG] → LongTermMemory.RecallWithTopK(query=что такое горутины, topK=5)
+2026-06-07T10:20:26Z [DEBUG] ← LongTermMemory.RecallWithTopK(что такое горутины, 5) = (len=0, <nil>)
+2026-06-07T10:20:26Z [DEBUG] ← LongTermMemory.Recall(что такое горутины) = (len=0, <nil>)
+2026-06-07T10:20:26Z [DEBUG] ← AnalystAgent.GenerateReport(что такое горутины) = (len=163, nil)
+2026-06-07T10:20:26Z [DEBUG] ← CoordinatorAgent.Run(что такое горутины) = (len=163, nil)
