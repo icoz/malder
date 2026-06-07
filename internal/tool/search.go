@@ -88,27 +88,31 @@ func (t *SearchTool) Execute(ctx context.Context, args map[string]any) (result s
 	reqURL := fmt.Sprintf("%s/search?q=%s&engine=yandex&num=%d",
 		t.endpoint, url.QueryEscape(query), num)
 
+	reqStart := time.Now()
 	httpReq, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("ошибка создания запроса: %w", err)
 	}
 
 	resp, err := t.httpClient.Do(httpReq)
+	reqDur := time.Since(reqStart)
 	if err != nil {
 		return "", fmt.Errorf("ошибка выполнения поиска: %w", err)
 	}
 	defer resp.Body.Close()
 
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	log.Info("HTTP search %s: status=%d, duration=%v, body=%d bytes", query, resp.StatusCode, reqDur, len(bodyBytes))
+
 	if resp.StatusCode == 429 {
 		return "", ErrTooManyRequests
 	}
 	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("OpenSerp вернул код %d: %s", resp.StatusCode, string(body))
+		return "", fmt.Errorf("OpenSerp вернул код %d: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	var sr searchResponse
-	if err := json.NewDecoder(resp.Body).Decode(&sr); err != nil {
+	if err := json.Unmarshal(bodyBytes, &sr); err != nil {
 		return "", fmt.Errorf("ошибка парсинга JSON: %w", err)
 	}
 	if len(sr.Results) == 0 {

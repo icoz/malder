@@ -53,6 +53,7 @@ func (t *FetchPageTool) Execute(ctx context.Context, args map[string]any) (resul
 		return "", fmt.Errorf("аргумент 'url' должен быть строкой")
 	}
 
+	reqStart := time.Now()
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return "", fmt.Errorf("ошибка создания запроса: %w", err)
@@ -60,12 +61,14 @@ func (t *FetchPageTool) Execute(ctx context.Context, args map[string]any) (resul
 	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; MalderBot/1.0)")
 
 	resp, err := t.httpClient.Do(req)
+	reqDur := time.Since(reqStart)
 	if err != nil {
 		return "", fmt.Errorf("ошибка загрузки страницы: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
+		log.Info("HTTP fetch %s: status=%d, duration=%v", url, resp.StatusCode, reqDur)
 		return "", fmt.Errorf("HTTP ошибка: %d %s", resp.StatusCode, resp.Status)
 	}
 
@@ -90,6 +93,7 @@ func (t *FetchPageTool) Execute(ctx context.Context, args map[string]any) (resul
 	if len(text) > maxLen {
 		text = text[:maxLen] + "... (текст обрезан)"
 	}
+	log.Info("HTTP fetch %s: status=200, duration=%v, text=%d chars", url, reqDur, len(text))
 	if text == "" {
 		return "", fmt.Errorf("не удалось извлечь текст со страницы %s", url)
 	}
