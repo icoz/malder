@@ -54,9 +54,7 @@ func (a *AnalystAgent) GenerateReport(ctx context.Context, topic string) (report
 
 	prompt := a.buildPrompt(topic, facts)
 	systemPrompt := "Ты — эксперт-аналитик. Составляй чёткие, структурированные отчёты на русском языке. Используй факты из предоставленного контекста. Если факты противоречивы, укажи это."
-	llmCtx, cancel := context.WithTimeout(ctx, a.timeout)
-	defer cancel()
-	report, err = a.llm.CompleteSimple(llmCtx, a.model, systemPrompt, prompt, a.temperature)
+	report, err = a.llm.CompleteSimple(ctx, a.model, systemPrompt, prompt, a.temperature)
 	if err != nil {
 		return "", fmt.Errorf("ошибка LLM: %w", err)
 	}

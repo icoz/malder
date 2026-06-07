@@ -67,9 +67,7 @@ func (c *CriticAgent) Evaluate(ctx context.Context, report string) (score int, f
 	log.Info("CriticAgent: оценка отчёта (длина=%d)", len(report))
 	prompt := fmt.Sprintf(criticPromptTemplate, report)
 	systemPrompt := "Ты помощник, отвечающий только JSON. Никаких пояснений до или после JSON."
-	llmCtx, cancel := context.WithTimeout(ctx, c.timeout)
-	defer cancel()
-	response, err := c.llm.CompleteSimple(llmCtx, c.model, systemPrompt, prompt, c.temperature)
+	response, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature)
 	if err != nil {
 		return 0, "", fmt.Errorf("ошибка LLM: %w", err)
 	}

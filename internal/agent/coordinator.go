@@ -150,9 +150,7 @@ func (c *CoordinatorAgent) planQueries(ctx context.Context, userQuery string) (q
 Ответь ТОЛЬКО в формате JSON-массива строк, например: ["запрос 1", "запрос 2", "запрос 3"]
 Не пиши ничего кроме JSON.`, userQuery)
 
-	llmCtx, cancel := context.WithTimeout(ctx, c.timeout)
-	defer cancel()
-	response, err := c.llm.CompleteSimple(llmCtx, c.model, "Ты помощник, отвечающий только JSON.", prompt, c.temperature)
+	response, err := c.llm.CompleteSimple(ctx, c.model, "Ты помощник, отвечающий только JSON.", prompt, c.temperature)
 	if err != nil {
 		return nil, err
 	}
@@ -176,9 +174,7 @@ func (c *CoordinatorAgent) extractQueriesFromFeedback(ctx context.Context, feedb
 Ответь ТОЛЬКО в формате JSON-массива строк, например: ["запрос 1", "запрос 2"]
 Не пиши ничего кроме JSON.`, feedback)
 
-	llmCtx, cancel := context.WithTimeout(ctx, c.timeout)
-	defer cancel()
-	response, err := c.llm.CompleteSimple(llmCtx, c.model, "Ты полезный помощник.", prompt, c.temperature)
+	response, err := c.llm.CompleteSimple(ctx, c.model, "Ты полезный помощник.", prompt, c.temperature)
 	if err != nil {
 		log.Warn("Ошибка при генерации доп. запросов: %v", err)
 		return nil
