@@ -60,6 +60,7 @@ func (s *SearchAgent) Run(ctx context.Context, queries []string) (err error) {
 	for _, q := range queries {
 		wg.Add(1)
 		go func(query string) {
+			defer log.Recover("SearchAgent.Run.query." + query)
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()
@@ -121,6 +122,7 @@ func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) (e
 	for _, link := range links {
 		wg.Add(1)
 		go func(url string) {
+			defer log.Recover("SearchAgent.processPage." + url)
 			defer wg.Done()
 			sem <- struct{}{}
 			defer func() { <-sem }()

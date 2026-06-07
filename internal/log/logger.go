@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -92,3 +93,11 @@ func Debug(format string, args ...any) { global.log(DEBUG, format, args...) }
 func Info(format string, args ...any)  { global.log(INFO, format, args...) }
 func Warn(format string, args ...any)  { global.log(WARN, format, args...) }
 func Error(format string, args ...any) { global.log(ERROR, format, args...) }
+
+// Recover catches panics in goroutines, logs the error and stack trace.
+// Usage: defer log.Recover("goroutine name")
+func Recover(context string) {
+	if r := recover(); r != nil {
+		Error("PANIC [%s]: %v\n%s", context, r, debug.Stack())
+	}
+}

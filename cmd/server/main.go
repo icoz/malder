@@ -215,6 +215,7 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 		defer cancel()
 
 		go func() {
+			defer malderlog.Recover("SSE research handler")
 			reporter := func(event string, data map[string]any) {
 				dataJSON, _ := json.Marshal(data)
 				fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, string(dataJSON))
