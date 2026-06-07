@@ -103,7 +103,7 @@ func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) (e
 		log.Debug("← SearchAgent.processQueryInternal(%s) = %v", query, err)
 	}()
 	log.Debug("→ SearchAgent.processQueryInternal(query=%s)", query)
-	searchResult, err := s.searchTool.Execute(ctx, map[string]any{"query": query, "num": s.maxPagesPerQuery + 2})
+	searchResult, err := s.searchTool.Execute(ctx, map[string]any{"query": query, "limit": s.maxPagesPerQuery + 2})
 	if err != nil {
 		return fmt.Errorf("поиск не удался: %w", err)
 	}

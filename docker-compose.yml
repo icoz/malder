@@ -1,8 +1,8 @@
 services:
   openserp:
-    image: openserp/openserp:latest
+    image: karust/openserp:latest
     expose:
-      - "8080"
+      - "7000"
     environment:
       - ENGINE=yandex
     restart: unless-stopped
@@ -20,7 +20,7 @@ services:
       - LLM_MODEL_CRITIC=${LLM_MODEL_CRITIC:-}
       - LLM_TEMPERATURE=0.7
       - LLM_TIMEOUT=60s
-      - OPENSERP_URL=http://openserp:8080
+      - OPENSERP_URL=http://openserp:7000
       - MEMORY_PATH=/data
       - MALDER_LOG_LEVEL=${MALDER_LOG_LEVEL:-warn}
       - MALDER_DEBUG_FILE=${MALDER_DEBUG_FILE:-/data/malder_debug.log}

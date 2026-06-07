@@ -112,7 +112,7 @@ func main() {
 	}
 	defer mem.Close()
 
-	searchTool := tool.NewSearchTool(cfg.OpenSerpURL, 10*time.Second)
+	searchTool := tool.NewSearchTool(cfg.OpenSerpURL, 10*time.Second, "yandex")
 	fetchTool := tool.NewFetchPageTool(15 * time.Second)
 	saveFactTool := tool.NewSaveFactTool(mem)
 	schedCfg := scheduler.Config{
