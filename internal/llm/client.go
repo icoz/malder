@@ -47,10 +47,17 @@ type chatRequest struct {
 	Stream      bool          `json:"stream"`
 }
 
+type chatUsage struct {
+	PromptTokens     int `json:"prompt_tokens"`
+	CompletionTokens int `json:"completion_tokens"`
+	TotalTokens      int `json:"total_tokens"`
+}
+
 type chatResponse struct {
 	Choices []struct {
 		Message ChatMessage `json:"message"`
 	} `json:"choices"`
+	Usage *chatUsage `json:"usage,omitempty"`
 	Error *struct {
 		Message string `json:"message"`
 	} `json:"error,omitempty"`
@@ -120,7 +127,12 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 	if len(truncated) > 500 {
 		truncated = truncated[:500] + "..."
 	}
-	log.Info("LLM ответ: длина=%d, начало: %s", len(result), truncated)
+	if chatResp.Usage != nil {
+		log.Info("LLM ответ: длина=%d, токены: input=%d, output=%d, total=%d",
+			len(result), chatResp.Usage.PromptTokens, chatResp.Usage.CompletionTokens, chatResp.Usage.TotalTokens)
+	} else {
+		log.Info("LLM ответ: длина=%d, начало: %s", len(result), truncated)
+	}
 	log.Debug("← llm.Complete = (len=%d, nil)", len(result))
 	return result, nil
 }
