@@ -91,7 +91,7 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 	for attempt := 0; attempt < maxAttempts; attempt++ {
 		if attempt > 0 {
 			backoff := c.timeout * time.Duration(1<<(attempt-1))
-			log.Warn("LLM request failed (attempt %d/%d): %v, retrying in %v", attempt, maxAttempts-1, lastErr, backoff)
+			log.Warn("LLM request failed (attempt %d/%d): %v, retrying in %v", attempt+1, maxAttempts, lastErr, backoff)
 			select {
 			case <-time.After(backoff):
 			case <-ctx.Done():
@@ -113,14 +113,15 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 		}
 
 		resp, err := c.httpClient.Do(httpReq)
-		cancel()
 		if err != nil {
+			cancel()
 			lastErr = fmt.Errorf("http do: %w", err)
 			continue
 		}
 
 		body, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
+		cancel()
 		if err != nil {
 			lastErr = fmt.Errorf("read body: %w", err)
 			continue

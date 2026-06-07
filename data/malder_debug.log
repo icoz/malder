@@ -1,153 +1,151 @@
-2026-06-07T11:05:43Z [DEBUG] → NewSearchAgent(maxPages=3)
-2026-06-07T11:05:43Z [DEBUG] → NewAnalystAgent(model=deepseek-v4-flash, temp=0.70)
-2026-06-07T11:05:43Z [DEBUG] → NewCriticAgent(model=deepseek-v4-flash, temp=0.70)
-2026-06-07T11:05:43Z [DEBUG] → NewCoordinator(maxIter=3)
-2026-06-07T11:06:06Z [DEBUG] → CoordinatorAgent.Run(query=что такое горутины, maxIter=3)
-2026-06-07T11:06:06Z [DEBUG] → CoordinatorAgent.planQueries(query=что такое горутины)
-2026-06-07T11:06:06Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
-2026-06-07T11:06:12Z [DEBUG] ← llm.Complete = (len=242, nil)
-2026-06-07T11:06:12Z [DEBUG] ← CoordinatorAgent.planQueries = ([определение горутины в Go как работают горутины горутины vs потоки пример использования горутин преимущества горутин], <nil>)
-2026-06-07T11:06:12Z [DEBUG] → SearchAgent.Run(queries=[определение горутины в Go как работают горутины горутины vs потоки пример использования горутин преимущества горутин])
-2026-06-07T11:06:12Z [DEBUG] → SearchAgent.processQuery(query=преимущества горутин)
-2026-06-07T11:06:12Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
-2026-06-07T11:06:12Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
-2026-06-07T11:06:12Z [DEBUG] → SearchAgent.processQueryInternal(query=преимущества горутин)
-2026-06-07T11:06:12Z [DEBUG] → SearchAgent.processQuery(query=горутины vs потоки)
-2026-06-07T11:06:12Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
-2026-06-07T11:06:12Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:преимущества горутин])
-2026-06-07T11:06:12Z [DEBUG] → SearchAgent.processQuery(query=как работают горутины)
-2026-06-07T11:06:12Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
-2026-06-07T11:06:12Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
-2026-06-07T11:06:12Z [DEBUG] → SearchAgent.processQueryInternal(query=как работают горутины)
-2026-06-07T11:06:12Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:как работают горутины])
-2026-06-07T11:06:12Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
-2026-06-07T11:06:12Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины vs потоки)
-2026-06-07T11:06:12Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:горутины vs потоки])
-2026-06-07T11:06:16Z [DEBUG] ← SearchTool.Execute = (len=2560, nil)
-2026-06-07T11:06:16Z [DEBUG] → SearchAgent.processPage(url=https://dzen.ru/a/ZW9w_C09HAuGRvpJ, query=горутины vs потоки)
-2026-06-07T11:06:16Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://dzen.ru/a/ZW9w_C09HAuGRvpJ])
-2026-06-07T11:06:16Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/933464, query=горутины vs потоки)
-2026-06-07T11:06:16Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/933464])
-2026-06-07T11:06:16Z [DEBUG] ← FetchPageTool.Execute = (len=534, nil)
-2026-06-07T11:06:16Z [DEBUG] → LongTermMemory.Save(key=page_1780830376806874990_7238be2de967a9eb, value_len=663)
-2026-06-07T11:06:16Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
-2026-06-07T11:06:16Z [DEBUG] → LongTermMemory.Save(key=page_1780830376863245012_7732a91b032d1ae3, value_len=5152)
-2026-06-07T11:06:17Z [DEBUG] ← SearchTool.Execute = (len=3342, nil)
-2026-06-07T11:06:17Z [DEBUG] → SearchAgent.processPage(url=https://proprogrammer.ru/izuchenie/gorutini-osnovi-i-primenenie-v-go-dlya-nachinayushix, query=как работают горутины)
-2026-06-07T11:06:17Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://proprogrammer.ru/izuchenie/gorutini-osnovi-i-primenenie-v-go-dlya-nachinayushix])
-2026-06-07T11:06:17Z [DEBUG] → SearchAgent.processPage(url=https://metanit.com/go/tutorial/7.1.php, query=как работают горутины)
-2026-06-07T11:06:17Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://metanit.com/go/tutorial/7.1.php])
-2026-06-07T11:06:17Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
-2026-06-07T11:06:17Z [DEBUG] → LongTermMemory.Save(key=page_1780830377308973834_11b644ec7bb70623, value_len=5164)
-2026-06-07T11:06:17Z [DEBUG] ← SearchTool.Execute = (len=2650, nil)
-2026-06-07T11:06:17Z [DEBUG] → SearchAgent.processPage(url=https://gosuda.org/ru/blog/posts/goroutine-basics-z3fbe209e, query=преимущества горутин)
-2026-06-07T11:06:17Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://gosuda.org/ru/blog/posts/goroutine-basics-z3fbe209e])
-2026-06-07T11:06:17Z [DEBUG] → SearchAgent.processPage(url=https://goxpert.ru/2024/06/01/concurrency/goroutines, query=преимущества горутин)
-2026-06-07T11:06:17Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://goxpert.ru/2024/06/01/concurrency/goroutines])
-2026-06-07T11:06:17Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
-2026-06-07T11:06:17Z [DEBUG] → LongTermMemory.Save(key=page_1780830377386916639_-737eef5723b4dd0a, value_len=5212)
-2026-06-07T11:06:17Z [DEBUG] ← LongTermMemory.Save(page_1780830376806874990_7238be2de967a9eb, len=663) = <nil>
-2026-06-07T11:06:17Z [DEBUG] ← SearchAgent.processPage(https://dzen.ru/a/ZW9w_C09HAuGRvpJ) = <nil>
-2026-06-07T11:06:17Z [DEBUG] → SearchAgent.processPage(url=https://kedu.ru/press-center/articles/info-it-go-i-mnogopotochnost-kak-gorutiny-i-kanaly-delayut-parallelizm-prostym, query=горутины vs потоки)
-2026-06-07T11:06:17Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://kedu.ru/press-center/articles/info-it-go-i-mnogopotochnost-kak-gorutiny-i-kanaly-delayut-parallelizm-prostym])
-2026-06-07T11:06:17Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
-2026-06-07T11:06:17Z [DEBUG] → LongTermMemory.Save(key=page_1780830377728930841_2c5a9496a6075143, value_len=5183)
-2026-06-07T11:06:17Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
-2026-06-07T11:06:17Z [DEBUG] → LongTermMemory.Save(key=page_1780830377785252278_-5c19eb3cd6ab68c, value_len=5233)
-2026-06-07T11:06:17Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
-2026-06-07T11:06:17Z [DEBUG] → LongTermMemory.Save(key=page_1780830377898533995_-a10540f00665af, value_len=5176)
-2026-06-07T11:06:18Z [DEBUG] ← LongTermMemory.Save(page_1780830376863245012_7732a91b032d1ae3, len=5152) = <nil>
-2026-06-07T11:06:18Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/933464) = <nil>
-2026-06-07T11:06:19Z [DEBUG] ← LongTermMemory.Save(page_1780830377308973834_11b644ec7bb70623, len=5164) = <nil>
-2026-06-07T11:06:19Z [DEBUG] ← SearchAgent.processPage(https://metanit.com/go/tutorial/7.1.php) = <nil>
-2026-06-07T11:06:19Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/830460, query=как работают горутины)
-2026-06-07T11:06:19Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/830460])
-2026-06-07T11:06:19Z [DEBUG] ← FetchPageTool.Execute = (len=6124, nil)
-2026-06-07T11:06:19Z [DEBUG] → LongTermMemory.Save(key=page_1780830379915033909_7732a91b0176e523, value_len=5160)
-2026-06-07T11:06:20Z [DEBUG] ← LongTermMemory.Save(page_1780830377386916639_-737eef5723b4dd0a, len=5212) = <nil>
-2026-06-07T11:06:20Z [DEBUG] ← SearchAgent.processPage(https://proprogrammer.ru/izuchenie/gorutini-osnovi-i-primenenie-v-go-dlya-nachinayushix) = <nil>
-2026-06-07T11:06:21Z [DEBUG] ← LongTermMemory.Save(page_1780830377728930841_2c5a9496a6075143, len=5183) = <nil>
-2026-06-07T11:06:21Z [DEBUG] ← SearchAgent.processPage(https://gosuda.org/ru/blog/posts/goroutine-basics-z3fbe209e) = <nil>
-2026-06-07T11:06:21Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/141853, query=преимущества горутин)
-2026-06-07T11:06:21Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/141853])
-2026-06-07T11:06:21Z [DEBUG] ← FetchPageTool.Execute = (len=8059, nil)
-2026-06-07T11:06:21Z [DEBUG] → LongTermMemory.Save(key=page_1780830381891695557_7732a91af5939392, value_len=5159)
-2026-06-07T11:06:22Z [DEBUG] ← LongTermMemory.Save(page_1780830377785252278_-5c19eb3cd6ab68c, len=5233) = <nil>
-2026-06-07T11:06:22Z [DEBUG] ← SearchAgent.processPage(https://kedu.ru/press-center/articles/info-it-go-i-mnogopotochnost-kak-gorutiny-i-kanaly-delayut-parallelizm-prostym) = <nil>
-2026-06-07T11:06:22Z [DEBUG] ← SearchAgent.processQueryInternal(горутины vs потоки) = <nil>
-2026-06-07T11:06:22Z [DEBUG] → AdaptiveScheduler.Record(duration=9.955804718s, err=<nil>)
-2026-06-07T11:06:22Z [DEBUG] ← SearchAgent.processQuery(горутины vs потоки) = <nil>
-2026-06-07T11:06:22Z [DEBUG] → SearchAgent.processQuery(query=пример использования горутин)
-2026-06-07T11:06:22Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
-2026-06-07T11:06:22Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
-2026-06-07T11:06:22Z [DEBUG] → SearchAgent.processQueryInternal(query=пример использования горутин)
-2026-06-07T11:06:22Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:пример использования горутин])
-2026-06-07T11:06:23Z [DEBUG] ← LongTermMemory.Save(page_1780830377898533995_-a10540f00665af, len=5176) = <nil>
-2026-06-07T11:06:23Z [DEBUG] ← SearchAgent.processPage(https://goxpert.ru/2024/06/01/concurrency/goroutines) = <nil>
-2026-06-07T11:06:24Z [DEBUG] ← LongTermMemory.Save(page_1780830379915033909_7732a91b0176e523, len=5160) = <nil>
-2026-06-07T11:06:24Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/830460) = <nil>
-2026-06-07T11:06:24Z [DEBUG] ← SearchAgent.processQueryInternal(как работают горутины) = <nil>
-2026-06-07T11:06:24Z [DEBUG] → AdaptiveScheduler.Record(duration=11.64236414s, err=<nil>)
-2026-06-07T11:06:24Z [DEBUG] ← SearchAgent.processQuery(как работают горутины) = <nil>
-2026-06-07T11:06:24Z [DEBUG] → SearchAgent.processQuery(query=определение горутины в Go)
-2026-06-07T11:06:24Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
-2026-06-07T11:06:24Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
-2026-06-07T11:06:24Z [DEBUG] → SearchAgent.processQueryInternal(query=определение горутины в Go)
-2026-06-07T11:06:24Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:определение горутины в Go])
-2026-06-07T11:06:24Z [DEBUG] ← LongTermMemory.Save(page_1780830381891695557_7732a91af5939392, len=5159) = <nil>
-2026-06-07T11:06:24Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/141853) = <nil>
-2026-06-07T11:06:24Z [DEBUG] ← SearchAgent.processQueryInternal(преимущества горутин) = <nil>
-2026-06-07T11:06:24Z [DEBUG] → AdaptiveScheduler.Record(duration=12.488544897s, err=<nil>)
-2026-06-07T11:06:24Z [DEBUG] ← SearchAgent.processQuery(преимущества горутин) = <nil>
-2026-06-07T11:06:26Z [DEBUG] ← SearchTool.Execute = (len=3098, nil)
-2026-06-07T11:06:26Z [DEBUG] → SearchAgent.processPage(url=https://nuancesprog.ru/p/30345, query=пример использования горутин)
-2026-06-07T11:06:26Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://nuancesprog.ru/p/30345])
-2026-06-07T11:06:26Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/830460, query=пример использования горутин)
-2026-06-07T11:06:26Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/830460])
-2026-06-07T11:06:26Z [DEBUG] ← FetchPageTool.Execute = (len=6124, nil)
-2026-06-07T11:06:26Z [DEBUG] → LongTermMemory.Save(key=page_1780830386272859042_7732a91b0176e523, value_len=5174)
-2026-06-07T11:06:26Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
-2026-06-07T11:06:26Z [DEBUG] → LongTermMemory.Save(key=page_1780830386592382530_4d3120edf9a377b2, value_len=5169)
-2026-06-07T11:06:26Z [DEBUG] ← SearchTool.Execute = (len=2488, nil)
-2026-06-07T11:06:26Z [DEBUG] → SearchAgent.processPage(url=https://golangify.com/goroutines, query=определение горутины в Go)
-2026-06-07T11:06:26Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://golangify.com/goroutines])
-2026-06-07T11:06:26Z [DEBUG] → SearchAgent.processPage(url=https://metanit.com/go/tutorial/7.1.php, query=определение горутины в Go)
-2026-06-07T11:06:26Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://metanit.com/go/tutorial/7.1.php])
-2026-06-07T11:06:26Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
-2026-06-07T11:06:26Z [DEBUG] → LongTermMemory.Save(key=page_1780830386912937111_11b644ec7bb70623, value_len=5169)
-2026-06-07T11:06:27Z [DEBUG] ← LongTermMemory.Save(page_1780830386272859042_7732a91b0176e523, len=5174) = <nil>
-2026-06-07T11:06:27Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/830460) = <nil>
-2026-06-07T11:06:27Z [DEBUG] → SearchAgent.processPage(url=https://dzen.ru/a/Z37z6q6sR0Pc2iHx, query=пример использования горутин)
-2026-06-07T11:06:27Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://dzen.ru/a/Z37z6q6sR0Pc2iHx])
-2026-06-07T11:06:27Z [DEBUG] ← FetchPageTool.Execute = (len=534, nil)
-2026-06-07T11:06:27Z [DEBUG] → LongTermMemory.Save(key=page_1780830387106805169_-5a1a4c9a8ced045a, value_len=685)
-2026-06-07T11:06:27Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
-2026-06-07T11:06:27Z [DEBUG] → LongTermMemory.Save(key=page_1780830387217085480_-2f5d021633726544, value_len=5162)
-2026-06-07T11:06:27Z [DEBUG] ← LongTermMemory.Save(page_1780830386592382530_4d3120edf9a377b2, len=5169) = <nil>
-2026-06-07T11:06:27Z [DEBUG] ← SearchAgent.processPage(https://nuancesprog.ru/p/30345) = <nil>
-2026-06-07T11:06:28Z [DEBUG] ← LongTermMemory.Save(page_1780830386912937111_11b644ec7bb70623, len=5169) = <nil>
-2026-06-07T11:06:28Z [DEBUG] ← SearchAgent.processPage(https://metanit.com/go/tutorial/7.1.php) = <nil>
-2026-06-07T11:06:28Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/830460, query=определение горутины в Go)
-2026-06-07T11:06:28Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/830460])
-2026-06-07T11:06:28Z [DEBUG] ← FetchPageTool.Execute = (len=6124, nil)
-2026-06-07T11:06:28Z [DEBUG] → LongTermMemory.Save(key=page_1780830388952115019_7732a91b0176e523, value_len=5165)
-2026-06-07T11:06:29Z [DEBUG] ← LongTermMemory.Save(page_1780830387106805169_-5a1a4c9a8ced045a, len=685) = <nil>
-2026-06-07T11:06:29Z [DEBUG] ← SearchAgent.processPage(https://dzen.ru/a/Z37z6q6sR0Pc2iHx) = <nil>
-2026-06-07T11:06:29Z [DEBUG] ← SearchAgent.processQueryInternal(пример использования горутин) = <nil>
-2026-06-07T11:06:29Z [DEBUG] → AdaptiveScheduler.Record(duration=7.21115137s, err=<nil>)
-2026-06-07T11:06:29Z [DEBUG] ← SearchAgent.processQuery(пример использования горутин) = <nil>
-2026-06-07T11:06:30Z [DEBUG] ← LongTermMemory.Save(page_1780830387217085480_-2f5d021633726544, len=5162) = <nil>
-2026-06-07T11:06:30Z [DEBUG] ← SearchAgent.processPage(https://golangify.com/goroutines) = <nil>
-2026-06-07T11:06:31Z [DEBUG] ← LongTermMemory.Save(page_1780830388952115019_7732a91b0176e523, len=5165) = <nil>
-2026-06-07T11:06:31Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/830460) = <nil>
-2026-06-07T11:06:31Z [DEBUG] ← SearchAgent.processQueryInternal(определение горутины в Go) = <nil>
-2026-06-07T11:06:31Z [DEBUG] → AdaptiveScheduler.Record(duration=7.24558321s, err=<nil>)
-2026-06-07T11:06:31Z [DEBUG] ← SearchAgent.processQuery(определение горутины в Go) = <nil>
-2026-06-07T11:06:31Z [DEBUG] ← SearchAgent.Run = <nil>
-2026-06-07T11:06:31Z [DEBUG] → AnalystAgent.GenerateReport(topic=что такое горутины)
-2026-06-07T11:06:31Z [DEBUG] → LongTermMemory.RecallWithTopK(query=что такое горутины, topK=5)
-2026-06-07T11:06:32Z [DEBUG] ← LongTermMemory.RecallWithTopK(что такое горутины, 5) = (len=5, <nil>)
-2026-06-07T11:06:32Z [DEBUG] ← LongTermMemory.Recall(что такое горутины) = (len=5, <nil>)
-2026-06-07T11:06:32Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
-2026-06-07T11:07:32Z [DEBUG] ← AnalystAgent.GenerateReport(что такое горутины) = ("", ошибка LLM: http do: Post "https://api.modelgate.ru/v1/chat/completions": context deadline exceeded (Client.Timeout exceeded while awaiting headers))
-2026-06-07T11:07:32Z [DEBUG] ← CoordinatorAgent.Run(что такое горутины) = ("", ошибка аналитика на итерации 1: ошибка LLM: http do: Post "https://api.modelgate.ru/v1/chat/completions": context deadline exceeded (Client.Timeout exceeded while awaiting headers))
+2026-06-07T11:21:27Z [DEBUG] → NewSearchAgent(maxPages=3)
+2026-06-07T11:21:27Z [DEBUG] → NewAnalystAgent(model=deepseek-v4-flash, temp=0.70, timeout=1m0s)
+2026-06-07T11:21:27Z [DEBUG] → NewCriticAgent(model=deepseek-v4-flash, temp=0.70, timeout=1m0s)
+2026-06-07T11:21:27Z [DEBUG] → NewCoordinator(maxIter=3, timeout=1m0s)
+2026-06-07T11:21:46Z [DEBUG] → CoordinatorAgent.Run(query=что такое горутины, maxIter=3)
+2026-06-07T11:21:46Z [DEBUG] → CoordinatorAgent.planQueries(query=что такое горутины)
+2026-06-07T11:21:46Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T11:21:49Z [DEBUG] ← llm.Complete = (len=332, nil)
+2026-06-07T11:21:49Z [DEBUG] ← CoordinatorAgent.planQueries = ([горутины определение и принцип работы горутины в Go синтаксис и запуск горутины vs потоки и легковесность горутины и каналы взаимодействие примеры использования горутин в Go], <nil>)
+2026-06-07T11:21:49Z [DEBUG] → SearchAgent.Run(queries=[горутины определение и принцип работы горутины в Go синтаксис и запуск горутины vs потоки и легковесность горутины и каналы взаимодействие примеры использования горутин в Go])
+2026-06-07T11:21:49Z [DEBUG] → SearchAgent.processQuery(query=примеры использования горутин в Go)
+2026-06-07T11:21:49Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T11:21:49Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T11:21:49Z [DEBUG] → SearchAgent.processQueryInternal(query=примеры использования горутин в Go)
+2026-06-07T11:21:49Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:примеры использования горутин в Go])
+2026-06-07T11:21:49Z [DEBUG] → SearchAgent.processQuery(query=горутины в Go синтаксис и запуск)
+2026-06-07T11:21:49Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T11:21:49Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T11:21:49Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины в Go синтаксис и запуск)
+2026-06-07T11:21:49Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:горутины в Go синтаксис и запуск])
+2026-06-07T11:21:49Z [DEBUG] → SearchAgent.processQuery(query=горутины определение и принцип работы)
+2026-06-07T11:21:49Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T11:21:49Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T11:21:49Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины определение и принцип работы)
+2026-06-07T11:21:49Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:горутины определение и принцип работы])
+2026-06-07T11:21:54Z [DEBUG] ← SearchTool.Execute = (len=2591, nil)
+2026-06-07T11:21:54Z [DEBUG] → SearchAgent.processPage(url=https://metanit.com/go/tutorial/7.1.php, query=горутины в Go синтаксис и запуск)
+2026-06-07T11:21:54Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://metanit.com/go/tutorial/7.1.php])
+2026-06-07T11:21:54Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/830460, query=горутины в Go синтаксис и запуск)
+2026-06-07T11:21:54Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/830460])
+2026-06-07T11:21:54Z [DEBUG] ← SearchTool.Execute = (len=2524, nil)
+2026-06-07T11:21:54Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/881014, query=примеры использования горутин в Go)
+2026-06-07T11:21:54Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/881014])
+2026-06-07T11:21:54Z [DEBUG] → SearchAgent.processPage(url=https://golangify.com/goroutines, query=примеры использования горутин в Go)
+2026-06-07T11:21:54Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://golangify.com/goroutines])
+2026-06-07T11:21:55Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T11:21:55Z [DEBUG] → LongTermMemory.Save(key=page_1780831315095731517_11b644ec7bb70623, value_len=5181)
+2026-06-07T11:21:55Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T11:21:55Z [DEBUG] → LongTermMemory.Save(key=page_1780831315330676685_-2f5d021633726544, value_len=5179)
+2026-06-07T11:21:55Z [DEBUG] ← FetchPageTool.Execute = (len=6124, nil)
+2026-06-07T11:21:55Z [DEBUG] → LongTermMemory.Save(key=page_1780831315344642939_7732a91b0176e523, value_len=5177)
+2026-06-07T11:21:55Z [DEBUG] ← SearchTool.Execute = (len=2975, nil)
+2026-06-07T11:21:55Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/141853, query=горутины определение и принцип работы)
+2026-06-07T11:21:55Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/141853])
+2026-06-07T11:21:55Z [DEBUG] → SearchAgent.processPage(url=https://proprogrammer.ru/izuchenie/gorutini-osnovi-i-primenenie-v-go-dlya-nachinayushix, query=горутины определение и принцип работы)
+2026-06-07T11:21:55Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://proprogrammer.ru/izuchenie/gorutini-osnovi-i-primenenie-v-go-dlya-nachinayushix])
+2026-06-07T11:21:55Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T11:21:55Z [DEBUG] → LongTermMemory.Save(key=page_1780831315458150667_7732a91b01bdbf6c, value_len=5182)
+2026-06-07T11:21:55Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T11:21:55Z [DEBUG] → LongTermMemory.Save(key=page_1780831315503066229_-737eef5723b4dd0a, value_len=5242)
+2026-06-07T11:21:55Z [DEBUG] ← FetchPageTool.Execute = (len=8059, nil)
+2026-06-07T11:21:55Z [DEBUG] → LongTermMemory.Save(key=page_1780831315703196694_7732a91af5939392, value_len=5190)
+2026-06-07T11:21:55Z [DEBUG] ← LongTermMemory.Save(page_1780831315095731517_11b644ec7bb70623, len=5181) = <nil>
+2026-06-07T11:21:55Z [DEBUG] ← SearchAgent.processPage(https://metanit.com/go/tutorial/7.1.php) = <nil>
+2026-06-07T11:21:55Z [DEBUG] → SearchAgent.processPage(url=https://golangify.com/goroutines, query=горутины в Go синтаксис и запуск)
+2026-06-07T11:21:55Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://golangify.com/goroutines])
+2026-06-07T11:21:56Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T11:21:56Z [DEBUG] → LongTermMemory.Save(key=page_1780831316218546018_-2f5d021633726544, value_len=5174)
+2026-06-07T11:21:56Z [DEBUG] ← LongTermMemory.Save(page_1780831315330676685_-2f5d021633726544, len=5179) = <nil>
+2026-06-07T11:21:56Z [DEBUG] ← SearchAgent.processPage(https://golangify.com/goroutines) = <nil>
+2026-06-07T11:21:56Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/830460, query=примеры использования горутин в Go)
+2026-06-07T11:21:56Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/830460])
+2026-06-07T11:21:56Z [DEBUG] ← FetchPageTool.Execute = (len=6124, nil)
+2026-06-07T11:21:56Z [DEBUG] → LongTermMemory.Save(key=page_1780831316867761225_7732a91b0176e523, value_len=5182)
+2026-06-07T11:21:57Z [DEBUG] ← LongTermMemory.Save(page_1780831315344642939_7732a91b0176e523, len=5177) = <nil>
+2026-06-07T11:21:57Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/830460) = <nil>
+2026-06-07T11:21:58Z [DEBUG] ← LongTermMemory.Save(page_1780831315458150667_7732a91b01bdbf6c, len=5182) = <nil>
+2026-06-07T11:21:58Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/881014) = <nil>
+2026-06-07T11:21:59Z [DEBUG] ← LongTermMemory.Save(page_1780831315503066229_-737eef5723b4dd0a, len=5242) = <nil>
+2026-06-07T11:21:59Z [DEBUG] ← SearchAgent.processPage(https://proprogrammer.ru/izuchenie/gorutini-osnovi-i-primenenie-v-go-dlya-nachinayushix) = <nil>
+2026-06-07T11:21:59Z [DEBUG] → SearchAgent.processPage(url=https://metanit.com/go/tutorial/7.1.php, query=горутины определение и принцип работы)
+2026-06-07T11:21:59Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://metanit.com/go/tutorial/7.1.php])
+2026-06-07T11:21:59Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T11:21:59Z [DEBUG] → LongTermMemory.Save(key=page_1780831319342340198_11b644ec7bb70623, value_len=5194)
+2026-06-07T11:22:00Z [DEBUG] ← LongTermMemory.Save(page_1780831315703196694_7732a91af5939392, len=5190) = <nil>
+2026-06-07T11:22:00Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/141853) = <nil>
+2026-06-07T11:22:00Z [DEBUG] ← LongTermMemory.Save(page_1780831316218546018_-2f5d021633726544, len=5174) = <nil>
+2026-06-07T11:22:00Z [DEBUG] ← SearchAgent.processPage(https://golangify.com/goroutines) = <nil>
+2026-06-07T11:22:00Z [DEBUG] ← SearchAgent.processQueryInternal(горутины в Go синтаксис и запуск) = <nil>
+2026-06-07T11:22:00Z [DEBUG] → AdaptiveScheduler.Record(duration=11.305412859s, err=<nil>)
+2026-06-07T11:22:00Z [DEBUG] ← SearchAgent.processQuery(горутины в Go синтаксис и запуск) = <nil>
+2026-06-07T11:22:00Z [DEBUG] → SearchAgent.processQuery(query=горутины vs потоки и легковесность)
+2026-06-07T11:22:00Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T11:22:00Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T11:22:00Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины vs потоки и легковесность)
+2026-06-07T11:22:00Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:горутины vs потоки и легковесность])
+2026-06-07T11:22:01Z [DEBUG] ← LongTermMemory.Save(page_1780831316867761225_7732a91b0176e523, len=5182) = <nil>
+2026-06-07T11:22:01Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/830460) = <nil>
+2026-06-07T11:22:01Z [DEBUG] ← SearchAgent.processQueryInternal(примеры использования горутин в Go) = <nil>
+2026-06-07T11:22:01Z [DEBUG] → AdaptiveScheduler.Record(duration=12.096006878s, err=<nil>)
+2026-06-07T11:22:01Z [DEBUG] ← SearchAgent.processQuery(примеры использования горутин в Go) = <nil>
+2026-06-07T11:22:01Z [DEBUG] → SearchAgent.processQuery(query=горутины и каналы взаимодействие)
+2026-06-07T11:22:01Z [DEBUG] → AdaptiveScheduler.WaitIfNeeded
+2026-06-07T11:22:01Z [DEBUG] ← AdaptiveScheduler.WaitIfNeeded = <nil>
+2026-06-07T11:22:01Z [DEBUG] → SearchAgent.processQueryInternal(query=горутины и каналы взаимодействие)
+2026-06-07T11:22:01Z [DEBUG] → SearchTool.Execute(args=map[limit:5 query:горутины и каналы взаимодействие])
+2026-06-07T11:22:02Z [DEBUG] ← LongTermMemory.Save(page_1780831319342340198_11b644ec7bb70623, len=5194) = <nil>
+2026-06-07T11:22:02Z [DEBUG] ← SearchAgent.processPage(https://metanit.com/go/tutorial/7.1.php) = <nil>
+2026-06-07T11:22:02Z [DEBUG] ← SearchAgent.processQueryInternal(горутины определение и принцип работы) = <nil>
+2026-06-07T11:22:02Z [DEBUG] → AdaptiveScheduler.Record(duration=12.816670398s, err=<nil>)
+2026-06-07T11:22:02Z [DEBUG] ← SearchAgent.processQuery(горутины определение и принцип работы) = <nil>
+2026-06-07T11:22:05Z [DEBUG] ← SearchTool.Execute = (len=2643, nil)
+2026-06-07T11:22:05Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/933464, query=горутины vs потоки и легковесность)
+2026-06-07T11:22:05Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/933464])
+2026-06-07T11:22:05Z [DEBUG] → SearchAgent.processPage(url=https://yeahub.ru/ru/questions/golang-backend-developer/chem-gorutiny-otlichayutsya-ot-potokov-os-legkovesnost-planirovshchik-go, query=горутины vs потоки и легковесность)
+2026-06-07T11:22:05Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://yeahub.ru/ru/questions/golang-backend-developer/chem-gorutiny-otlichayutsya-ot-potokov-os-legkovesnost-planirovshchik-go])
+2026-06-07T11:22:05Z [DEBUG] ← FetchPageTool.Execute = (len=3334, nil)
+2026-06-07T11:22:05Z [DEBUG] → LongTermMemory.Save(key=page_1780831325855364663_27a97d3114bd05d9, value_len=3587)
+2026-06-07T11:22:05Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T11:22:05Z [DEBUG] → LongTermMemory.Save(key=page_1780831325997186543_7732a91b032d1ae3, value_len=5182)
+2026-06-07T11:22:06Z [DEBUG] ← SearchTool.Execute = (len=2720, nil)
+2026-06-07T11:22:06Z [DEBUG] → SearchAgent.processPage(url=https://kurshub.ru/journal/blog/mnogopotochnost-v-golang, query=горутины и каналы взаимодействие)
+2026-06-07T11:22:06Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://kurshub.ru/journal/blog/mnogopotochnost-v-golang])
+2026-06-07T11:22:06Z [DEBUG] → SearchAgent.processPage(url=https://temofeev.ru/info/articles/gorutiny-i-kanaly-v-go-effektivnaya-konkurentnost, query=горутины и каналы взаимодействие)
+2026-06-07T11:22:06Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://temofeev.ru/info/articles/gorutiny-i-kanaly-v-go-effektivnaya-konkurentnost])
+2026-06-07T11:22:06Z [DEBUG] ← LongTermMemory.Save(page_1780831325855364663_27a97d3114bd05d9, len=3587) = <nil>
+2026-06-07T11:22:06Z [DEBUG] ← SearchAgent.processPage(https://yeahub.ru/ru/questions/golang-backend-developer/chem-gorutiny-otlichayutsya-ot-potokov-os-legkovesnost-planirovshchik-go) = <nil>
+2026-06-07T11:22:06Z [DEBUG] → SearchAgent.processPage(url=https://www.youtube.com/watch?v=RegO7MZ580M, query=горутины vs потоки и легковесность)
+2026-06-07T11:22:06Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://www.youtube.com/watch?v=RegO7MZ580M])
+2026-06-07T11:22:06Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T11:22:06Z [DEBUG] → LongTermMemory.Save(key=page_1780831326658093361_78ae9eef90758bef, value_len=5229)
+2026-06-07T11:22:07Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T11:22:07Z [DEBUG] → LongTermMemory.Save(key=page_1780831327192848041_7ea373bc9b9931bf, value_len=5202)
+2026-06-07T11:22:07Z [DEBUG] ← LongTermMemory.Save(page_1780831325997186543_7732a91b032d1ae3, len=5182) = <nil>
+2026-06-07T11:22:07Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/933464) = <nil>
+2026-06-07T11:22:08Z [DEBUG] ← LongTermMemory.Save(page_1780831326658093361_78ae9eef90758bef, len=5229) = <nil>
+2026-06-07T11:22:08Z [DEBUG] ← SearchAgent.processPage(https://temofeev.ru/info/articles/gorutiny-i-kanaly-v-go-effektivnaya-konkurentnost) = <nil>
+2026-06-07T11:22:08Z [DEBUG] → SearchAgent.processPage(url=https://habr.com/ru/articles/869400, query=горутины и каналы взаимодействие)
+2026-06-07T11:22:08Z [DEBUG] → FetchPageTool.Execute(args=map[url:https://habr.com/ru/articles/869400])
+2026-06-07T11:22:08Z [DEBUG] ← FetchPageTool.Execute = (len=10031, nil)
+2026-06-07T11:22:08Z [DEBUG] → LongTermMemory.Save(key=page_1780831328614692665_7732a91b01a54243, value_len=5181)
+2026-06-07T11:22:09Z [DEBUG] ← LongTermMemory.Save(page_1780831327192848041_7ea373bc9b9931bf, len=5202) = <nil>
+2026-06-07T11:22:09Z [DEBUG] ← SearchAgent.processPage(https://kurshub.ru/journal/blog/mnogopotochnost-v-golang) = <nil>
+2026-06-07T11:22:09Z [DEBUG] ← LongTermMemory.Save(page_1780831328614692665_7732a91b01a54243, len=5181) = <nil>
+2026-06-07T11:22:09Z [DEBUG] ← SearchAgent.processPage(https://habr.com/ru/articles/869400) = <nil>
+2026-06-07T11:22:09Z [DEBUG] ← SearchAgent.processQueryInternal(горутины и каналы взаимодействие) = <nil>
+2026-06-07T11:22:09Z [DEBUG] → AdaptiveScheduler.Record(duration=8.209619928s, err=<nil>)
+2026-06-07T11:22:09Z [DEBUG] ← SearchAgent.processQuery(горутины и каналы взаимодействие) = <nil>
+2026-06-07T11:22:16Z [DEBUG] ← FetchPageTool.Execute = ("", ошибка загрузки страницы: Get "https://www.youtube.com/watch?v=RegO7MZ580M": net/http: TLS handshake timeout)
+2026-06-07T11:22:16Z [DEBUG] ← SearchAgent.processPage(https://www.youtube.com/watch?v=RegO7MZ580M) = fetch_page: ошибка загрузки страницы: Get "https://www.youtube.com/watch?v=RegO7MZ580M": net/http: TLS handshake timeout
+2026-06-07T11:22:16Z [DEBUG] ← SearchAgent.processQueryInternal(горутины vs потоки и легковесность) = <nil>
+2026-06-07T11:22:16Z [DEBUG] → AdaptiveScheduler.Record(duration=15.812359987s, err=<nil>)
+2026-06-07T11:22:16Z [DEBUG] ← SearchAgent.processQuery(горутины vs потоки и легковесность) = <nil>
+2026-06-07T11:22:16Z [DEBUG] ← SearchAgent.Run = <nil>
+2026-06-07T11:22:16Z [DEBUG] → AnalystAgent.GenerateReport(topic=что такое горутины)
+2026-06-07T11:22:16Z [DEBUG] → LongTermMemory.RecallWithTopK(query=что такое горутины, topK=5)
+2026-06-07T11:22:17Z [DEBUG] ← LongTermMemory.RecallWithTopK(что такое горутины, 5) = (len=5, <nil>)
+2026-06-07T11:22:17Z [DEBUG] ← LongTermMemory.Recall(что такое горутины) = (len=5, <nil>)
+2026-06-07T11:22:17Z [DEBUG] → llm.Complete(model=deepseek-v4-flash, messages=2, temp=0.70)
+2026-06-07T11:23:17Z [DEBUG] ← AnalystAgent.GenerateReport(что такое горутины) = ("", ошибка LLM: context deadline exceeded)
+2026-06-07T11:23:17Z [DEBUG] ← CoordinatorAgent.Run(что такое горутины) = ("", ошибка аналитика на итерации 1: ошибка LLM: context deadline exceeded)
