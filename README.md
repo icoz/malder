@@ -50,6 +50,7 @@
 | OPENSERP_URL | URL OpenSerp | http://localhost:8080 |
 | MEMORY_PATH | Путь для сохранения памяти | ./data/malder_memory |
 | MAX_CONCURRENT_SEARCH | Параллельных поисков | 3 |
+| MIN_FACTS_FOR_CACHE | Сколько фактов в памяти нужно, чтобы пропустить поиск | 3 |
 | MAX_ITERATIONS | Итераций улучшения отчёта | 3 |
 | SERVER_PORT | Порт сервера | 8080 |
 

@@ -34,6 +34,7 @@ services:
       - SEARCH_ENGINE=${SEARCH_ENGINE:-duck}
       - MAX_CONCURRENT_SEARCH=3
       - MAX_PAGES_PER_QUERY=3
+      - MIN_FACTS_FOR_CACHE=${MIN_FACTS_FOR_CACHE:-3}
       - MAX_ITERATIONS=3
       - SERVER_PORT=8080
     volumes:

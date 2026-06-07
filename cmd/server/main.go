@@ -43,6 +43,7 @@ type Config struct {
 
 	MaxConcurrentSearch int
 	MaxPagesPerQuery    int
+	MinFactsForCache    int
 
 	MaxIterations int
 
@@ -60,6 +61,7 @@ func loadConfig() *Config {
 		MemoryPath:          getEnv("MEMORY_PATH", "./data/malder_memory"),
 		MaxConcurrentSearch: getEnvInt("MAX_CONCURRENT_SEARCH", 3),
 		MaxPagesPerQuery:    getEnvInt("MAX_PAGES_PER_QUERY", 3),
+		MinFactsForCache:    getEnvInt("MIN_FACTS_FOR_CACHE", 3),
 		MaxIterations:       getEnvInt("MAX_ITERATIONS", 3),
 		ServerPort:          getEnv("SERVER_PORT", "8080"),
 	}
@@ -140,7 +142,7 @@ func main() {
 	}
 	adaptiveScheduler := scheduler.NewAdaptiveScheduler(schedCfg)
 
-	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, cfg.MaxPagesPerQuery)
+	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, cfg.MaxPagesPerQuery, cfg.MinFactsForCache)
 
 	analystAgent := agent.NewAnalystAgent(llmClient, cfg.LLMModelAnalyst, cfg.LLMTemperature, cfg.LLMTimeoutAnalyst, mem, saveFactTool)
 

@@ -31,3 +31,6 @@ go.work.sum
 # .idea/
 # .vscode/
 server
+
+#docker data
+data

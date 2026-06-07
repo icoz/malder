@@ -19,6 +19,7 @@ type SearchAgent struct {
 	memory           *memory.LongTermMemory
 	scheduler        *scheduler.AdaptiveScheduler
 	maxPagesPerQuery int
+	minFactsForCache int
 }
 
 func NewSearchAgent(
@@ -27,10 +28,14 @@ func NewSearchAgent(
 	mem *memory.LongTermMemory,
 	sched *scheduler.AdaptiveScheduler,
 	maxPagesPerQuery int,
+	minFactsForCache int,
 ) *SearchAgent {
-	log.Debug("→ NewSearchAgent(maxPages=%d)", maxPagesPerQuery)
+	log.Debug("→ NewSearchAgent(maxPages=%d, minFacts=%d)", maxPagesPerQuery, minFactsForCache)
 	if maxPagesPerQuery <= 0 {
 		maxPagesPerQuery = 3
+	}
+	if minFactsForCache <= 0 {
+		minFactsForCache = 3
 	}
 	return &SearchAgent{
 		searchTool:       searchTool,
@@ -38,6 +43,7 @@ func NewSearchAgent(
 		memory:           mem,
 		scheduler:        sched,
 		maxPagesPerQuery: maxPagesPerQuery,
+		minFactsForCache: minFactsForCache,
 	}
 }
 
@@ -101,6 +107,16 @@ func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) (e
 		log.Debug("← SearchAgent.processQueryInternal(%s) = %v", query, err)
 	}()
 	log.Debug("→ SearchAgent.processQueryInternal(query=%s)", query)
+
+	facts, recallErr := s.memory.Recall(ctx, query)
+	if recallErr == nil && len(facts) >= s.minFactsForCache {
+		log.Info("SearchAgent: по запросу '%s' уже есть %d фактов в памяти, пропускаем поиск", query, len(facts))
+		return nil
+	}
+	if recallErr != nil {
+		log.Warn("SearchAgent: ошибка поиска в памяти '%s': %v", query, recallErr)
+	}
+
 	searchResult, err := s.searchTool.Execute(ctx, map[string]any{"query": query, "limit": s.maxPagesPerQuery + 2})
 	if err != nil {
 		return fmt.Errorf("поиск не удался: %w", err)
