@@ -98,7 +98,8 @@ func getEnvDuration(key string, defaultVal time.Duration) time.Duration {
 func main() {
 	malderlog.Init()
 	cfg := loadConfig()
-	malderlog.Info("Запуск malder с конфигурацией: %+v", cfg)
+	malderlog.Info("Запуск malder — LLM: %s, модель: %s, порт: %s, движок: %s, память: %s",
+		cfg.LLMEndpoint, cfg.LLMModel, cfg.ServerPort, getEnv("SEARCH_ENGINE", "duck"), cfg.MemoryPath)
 
 	llmClient := llm.NewClient(llm.Config{
 		Endpoint: cfg.LLMEndpoint,
@@ -174,15 +175,19 @@ func researchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 			return
 		}
 		if req.Query == "" {
+			malderlog.Warn("Запрос research: пустой query")
 			writeJSONError(w, "Query cannot be empty", http.StatusBadRequest)
 			return
 		}
 
+		malderlog.Info("Запрос research: query=%q", req.Query)
 		result, err := coord.Run(r.Context(), req.Query)
 		if err != nil {
+			malderlog.Warn("Запрос research: ошибка=%v", err)
 			writeJSONError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
+		malderlog.Info("Запрос research: готово, длина=%d", len(result))
 		writeJSON(w, researchResponse{Result: result})
 	}
 }
@@ -201,11 +206,13 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 
 		query := r.URL.Query().Get("q")
 		if query == "" {
+			malderlog.Warn("Запрос research/stream: пустой query")
 			fmt.Fprintf(w, "event: error\ndata: missing query parameter 'q'\n\n")
 			flusher.Flush()
 			return
 		}
 
+		malderlog.Info("Запрос research/stream: query=%q", query)
 		resultChan := make(chan struct {
 			result string
 			err    error
@@ -245,8 +252,10 @@ func sseResearchHandler(coord *agent.CoordinatorAgent) http.HandlerFunc {
 			flusher.Flush()
 		case res := <-resultChan:
 			if res.err != nil {
+				malderlog.Warn("Запрос research/stream: ошибка=%v", res.err)
 				fmt.Fprintf(w, "event: error\ndata: %s\n\n", jsonEscape(res.err.Error()))
 			} else {
+				malderlog.Info("Запрос research/stream: готово, длина=%d", len(res.result))
 				resultData, _ := json.Marshal(map[string]string{"result": res.result})
 				fmt.Fprintf(w, "event: result\ndata: %s\n\n", resultData)
 			}
