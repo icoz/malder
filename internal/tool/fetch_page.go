@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
+	md "github.com/JohannesKaufmann/html-to-markdown"
+	"github.com/go-shiori/go-readability"
 	"github.com/icoz/malder/internal/log"
-	"github.com/PuerkitoBio/goquery"
 )
 
 type FetchPageTool struct {
@@ -29,10 +31,10 @@ func (t *FetchPageTool) Name() string {
 }
 
 func (t *FetchPageTool) Description() string {
-	return `Загружает веб-страницу по URL и возвращает её текстовое содержимое (без HTML-тегов).
+	return `Загружает веб-страницу по URL и возвращает её содержимое в формате Markdown (без рекламы, меню и прочего мусора).
 Аргументы:
   - url (строка, обязательный): полный URL страницы, например "https://example.com/article"
-Возвращает текст страницы или сообщение об ошибке.`
+Возвращает markdown-текст статьи или сообщение об ошибке.`
 }
 
 func (t *FetchPageTool) Execute(ctx context.Context, args map[string]any) (result string, err error) {
@@ -48,13 +50,18 @@ func (t *FetchPageTool) Execute(ctx context.Context, args map[string]any) (resul
 	if !ok {
 		return "", fmt.Errorf("отсутствует обязательный аргумент 'url'")
 	}
-	url, ok := urlRaw.(string)
+	pageURL, ok := urlRaw.(string)
 	if !ok {
 		return "", fmt.Errorf("аргумент 'url' должен быть строкой")
 	}
 
+	parsedURL, err := url.Parse(pageURL)
+	if err != nil {
+		return "", fmt.Errorf("невалидный URL: %w", err)
+	}
+
 	reqStart := time.Now()
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", pageURL, nil)
 	if err != nil {
 		return "", fmt.Errorf("ошибка создания запроса: %w", err)
 	}
@@ -68,34 +75,35 @@ func (t *FetchPageTool) Execute(ctx context.Context, args map[string]any) (resul
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Info("HTTP fetch %s: status=%d, duration=%v", url, resp.StatusCode, reqDur)
+		log.Info("HTTP fetch %s: status=%d, duration=%v", pageURL, resp.StatusCode, reqDur)
 		return "", fmt.Errorf("HTTP ошибка: %d %s", resp.StatusCode, resp.Status)
 	}
 
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	article, err := readability.FromReader(resp.Body, parsedURL)
 	if err != nil {
-		return "", fmt.Errorf("ошибка парсинга HTML: %w", err)
+		return "", fmt.Errorf("ошибка извлечения контента: %w", err)
 	}
 
-	doc.Find("script, style, noscript, meta, link, [onclick], [onload]").Each(func(i int, s *goquery.Selection) {
-		s.Remove()
-	})
-
-	body := doc.Find("body")
-	if body.Length() == 0 {
-		body = doc.Selection
+	converter := md.NewConverter("", true, nil)
+	markdown, err := converter.ConvertString(article.Content)
+	if err != nil {
+		return "", fmt.Errorf("ошибка конвертации в markdown: %w", err)
 	}
-	text := body.Text()
-	text = strings.Join(strings.Fields(text), " ")
-	text = strings.TrimSpace(text)
 
+	var b strings.Builder
+	if article.Title != "" {
+		b.WriteString(fmt.Sprintf("# %s\n\n", article.Title))
+	}
+	b.WriteString(strings.TrimSpace(markdown))
+
+	text := b.String()
 	const maxLen = 10000
 	if len(text) > maxLen {
 		text = text[:maxLen] + "... (текст обрезан)"
 	}
-	log.Info("HTTP fetch %s: status=200, duration=%v, text=%d chars", url, reqDur, len(text))
+	log.Info("HTTP fetch %s: status=200, duration=%v, text=%d chars", pageURL, reqDur, len(text))
 	if text == "" {
-		return "", fmt.Errorf("не удалось извлечь текст со страницы %s", url)
+		return "", fmt.Errorf("не удалось извлечь текст со страницы %s", pageURL)
 	}
 	return text, nil
 }
