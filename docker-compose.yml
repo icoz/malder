@@ -25,6 +25,7 @@ services:
       - MEMORY_PATH=/data
       - MALDER_LOG_LEVEL=${MALDER_LOG_LEVEL:-info}
       - MALDER_DEBUG_FILE=${MALDER_DEBUG_FILE:-/data/malder_debug.log}
+      - SEARCH_ENGINE=${SEARCH_ENGINE:-duck}
       - MAX_CONCURRENT_SEARCH=3
       - MAX_PAGES_PER_QUERY=3
       - MAX_ITERATIONS=3

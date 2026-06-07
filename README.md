@@ -36,6 +36,7 @@
 | LLM_MODEL_COORDINATOR | Модель для координатора (планирование) | LLM_MODEL |
 | LLM_MODEL_ANALYST | Модель для аналитика (генерация отчёта) | LLM_MODEL |
 | LLM_MODEL_CRITIC | Модель для критика (оценка) | LLM_MODEL |
+| SEARCH_ENGINE | Поисковый движок (duck/google/yandex/...) | duck |
 | MALDER_LOG_LEVEL | Уровень журналирования (debug/info/warn/error) | info |
 | MALDER_DEBUG_FILE | Файл для DEBUG-логов | malder_debug.log |
 | LLM_TEMPERATURE | Температура LLM | 0.7 |

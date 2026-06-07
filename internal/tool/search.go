@@ -38,7 +38,7 @@ func NewSearchTool(endpoint string, timeout time.Duration, engine string) *Searc
 func (t *SearchTool) Name() string { return "search" }
 
 func (t *SearchTool) Description() string {
-	return `Ищет информацию в интернете через Яндекс. Возвращает список результатов (заголовок, ссылка, сниппет).
+	return `Ищет информацию в интернете. Возвращает список результатов (заголовок, ссылка, сниппет).
 Аргументы:
   - query (строка, обязательный): поисковый запрос.
   - limit (целое, необязательный): количество результатов (по умолчанию 10, максимум 100).`
