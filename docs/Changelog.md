@@ -33,10 +33,45 @@
 - Содержит: основной вопрос, 3-5 ключевых выводов, рекомендации
 - Сохраняется в `Report.ExecutiveSummary` и отображается в веб-интерфейсе
 
-#### Веб-интерфейс
+#### Веб-интерфейс (v2)
 
-- На странице деталей отчёта отображается блок «Краткое резюме» (если есть)
-- API `POST /api/research` возвращает `executive_summary` в JSON
+**Исправления:**
+- **Critical**: контент отчёта не отображался — `$r.ReportHTML` заменён на `$.ReportHTML` в `report_detail.html` (поле `ReportHTML` не входит в структуру `Report`, передаётся отдельным ключом шаблона)
+
+**CSS — полный редизайн:**
+- CSS custom properties для единой цветовой схемы
+- Тёмная тема (automatic через `prefers-color-scheme: dark`)
+- Sticky-навбар с backdrop-filter blur
+- Карточная вёрстка с тенями и бордерами
+- Типографика: заголовки, код, блокцитаты, таблицы, изображения
+- Адаптивность для мобильных (столбцы вместо строк на малых экранах)
+- Статус-бейджи с CSS-индикаторами и pulse-анимацией для in_progress
+- Style print: скрытие навбара, убирание теней
+- Копи-нотификация (toast-уведомление)
+
+**Новые страницы:**
+- `404.html` — стилизованная страница «не найдено» с кнопкой на главную
+- `error.html` — страница ошибки сервера
+- Catch-all route `GET /{path...}` для неизвестных путей
+
+**Улучшения детальной страницы отчёта:**
+- Оглавление (TOC): автоматически генерируется из h2-заголовков отчёта, якорные ссылки
+- Кнопка «Копировать» — fetch raw markdown → clipboard (с fallback через textarea)
+- Счётчик слов в мета-блоке
+- Блок «Краткое резюме» с акцентной рамкой (если есть)
+
+**Улучшения страницы исследования:**
+- Event-log: хронология этапов исследования под прогресс-баром
+- SSE timeout: 120 секунд без данных → сообщение об ошибке
+- Более точный прогресс-бар по этапам (0-100%)
+- Детальная информация этапов в логе (оценка критика, количество подтем/разделов)
+- Выделение активной ссылки в навбаре
+
+**JavaScript:**
+- Реструктуризация: общий код (TOC, copy, nav) выполняется на всех страницах, код формы — только на index
+- Генерация TOC из h2 заголовков
+- Копирование с Clipboard API + execCommand fallback
+- Сброс SSE timeout при любом событии
 
 ### Файлы, затронутые в этой версии
 
@@ -49,10 +84,18 @@
 | `internal/agent/critic.go` | weak_sections в CritiqueResult; NewCriticAgent принимает verbosity |
 | `internal/agent/search.go` | Verbosity + factCountGuide + maxSummaryLen + maxRawLen |
 | `internal/memory/report.go` | ExecutiveSummary в Report; Complete принимает execSummary |
-| `cmd/server/main.go` | VERBOSITY конфиг; проброс verbosity в агенты |
-| `cmd/server/web/templates/report_detail.html` | Отображение ExecutiveSummary |
+| `cmd/server/main.go` | VERBOSITY конфиг; проброс verbosity; WordCount; 404/error handlers; catch-all route |
+| `cmd/server/web/templates/base.html` | — |
+| `cmd/server/web/templates/index.html` | Event-log div |
+| `cmd/server/web/templates/report_detail.html` | TOC, copy btn, word count; фикс бага с `$r.ReportHTML` |
+| `cmd/server/web/templates/report_list.html` | — |
+| `cmd/server/web/templates/not_found.html` | **Новый**: стилизованная 404 |
+| `cmd/server/web/templates/error.html` | **Новый**: страница ошибки сервера |
+| `cmd/server/web/static/style.css` | Полный редизайн: custom properties, тёмная тема, responsive, карточки, типографика, TOC, print |
+| `cmd/server/web/static/main.js` | TOC, copy, nav-accent, event-log, SSE timeout, реструктуризация |
 | `.env.example` | Добавлена VERBOSITY |
 | `docs/Architech.md` | Описание VerbosityLevel, обновлены диаграммы, раздел 5.7 |
+| `docs/Changelog.md` | **Новый**: журнал изменений |
 
 ### Конфигурация
 
