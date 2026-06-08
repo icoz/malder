@@ -330,7 +330,7 @@ func main() {
 
 func indexHandler(tmpls *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		malderlog.Debug("Веб-панель: главная")
+		malderlog.Debug("→ WebUI.indexHandler")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		tmpls.ExecuteTemplate(w, "index.html", nil)
 	}
@@ -338,7 +338,7 @@ func indexHandler(tmpls *template.Template) http.HandlerFunc {
 
 func reportListHandler(tmpls *template.Template, store *memory.ReportStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		malderlog.Debug("Веб-панель: список отчётов")
+		malderlog.Debug("→ WebUI.reportListHandler")
 		reports, err := store.List()
 		if err != nil {
 			malderlog.Warn("Список отчётов: ошибка: %v", err)
@@ -355,7 +355,7 @@ func reportListHandler(tmpls *template.Template, store *memory.ReportStore) http
 func reportDetailHandler(tmpls *template.Template, store *memory.ReportStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
-		malderlog.Debug("Веб-панель: просмотр отчёта %s", id)
+		malderlog.Debug("→ WebUI.reportDetailHandler(id=%s)", id)
 		report, err := store.Get(id)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
@@ -512,7 +512,7 @@ func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 		go func() {
 			defer malderlog.Recover("SSE research handler")
 			reporter := func(event string, data map[string]any) {
-				malderlog.Debug("SSE: событие %s, report_id=%s", event, reportID)
+				malderlog.Debug("→ WebUI.SSE(event=%s, report_id=%s)", event, reportID)
 				dataJSON, _ := json.Marshal(data)
 				fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, string(dataJSON))
 				flusher.Flush()
