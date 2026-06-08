@@ -319,7 +319,7 @@ func main() {
 	mux.HandleFunc("POST /api/reports/{id}/fail", apiReportFailHandler(reportStore))
 	mux.HandleFunc("POST /api/reports/{id}/retry", apiReportRetryHandler(coordinator, reportStore))
 	mux.HandleFunc("GET /api/health", healthHandler)
-	mux.Handle("GET /static/", staticHandler)
+	mux.Handle("GET /static/", cacheControlMiddleware(staticHandler))
 
 	addr := ":" + cfg.ServerPort
 	malderlog.Info("Сервер запущен на %s", addr)
@@ -651,6 +651,13 @@ func errorHandler(tmpls *template.Template) http.HandlerFunc {
 			"Error": "Произошла внутренняя ошибка сервера.",
 		})
 	}
+}
+
+func cacheControlMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache, must-revalidate")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {

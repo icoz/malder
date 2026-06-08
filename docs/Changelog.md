@@ -120,6 +120,17 @@
 VERBOSITY=normal  # brief | normal | detailed
 ```
 
+#### Логирование веб-панели
+
+- Добавлены `log.Debug` во все page-хендлеры: главная, список отчётов, просмотр отчёта
+- Каждое SSE-событие логируется: `SSE: событие <type>, report_id=<id>`
+- `MALDER_LOG_LEVEL=debug` (или `export MALDER_LOG_LEVEL=debug`) для просмотра
+
+#### Cache-Control для статики
+
+- Обёртка `cacheControlMiddleware` над `http.FileServer` с заголовком `Cache-Control: no-cache, must-revalidate`
+- Браузер перестаёт кешировать `style.css` и `main.js` — при следующем ребилде Docker-образа изменения подхватываются без Ctrl+F5
+
 #### Ретраи LLM-клиента
 
 Переработана логика повторных попыток при ошибках LLM API:
