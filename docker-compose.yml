@@ -1,0 +1,59 @@
+services:
+  openserp:
+    image: karust/openserp:latest
+    command: serve -p 7000
+    expose:
+      - "7000"
+    environment:
+      - ENGINE=yandex
+    restart: unless-stopped
+
+  malder:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - LLM_ENDPOINT=${LLM_ENDPOINT:-https://api.modelgate.ru}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-deepseek-v4-flash}
+      - LLM_TEMPERATURE=0.7
+      - LLM_TIMEOUT=60s
+
+      - LLM_ENDPOINT_COORDINATOR=${LLM_ENDPOINT_COORDINATOR:-}
+      - LLM_ENDPOINT_ANALYST=${LLM_ENDPOINT_ANALYST:-}
+      - LLM_ENDPOINT_CRITIC=${LLM_ENDPOINT_CRITIC:-}
+      - LLM_API_KEY_COORDINATOR=${LLM_API_KEY_COORDINATOR:-}
+      - LLM_API_KEY_ANALYST=${LLM_API_KEY_ANALYST:-}
+      - LLM_API_KEY_CRITIC=${LLM_API_KEY_CRITIC:-}
+      - LLM_MODEL_COORDINATOR=${LLM_MODEL_COORDINATOR:-}
+      - LLM_MODEL_ANALYST=${LLM_MODEL_ANALYST:-}
+      - LLM_MODEL_CRITIC=${LLM_MODEL_CRITIC:-}
+      - LLM_TIMEOUT_COORDINATOR=${LLM_TIMEOUT_COORDINATOR:-}
+      - LLM_TIMEOUT_ANALYST=${LLM_TIMEOUT_ANALYST:-}
+      - LLM_TIMEOUT_CRITIC=${LLM_TIMEOUT_CRITIC:-}
+
+      - OPENSERP_URL=http://openserp:7000
+      - MEMORY_PATH=/data
+      - SOURCE_STORE_PATH=/data/sources.db
+      - MALDER_LOG_LEVEL=${MALDER_LOG_LEVEL:-info}
+      - MALDER_DEBUG_FILE=${MALDER_DEBUG_FILE:-/data/malder_debug.log}
+      - EMBEDDING_ENDPOINT=${EMBEDDING_ENDPOINT:-}
+      - EMBEDDING_API_KEY=${EMBEDDING_API_KEY:-}
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-text-embedding-3-small}
+      - SEARCH_ENGINE=${SEARCH_ENGINE:-duck}
+      - MAX_CONCURRENT_SEARCH=3
+      - MAX_PAGES_PER_QUERY=3
+      - MIN_RELEVANT_FACTS=${MIN_RELEVANT_FACTS:-10}
+      - MIN_FACTS_FOR_CACHE=${MIN_FACTS_FOR_CACHE:-} # deprecated, use MIN_RELEVANT_FACTS
+      - RECALL_TOP_K=${RECALL_TOP_K:-15}
+      - RECALL_DISTANCE_THRESHOLD=${RECALL_DISTANCE_THRESHOLD:-0.5}
+      - RECALL_LLM_CHECK=${RECALL_LLM_CHECK:-true}
+      - MAX_ITERATIONS=3
+      - MAX_CONCURRENT_SUBTOPICS=${MAX_CONCURRENT_SUBTOPICS:-3}
+      - MAX_SUBTOPIC_RETRIES=${MAX_SUBTOPIC_RETRIES:-2}
+      - SERVER_PORT=8080
+    volumes:
+      - ./data:/data
+    depends_on:
+      - openserp
+    restart: unless-stopped

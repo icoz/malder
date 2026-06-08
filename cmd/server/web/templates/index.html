@@ -1,0 +1,28 @@
+{{template "base" .}}
+{{define "title"}}Исследование — Malder{{end}}
+{{define "content"}}
+<h1>Глубокое исследование</h1>
+<p class="subtitle">Введите тему для исследования. Система выполнит поиск, проанализирует источники и сформирует структурированный отчёт.</p>
+
+<form id="research-form" class="research-form">
+<div class="form-group">
+<label for="query">Тема исследования</label>
+<div class="input-row">
+<input type="text" id="query" name="q" class="form-input" placeholder="Введите тему..." required autofocus>
+<button type="submit" class="btn btn-primary" id="submit-btn">Исследовать</button>
+</div>
+</div>
+</form>
+
+<div id="progress" class="progress" style="display:none">
+<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+<div class="progress-status" id="progress-status">Начинаем исследование...</div>
+</div>
+
+<div id="result" style="display:none">
+<div class="report-meta" id="report-meta"></div>
+<div class="report-content" id="report-content"></div>
+</div>
+
+<div id="error" class="error-box" style="display:none"></div>
+{{end}}

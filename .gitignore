@@ -30,3 +30,12 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+server
+!cmd/server
+!cmd/server/web/**
+!cmd/server/web/templates/**
+!cmd/server/web/static/**
+
+#docker data
+data
+out.json
