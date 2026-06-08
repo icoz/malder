@@ -213,6 +213,61 @@ h2 { font-size: 1.35rem; font-weight: 700; line-height: 1.35; margin-bottom: 0.5
 }
 .progress-status { color: var(--text-secondary); font-size: 0.9rem; }
 
+/* Plan panel */
+.plan-panel {
+  margin-bottom: 2rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  background: var(--surface);
+}
+.plan-panel-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+.plan-section {
+  margin-bottom: 0.75rem;
+}
+.plan-section:last-child { margin-bottom: 0; }
+.plan-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0;
+  font-weight: 500;
+  font-size: 0.93rem;
+}
+.plan-section-name { flex: 1; }
+.plan-subtopics {
+  margin-left: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.plan-subtopic {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0;
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+.plan-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.plan-status-dot.pending {
+  background: var(--border);
+}
+.plan-status-dot.done {
+  background: #22c55e;
+}
+
 /* Event log */
 .event-log { margin-top: 1rem; }
 .event-log-item {

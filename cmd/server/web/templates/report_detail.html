@@ -2,12 +2,15 @@
 {{define "title"}}{{.Report.Query}} — Malder{{end}}
 {{define "content"}}
 {{$r := .Report}}
+{{$p := .Progress}}
 <h1 class="report-title">{{$r.Query}}</h1>
 
 <div class="report-meta">
 <div class="meta-item"><span class="meta-label">Статус:</span> {{statusLabel $r.Status}}</div>
+<div class="meta-item"><span class="meta-label">Источников:</span>
+<span id="source-count">{{- if eq $r.Status "in_progress"}}{{or $p.sources_count 0}}{{else}}{{$r.SourceCount}}{{end -}}</span>
+</div>
 {{if ne $r.Status "in_progress"}}
-<div class="meta-item"><span class="meta-label">Источников:</span> {{$r.SourceCount}}</div>
 <div class="meta-item"><span class="meta-label">Время:</span> {{durationLabel $r.DurationMs}}</div>
 <div class="meta-item"><span class="meta-label">Объём:</span> {{$.WordCount}} слов</div>
 {{end}}
@@ -22,7 +25,6 @@
 </div>
 
 {{if eq $r.Status "in_progress"}}
-{{$p := .Progress}}
 <div id="progress" class="progress" data-report-id="{{$r.ID}}">
 <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:{{if $p}}{{$p.progress_pct}}{{else}}0{{end}}%"></div></div>
 <div class="progress-status" id="progress-status">
@@ -30,11 +32,13 @@
 {{if $p.title}}План: «{{$p.title}}» — {{len $p.sections}} разделов.<br>{{end}}
 {{if eq $p.last_event "plan_complete"}}Поиск источников...{{end}}
 {{if eq $p.last_event "search_start"}}Поиск источников...{{end}}
-{{if eq $p.last_event "search_complete"}}Анализ подтем...{{end}}
-{{if eq $p.last_event "subtopic_analysis_start"}}Анализ подтем ({{$p.completed}}/{{$p.total}})...{{end}}
-{{if eq $p.last_event "subtopic_analysis_complete"}}Анализ подтем завершён ({{$p.completed}}/{{$p.total}}). Синтез разделов...{{end}}
-{{if eq $p.last_event "section_synthesis_start"}}Синтез разделов ({{$p.completed}}/{{$p.total}})...{{end}}
-{{if eq $p.last_event "section_synthesis_complete"}}Синтез разделов завершён ({{$p.completed}}/{{$p.total}}).{{end}}
+{{if eq $p.last_event "search_complete"}}Поиск завершён ({{or $p.sources_count 0}} источников). Анализ подтем...{{end}}
+{{if eq $p.last_event "subtopic_analysis_start"}}Анализ подтем ({{or $p.completed 0}}/{{or $p.total 0}})...{{end}}
+{{if eq $p.last_event "subtopic_progress"}}Анализ подтем ({{or $p.completed 0}}/{{or $p.total 0}})...{{end}}
+{{if eq $p.last_event "subtopic_analysis_complete"}}Анализ подтем завершён ({{or $p.completed 0}}/{{or $p.total 0}}). Синтез разделов...{{end}}
+{{if eq $p.last_event "section_synthesis_start"}}Синтез разделов ({{or $p.completed 0}}/{{or $p.total 0}})...{{end}}
+{{if eq $p.last_event "section_progress"}}Синтез разделов ({{or $p.completed 0}}/{{or $p.total 0}})...{{end}}
+{{if eq $p.last_event "section_synthesis_complete"}}Синтез разделов завершён ({{or $p.completed 0}}/{{or $p.total 0}}).{{end}}
 {{if eq $p.last_event "critic_start"}}Проверка качества...{{end}}
 {{if eq $p.last_event "critic_complete"}}
 Оценка: {{$p.score}}/10. Итерация {{$p.iteration}}.
@@ -48,6 +52,30 @@
 {{end}}
 </div>
 </div>
+
+{{if $p.plan_sections}}
+<div class="plan-panel" id="plan-panel">
+<h3 class="plan-panel-title">План исследования</h3>
+{{range $p.plan_sections}}
+{{$secName := index . "name"}}
+<div class="plan-section" data-section="{{$secName}}">
+<div class="plan-section-header">
+<span class="plan-status-dot {{if contains $p.completed_sections $secName}}done{{else}}pending{{end}}"></span>
+<span class="plan-section-name">{{$secName}}</span>
+</div>
+<div class="plan-subtopics">
+{{range index . "subtopics"}}
+{{$subName := index . "name"}}
+<div class="plan-subtopic" data-subtopic="{{$subName}}">
+<span class="plan-status-dot {{if contains $p.completed_subtopics $subName}}done{{else}}pending{{end}}"></span>
+<span class="plan-subtopic-name">{{$subName}}</span>
+</div>
+{{end}}
+</div>
+</div>
+{{end}}
+</div>
+{{end}}
 {{end}}
 
 {{if eq $r.Status "error"}}

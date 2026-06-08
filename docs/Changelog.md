@@ -4,6 +4,77 @@
 
 ### Добавлено
 
+#### Логгирование LLM с req_id
+
+- Каждый вызов `Complete()` получает `req_id` (12-символьный hex из `time.Now().UnixNano()`)
+- Entry DEBUG при старте: model, chars, req_id
+- INFO при успешном ответе: req_id, duration, chars
+- WARN на каждой неудачной попытке: req_id, status, attempt, reason
+- **Финальный WARN** при исчерпании retry: model, chars, attempts, duration, last_err, http_status, body_snippet
+- **Timeout vs cancel**: `context.DeadlineExceeded` → `"timeout after %s"`, `context.Canceled` → `"client disconnected"`
+
+#### logPageHandler / logResponseWriter
+
+- Все HTTP-хендлеры обёрнуты в `logPageHandler`, логирующий при выходе: `← WebUI.handlerName: GET /path → 200 (1.2s)`
+- Inline DEBUG логи из хендлеров удалены (заменены единым wrapper)
+
+#### ProgressSaver callback
+
+- В `CoordinatorAgent` добавлен тип `ProgressSaver func(reportID, sectionID string, event string, data map[string]any)`
+- Вызывается внутри `c.report()` на каждом этапе — сохраняет прогресс в `ReportStore.SaveProgress()`
+- Позволяет восстановить состояние на странице деталей при перезагрузке
+
+#### In-place progress polling
+
+- Страница деталей отчёта: in-place polling `/api/reports/{id}` раз в 3с
+- Обновление progress-секции через DOM (фаза, счётчики, critic score/iteration)
+- Полный reload только при финальном статусе (`completed`/`error`)
+
+#### DEBUG-логи с размерами промптов в координаторе
+
+- `createPlan`: DEBUG с количеством queries, sections, subtopics
+- `synthesizeSection`: DEBUG с именем секции
+- `synthesizeFinal`: DEBUG с iteration + feedback length
+- Critic `Evaluate`: DEBUG с длиной отчёта
+- `extractQueriesFromFeedback`: DEBUG с числом запросов
+- `generateExecutiveSummary`: DEBUG с длиной отчёта
+
+### Исправлено
+
+#### Template namespace conflict (critical)
+
+- `ParseFS(templateFS, "web/templates/*.html")` — все `{{define "content"}}` в общем namespace, алфавитно последний файл (`report_list.html`) перезаписывал все остальные
+- Фикс: каждый хендлер создаёт свой `*template.Template` через `base.Clone()` + парсинг собственного файла
+- Удалён подход с единым `ParseFS(..., "web/templates/*.html")`
+
+#### pre-existing bug: synthesizeReport fmt.Sprintf
+
+- В `synthesizeReport` было 4 `%s` placeholder-а, но передавалось 5 аргументов — `lengthGuide` и `sourcesText` не вставлялись в промпт
+- Добавлены недостающие `%s` слоты
+
+#### JS event-data поля
+
+- SSE-события переименованы: `d.completed` / `d.total` вместо `d.sections` (для единообразия с critic-данными)
+
+### Файлы, затронутые в этой версии
+
+| Файл | Изменения |
+|------|-----------|
+| `internal/llm/client.go` | req_id во всех Complete() логах; финальный WARN с контекстом; timeout vs cancel; retry-log теперь с req_id, model, chars |
+| `internal/memory/longterm.go` | RetryConfig, retryWithBackoff() для Save() и RecallWithTopK() |
+| `internal/memory/report.go` | RawProgress поле, SaveProgress(), FailInProgressReports() |
+| `internal/agent/coordinator.go` | ProgressSaver тип/поле/сеттер; enhanced report() с подтемами/итерациями/counters; DEBUG лог размеров промптов; фикс fmt.Sprintf |
+| `cmd/server/main.go` | logResponseWriter + logPageHandler; per-page template через base.Clone(); progress saver wiring; все WS хендлеры обёрнуты в logPageHandler; inline DEBUG логи удалены |
+| `cmd/server/web/templates/report_detail.html` | progress-секция для in_progress (план, фаза, counters, critic) |
+| `cmd/server/web/static/main.js` | in-place polling; SSE event fields d.completed/d.total |
+| `docs/Architech.md` | ProgressSaver, in-place polling, logPageHandler, retry detail |
+
+---
+
+## [Unreleased] (предыдущие)
+
+### Добавлено
+
 #### Управление детализацией отчётов (VerbosityLevel)
 
 Добавлен трёхуровневый контроль детализации исследования, управляемый через переменную окружения `VERBOSITY` (`brief` / `normal` / `detailed`). По умолчанию — `normal`.

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/icoz/malder/internal/llm"
@@ -27,6 +28,11 @@ type SearchAgent struct {
 	distanceThreshold float64
 	useLLMCheck       bool
 	verbosity         VerbosityLevel
+	pagesProcessed    int32
+}
+
+func (s *SearchAgent) PagesProcessed() int {
+	return int(atomic.LoadInt32(&s.pagesProcessed))
 }
 
 func NewSearchAgent(
@@ -238,6 +244,7 @@ func (s *SearchAgent) processPage(ctx context.Context, pageURL, query string) (e
 	}
 
 	log.Info("SearchAgent: сохранена страница %s (raw=%d, summary=%d символов)", pageURL, len(rawContent), len(summary))
+	atomic.AddInt32(&s.pagesProcessed, 1)
 	return nil
 }
 

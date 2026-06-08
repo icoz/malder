@@ -98,6 +98,24 @@ func durationLabel(ms int64) string {
 	return fmt.Sprintf("%d сек", s)
 }
 
+func contains(slice any, s string) bool {
+	switch v := slice.(type) {
+	case []string:
+		for _, item := range v {
+			if item == s {
+				return true
+			}
+		}
+	case []any:
+		for _, item := range v {
+			if vs, ok := item.(string); ok && vs == s {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 type Config struct {
 	LLMEndpoint    string
 	LLMAPIKey      string
@@ -318,6 +336,7 @@ func main() {
 		"russianDatePtr": russianDatePtr,
 		"statusLabel":    statusLabel,
 		"durationLabel":  durationLabel,
+		"contains":       contains,
 	}
 
 	base := template.New("").Funcs(funcMap)

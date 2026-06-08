@@ -139,6 +139,7 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *R
 		"title":     plan.Title,
 		"sections":  sectionNames,
 		"subtopics": subtopicNames,
+		"plan_sections": c.sectionsToMap(plan.Sections),
 	})
 
 	allQueries := flattenQueries(plan)
@@ -147,7 +148,9 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *R
 	if err := c.searchAgent.Run(ctx, allQueries); err != nil {
 		log.Warn("Ошибки при поиске: %v", err)
 	}
-	c.report("search_complete", nil)
+	c.report("search_complete", map[string]any{
+		"sources_count": c.searchAgent.PagesProcessed(),
+	})
 
 	c.report("subtopic_analysis_start", map[string]any{"total": len(subtopicNames)})
 	subResults := c.researchSubtopics(ctx, plan)
@@ -238,13 +241,27 @@ func (c *CoordinatorAgent) researchSubtopics(ctx context.Context, plan *Research
 	}
 
 	subReports := make(map[string]*SubReport)
+	var completedSubtopics []string
 	for i := 0; i < len(jobs); i++ {
 		r := <-results
+		parts := strings.SplitN(r.key, "|", 2)
+		subName := ""
+		if len(parts) == 2 {
+			subName = parts[1]
+		}
 		if r.err != nil {
 			log.Warn("Coordinator: ошибка подтемы '%s': %v", r.key, r.err)
-			continue
+		} else {
+			subReports[r.key] = r.rep
+			if subName != "" {
+				completedSubtopics = append(completedSubtopics, subName)
+			}
 		}
-		subReports[r.key] = r.rep
+		c.report("subtopic_progress", map[string]any{
+			"completed_subtopics": completedSubtopics,
+			"completed":           len(completedSubtopics),
+			"total":               len(jobs),
+		})
 	}
 
 	return subReports
@@ -298,13 +315,20 @@ func (c *CoordinatorAgent) synthesizeSections(ctx context.Context, plan *Researc
 	}
 
 	sectionReports := make([]SectionReport, len(plan.Sections))
+	var completedSections []string
 	for i := 0; i < len(plan.Sections); i++ {
 		r := <-results
 		if r.err != nil {
 			log.Warn("Coordinator: ошибка синтеза секции #%d: %v", r.index, r.err)
-			continue
+		} else {
+			sectionReports[r.index] = r.report
+			completedSections = append(completedSections, r.report.Name)
 		}
-		sectionReports[r.index] = r.report
+		c.report("section_progress", map[string]any{
+			"completed_sections": completedSections,
+			"completed":          len(completedSections),
+			"total":              len(plan.Sections),
+		})
 	}
 
 	return sectionReports
@@ -552,6 +576,21 @@ func (c *CoordinatorAgent) extractQueriesFromFeedback(ctx context.Context, feedb
 		return nil
 	}
 	return
+}
+
+func (c *CoordinatorAgent) sectionsToMap(sections []Section) []map[string]any {
+	result := make([]map[string]any, 0, len(sections))
+	for _, sec := range sections {
+		subtopics := make([]map[string]any, 0, len(sec.Subtopics))
+		for _, st := range sec.Subtopics {
+			subtopics = append(subtopics, map[string]any{"name": st.Name})
+		}
+		result = append(result, map[string]any{
+			"name":      sec.Name,
+			"subtopics": subtopics,
+		})
+	}
+	return result
 }
 
 func (c *CoordinatorAgent) saveToMemory(ctx context.Context, key, value string) {

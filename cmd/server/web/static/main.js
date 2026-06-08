@@ -77,9 +77,9 @@ document.addEventListener('DOMContentLoaded', function () {
               if (p.title) { txt += 'План: «' + p.title + '» — ' + (p.sections ? p.sections.length : 0) + ' разделов.\n'; }
               var ev = p.last_event || '';
               if (ev === 'plan_complete' || ev === 'search_start') { txt += 'Поиск источников...'; }
-              else if (ev === 'search_complete') { txt += 'Анализ подтем...'; }
-              else if (ev === 'subtopic_analysis_start' || ev === 'subtopic_analysis_complete') { txt += 'Анализ подтем (' + (p.completed||0) + '/' + (p.total||0) + ')...'; }
-              else if (ev === 'section_synthesis_start' || ev === 'section_synthesis_complete') { txt += 'Синтез разделов (' + (p.completed||0) + '/' + (p.total||0) + ')...'; }
+              else if (ev === 'search_complete') { txt += 'Поиск завершён (' + (p.sources_count||0) + ' источников). Анализ подтем...'; }
+              else if (ev === 'subtopic_analysis_start' || ev === 'subtopic_progress' || ev === 'subtopic_analysis_complete') { txt += 'Анализ подтем (' + (p.completed||0) + '/' + (p.total||0) + ')...'; }
+              else if (ev === 'section_synthesis_start' || ev === 'section_progress' || ev === 'section_synthesis_complete') { txt += 'Синтез разделов (' + (p.completed||0) + '/' + (p.total||0) + ')...'; }
               else if (ev === 'critic_start') { txt += 'Проверка качества...'; }
               else if (ev === 'critic_complete') { txt += 'Оценка: ' + (p.score||'?') + '/10. Итерация ' + (p.iteration||1) + '.'; }
               else if (ev === 'additional_search_start') { txt += 'Дополнительный поиск (итерация ' + (p.iteration||1) + ')...'; }
@@ -87,6 +87,24 @@ document.addEventListener('DOMContentLoaded', function () {
               else { txt += 'Исследование выполняется...'; }
               if (txt) { progressStatus.textContent = txt; }
               if (p.progress_pct && progressFill) { progressFill.style.width = p.progress_pct + '%'; }
+              // Update source count
+              var sourceCountEl = document.getElementById('source-count');
+              if (sourceCountEl && p.sources_count != null) { sourceCountEl.textContent = p.sources_count; }
+              // Update plan panel status dots
+              if (p.completed_subtopics) {
+                document.querySelectorAll('.plan-subtopic').forEach(function (el) {
+                  var name = el.dataset.subtopic;
+                  var dot = el.querySelector('.plan-status-dot');
+                  if (name && dot) { dot.className = 'plan-status-dot' + (p.completed_subtopics.indexOf(name) !== -1 ? ' done' : ' pending'); }
+                });
+              }
+              if (p.completed_sections) {
+                document.querySelectorAll('.plan-section').forEach(function (el) {
+                  var name = el.dataset.section;
+                  var dot = el.querySelector('.plan-section-header .plan-status-dot');
+                  if (name && dot) { dot.className = 'plan-status-dot' + (p.completed_sections.indexOf(name) !== -1 ? ' done' : ' pending'); }
+                });
+              }
             } catch(e) {}
           }
         })
