@@ -26,9 +26,10 @@ type AnalystAgent struct {
 	sourceStore  *memory.SourceStore
 	model        string
 	temperature  float64
+	verbosity    VerbosityLevel
 }
 
-func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool, sourceStore *memory.SourceStore) *AnalystAgent {
+func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, mem *memory.LongTermMemory, saveTool *tool.SaveFactTool, sourceStore *memory.SourceStore, verbosity VerbosityLevel) *AnalystAgent {
 	return &AnalystAgent{
 		llm:          llmClient,
 		model:        model,
@@ -36,6 +37,7 @@ func NewAnalystAgent(llmClient *llm.Client, model string, temperature float64, m
 		memory:       mem,
 		saveFactTool: saveTool,
 		sourceStore:  sourceStore,
+		verbosity:    verbosity,
 	}
 }
 
@@ -55,15 +57,17 @@ func (a *AnalystAgent) GenerateSubReport(ctx context.Context, sectionName, subto
 		return nil, fmt.Errorf("ошибка поиска фактов: %w", err)
 	}
 
+	factTruncLen := a.factTruncLen()
 	var factsText strings.Builder
 	for i, f := range facts {
 		fact := f
-		if len(fact) > 3000 {
-			fact = fact[:3000] + "..."
+		if len(fact) > factTruncLen {
+			fact = fact[:factTruncLen] + "..."
 		}
 		factsText.WriteString(fmt.Sprintf("%d. %s\n\n", i+1, fact))
 	}
 
+	lengthGuide, maxTokens := a.analysisLengthGuide()
 	systemPrompt := "Ты — эксперт-аналитик, отвечающий только JSON."
 	prompt := fmt.Sprintf(`Исследуемая тема: "%s"
 Секция: "%s"
@@ -73,9 +77,7 @@ func (a *AnalystAgent) GenerateSubReport(ctx context.Context, sectionName, subto
 %s
 
 Задание: составь аналитическую заметку по подтеме.
-Если фактов достаточно — напиши развёрнутый анализ.
-Если фактов явно не хватает (например, их очень мало или они не по теме) —
-укажи complete=false и предложи конкретные поисковые запросы для поиска недостающей информации.
+%s
 
 Ответь ТОЛЬКО в формате JSON:
 {
@@ -93,9 +95,9 @@ func (a *AnalystAgent) GenerateSubReport(ctx context.Context, sectionName, subto
   "gap_reason": "объяснение, каких именно фактов не хватает"
 }
 
-Не пиши ничего кроме JSON.`, topic, sectionName, subtopicName, factsText.String())
+Не пиши ничего кроме JSON.`, topic, sectionName, subtopicName, factsText.String(), lengthGuide)
 
-	resp, err := a.llm.CompleteSimple(ctx, a.model, systemPrompt, prompt, a.temperature)
+	resp, err := a.llm.CompleteSimple(ctx, a.model, systemPrompt, prompt, a.temperature, maxTokens)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка LLM: %w", err)
 	}
@@ -115,4 +117,26 @@ func (a *AnalystAgent) GenerateSubReport(ctx context.Context, sectionName, subto
 	}
 
 	return &sr, nil
+}
+
+func (a *AnalystAgent) factTruncLen() int {
+	switch a.verbosity {
+	case VerbosityDetailed:
+		return 6000
+	case VerbosityBrief:
+		return 1500
+	default:
+		return 3000
+	}
+}
+
+func (a *AnalystAgent) analysisLengthGuide() (guide string, maxTokens int) {
+	switch a.verbosity {
+	case VerbosityDetailed:
+		return `Если фактов достаточно — напиши подробный, глубокий анализ (не менее 500-800 слов). Используй цифры, даты, имена. Структурируй текст: выдели ключевые аспекты, причинно-следственные связи, приведи примеры. Если фактов явно не хватает (например, их очень мало или они не по теме) — укажи complete=false и предложи конкретные поисковые запросы для поиска недостающей информации.`, 4096
+	case VerbosityBrief:
+		return `Если фактов достаточно — напиши краткую аналитическую заметку (100-200 слов), только самую суть. Если фактов явно не хватает — укажи complete=false и предложи 1-2 поисковых запроса.`, 1024
+	default:
+		return `Если фактов достаточно — напиши развёрнутый анализ. Если фактов явно не хватает (например, их очень мало или они не по теме) — укажи complete=false и предложи конкретные поисковые запросы для поиска недостающей информации.`, 2048
+	}
 }

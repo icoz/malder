@@ -46,6 +46,7 @@ type chatRequest struct {
 	Model       string        `json:"model"`
 	Messages    []ChatMessage `json:"messages"`
 	Temperature float64       `json:"temperature"`
+	MaxTokens   *int          `json:"max_tokens,omitempty"`
 	Stream      bool          `json:"stream"`
 }
 
@@ -65,20 +66,23 @@ type chatResponse struct {
 	} `json:"error,omitempty"`
 }
 
-func (c *Client) Complete(ctx context.Context, model string, messages []ChatMessage, temperature float64) (string, error) {
-	log.Debug("→ llm.Complete(model=%s, messages=%d, temp=%.2f)", model, len(messages), temperature)
+func (c *Client) Complete(ctx context.Context, model string, messages []ChatMessage, temperature float64, maxTokens int) (string, error) {
+	log.Debug("→ llm.Complete(model=%s, messages=%d, temp=%.2f, maxTokens=%d)", model, len(messages), temperature, maxTokens)
 
 	var totalLen int
 	for _, m := range messages {
 		totalLen += len(m.Content)
 	}
-	log.Info("LLM запрос: модель=%s, сообщений=%d, символов=%d, temp=%.2f", model, len(messages), totalLen, temperature)
+	log.Info("LLM запрос: модель=%s, сообщений=%d, символов=%d, temp=%.2f, maxTokens=%d", model, len(messages), totalLen, temperature, maxTokens)
 
 	reqBody := chatRequest{
 		Model:       model,
 		Messages:    messages,
 		Temperature: temperature,
 		Stream:      false,
+	}
+	if maxTokens > 0 {
+		reqBody.MaxTokens = &maxTokens
 	}
 	jsonData, err := json.Marshal(reqBody)
 	if err != nil {
@@ -169,10 +173,10 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 	return "", fmt.Errorf("LLM request failed after %d attempts: %w", maxAttempts, lastErr)
 }
 
-func (c *Client) CompleteSimple(ctx context.Context, model string, systemPrompt, userPrompt string, temperature float64) (string, error) {
+func (c *Client) CompleteSimple(ctx context.Context, model string, systemPrompt, userPrompt string, temperature float64, maxTokens int) (string, error) {
 	messages := []ChatMessage{
 		{Role: "system", Content: systemPrompt},
 		{Role: "user", Content: userPrompt},
 	}
-	return c.Complete(ctx, model, messages, temperature)
+	return c.Complete(ctx, model, messages, temperature, maxTokens)
 }

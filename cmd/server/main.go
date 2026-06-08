@@ -120,6 +120,8 @@ type Config struct {
 	MaxConcurrentSubtopics int
 	MaxSubtopicRetries     int
 
+	Verbosity string
+
 	ServerPort string
 }
 
@@ -142,6 +144,7 @@ func loadConfig() *Config {
 		MaxIterations:          getEnvInt("MAX_ITERATIONS", 3),
 		MaxConcurrentSubtopics: getEnvInt("MAX_CONCURRENT_SUBTOPICS", 3),
 		MaxSubtopicRetries:     getEnvInt("MAX_SUBTOPIC_RETRIES", 2),
+		Verbosity:              getEnv("VERBOSITY", "normal"),
 		ServerPort:             getEnv("SERVER_PORT", "8080"),
 	}
 	cfg.LLMEndpointCoordinator = getEnv("LLM_ENDPOINT_COORDINATOR", cfg.LLMEndpoint)
@@ -246,11 +249,13 @@ func main() {
 	}
 	adaptiveScheduler := scheduler.NewAdaptiveScheduler(schedCfg)
 
-	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, sourceStore, llmAnalyst, cfg.LLMModelAnalyst, cfg.MaxPagesPerQuery, cfg.MinRelevantFacts, cfg.RecallDistThreshold, cfg.RecallLLMCheck)
+	verbosity := agent.ParseVerbosity(cfg.Verbosity)
 
-	analystAgent := agent.NewAnalystAgent(llmAnalyst, cfg.LLMModelAnalyst, cfg.LLMTemperature, mem, saveFactTool, sourceStore)
+	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, sourceStore, llmAnalyst, cfg.LLMModelAnalyst, cfg.MaxPagesPerQuery, cfg.MinRelevantFacts, cfg.RecallDistThreshold, cfg.RecallLLMCheck, verbosity)
 
-	criticAgent := agent.NewCriticAgent(llmCritic, cfg.LLMModelCritic, cfg.LLMTemperature)
+	analystAgent := agent.NewAnalystAgent(llmAnalyst, cfg.LLMModelAnalyst, cfg.LLMTemperature, mem, saveFactTool, sourceStore, verbosity)
+
+	criticAgent := agent.NewCriticAgent(llmCritic, cfg.LLMModelCritic, cfg.LLMTemperature, verbosity)
 
 	coordinator := agent.NewCoordinator(agent.CoordinatorConfig{
 		LLM:                    llmCoordinator,
@@ -261,6 +266,7 @@ func main() {
 		SearchAgent:            searchAgent,
 		AnalystAgent:           analystAgent,
 		CriticAgent:            criticAgent,
+		Verbosity:              verbosity,
 		MaxIterations:          cfg.MaxIterations,
 		MaxConcurrentSubtopics: cfg.MaxConcurrentSubtopics,
 		MaxSubtopicRetries:     cfg.MaxSubtopicRetries,
@@ -331,10 +337,18 @@ func reportDetailHandler(tmpls *template.Template, store *memory.ReportStore) ht
 				htmlContent = template.HTML(buf.String())
 			}
 		}
+		var execSummaryHTML template.HTML
+		if report.ExecutiveSummary != "" {
+			var buf bytes.Buffer
+			if err := mdRenderer.Convert([]byte(report.ExecutiveSummary), &buf); err == nil {
+				execSummaryHTML = template.HTML(buf.String())
+			}
+		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		tmpls.ExecuteTemplate(w, "report_detail.html", map[string]any{
-			"Report":     report,
-			"ReportHTML": htmlContent,
+			"Report":           report,
+			"ReportHTML":       htmlContent,
+			"ExecSummaryHTML":  execSummaryHTML,
 		})
 	}
 }
@@ -407,12 +421,13 @@ func apiResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportStore
 			return
 		}
 
-		store.Complete(reportID, result.Report, result.SourceURLs, duration)
+		store.Complete(reportID, result.Report, result.ExecutiveSummary, result.SourceURLs, duration)
 		writeJSON(w, http.StatusOK, map[string]any{
-			"report_id":   reportID,
-			"report":      result.Report,
-			"source_urls": result.SourceURLs,
-			"duration_ms": duration.Milliseconds(),
+			"report_id":         reportID,
+			"report":            result.Report,
+			"executive_summary": result.ExecutiveSummary,
+			"source_urls":       result.SourceURLs,
+			"duration_ms":       duration.Milliseconds(),
 		})
 	}
 }
@@ -472,6 +487,7 @@ func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 				SearchAgent:            coord.SearchAgent(),
 				AnalystAgent:           coord.AnalystAgent(),
 				CriticAgent:            coord.CriticAgent(),
+				Verbosity:              coord.Verbosity(),
 				MaxIterations:          coord.MaxIterations(),
 				MaxConcurrentSubtopics: coord.MaxConcurrentSubtopics(),
 				MaxSubtopicRetries:     coord.MaxSubtopicRetries(),
@@ -495,7 +511,7 @@ func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 				malderlog.Warn("Запрос research/stream: ошибка=%v", res.err)
 				fmt.Fprintf(w, "event: error\ndata: %s\n\n", jsonEscape(res.err.Error()))
 			} else {
-				store.Complete(reportID, res.result.Report, res.result.SourceURLs, time.Since(time.Now()))
+				store.Complete(reportID, res.result.Report, res.result.ExecutiveSummary, res.result.SourceURLs, time.Since(time.Now()))
 				malderlog.Info("Запрос research/stream: готово, report_id=%s", reportID)
 				resultData, _ := json.Marshal(map[string]string{"report_id": reportID})
 				fmt.Fprintf(w, "event: result\ndata: %s\n\n", resultData)

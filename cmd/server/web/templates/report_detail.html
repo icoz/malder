@@ -30,6 +30,13 @@
 </div>
 {{end}}
 
+{{if $.ExecSummaryHTML}}
+<div class="exec-summary">
+<h2>Краткое резюме</h2>
+<div class="exec-summary-content">{{$.ExecSummaryHTML}}</div>
+</div>
+{{end}}
+
 {{if $r.ReportHTML}}
 <div class="report-content">{{$r.ReportHTML}}</div>
 {{end}}

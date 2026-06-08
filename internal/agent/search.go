@@ -26,6 +26,7 @@ type SearchAgent struct {
 	minRelevantFacts  int
 	distanceThreshold float64
 	useLLMCheck       bool
+	verbosity         VerbosityLevel
 }
 
 func NewSearchAgent(
@@ -40,8 +41,9 @@ func NewSearchAgent(
 	minRelevantFacts int,
 	distanceThreshold float64,
 	useLLMCheck bool,
+	verbosity VerbosityLevel,
 ) *SearchAgent {
-	log.Debug("→ NewSearchAgent(maxPages=%d, minRelevant=%d, distThreshold=%.3f, llmCheck=%t)", maxPagesPerQuery, minRelevantFacts, distanceThreshold, useLLMCheck)
+	log.Debug("→ NewSearchAgent(maxPages=%d, minRelevant=%d, distThreshold=%.3f, llmCheck=%t, verbosity=%s)", maxPagesPerQuery, minRelevantFacts, distanceThreshold, useLLMCheck, verbosity)
 	if maxPagesPerQuery <= 0 {
 		maxPagesPerQuery = 3
 	}
@@ -63,6 +65,7 @@ func NewSearchAgent(
 		minRelevantFacts:  minRelevantFacts,
 		distanceThreshold: distanceThreshold,
 		useLLMCheck:       useLLMCheck,
+		verbosity:         verbosity,
 	}
 }
 
@@ -197,7 +200,7 @@ func (s *SearchAgent) processPage(ctx context.Context, pageURL, query string) (e
 	}
 
 	// Save raw original
-	const maxRawLen = 10000
+	maxRawLen := s.maxRawLen()
 	rawContent := content
 	if len(rawContent) > maxRawLen {
 		rawContent = rawContent[:maxRawLen] + "... (обрезано)"
@@ -245,6 +248,7 @@ func (s *SearchAgent) summarizeContent(ctx context.Context, content, pageURL str
 		input = input[:maxLLMInput] + "..."
 	}
 
+	factCountGuide := s.factCountGuide()
 	prompt := fmt.Sprintf(`Извлеки ключевые факты из текста страницы.
 
 URL: %s
@@ -252,16 +256,16 @@ URL: %s
 Текст:
 %s
 
-Извлеки 3-7 ключевых фактов или утверждений, которые можно использовать в исследовательском отчёте. Сохрани числовые данные, даты, имена, названия. Если есть прямые цитаты — сохрани их дословно. Не добавляй комментарии от себя.
+%s
 
-Ответ напиши в виде маркированного списка на русском языке.`, pageURL, input)
+Ответ напиши в виде маркированного списка на русском языке.`, pageURL, input, factCountGuide)
 
-	resp, err := s.summarizer.CompleteSimple(ctx, s.summarizerModel, "Ты — экстрактор фактов. Отвечай только фактами, без пояснений.", prompt, 0.3)
+	resp, err := s.summarizer.CompleteSimple(ctx, s.summarizerModel, "Ты — экстрактор фактов. Отвечай только фактами, без пояснений.", prompt, 0.3, 0)
 	if err != nil {
 		return "", err
 	}
 
-	const maxSummaryLen = 3000
+	maxSummaryLen := s.maxSummaryLen()
 	if len(resp) > maxSummaryLen {
 		resp = resp[:maxSummaryLen] + "..."
 	}
@@ -303,13 +307,46 @@ func (s *SearchAgent) llmCheck(ctx context.Context, query string, facts []string
 
 	resp, err := s.summarizer.CompleteSimple(ctx, s.summarizerModel,
 		"Ты — эксперт по оценке полноты информации. Отвечай только YES или NO.",
-		prompt, 0.3)
+		prompt, 0.3, 0)
 	if err != nil {
 		log.Warn("SearchAgent: LLM-проверка кеша ошибка: %v", err)
 		return false
 	}
 	resp = strings.TrimSpace(resp)
 	return strings.HasPrefix(resp, "YES")
+}
+
+func (s *SearchAgent) factCountGuide() string {
+	switch s.verbosity {
+	case VerbosityDetailed:
+		return "Извлеки 7-15 ключевых фактов или утверждений, которые можно использовать в исследовательском отчёте. Сохрани числовые данные, даты, имена, названия. Если есть прямые цитаты — сохрани их дословно. Не добавляй комментарии от себя. Старайся извлечь максимум полезной информации."
+	case VerbosityBrief:
+		return "Извлеки 3-5 ключевых фактов или утверждений. Только самое важное. Сохрани числовые данные, даты, имена. Не добавляй комментарии от себя."
+	default:
+		return "Извлеки 3-7 ключевых фактов или утверждений, которые можно использовать в исследовательском отчёте. Сохрани числовые данные, даты, имена, названия. Если есть прямые цитаты — сохрани их дословно. Не добавляй комментарии от себя."
+	}
+}
+
+func (s *SearchAgent) maxSummaryLen() int {
+	switch s.verbosity {
+	case VerbosityDetailed:
+		return 6000
+	case VerbosityBrief:
+		return 1500
+	default:
+		return 3000
+	}
+}
+
+func (s *SearchAgent) maxRawLen() int {
+	switch s.verbosity {
+	case VerbosityDetailed:
+		return 20000
+	case VerbosityBrief:
+		return 5000
+	default:
+		return 10000
+	}
 }
 
 func extractLinks(md string) []string {

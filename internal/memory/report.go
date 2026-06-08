@@ -20,16 +20,17 @@ const (
 )
 
 type Report struct {
-	ID          string       `json:"id"`
-	Query       string       `json:"query"`
-	Status      ReportStatus `json:"status"`
-	ReportText  string       `json:"report_text,omitempty"`
-	Error       string       `json:"error,omitempty"`
-	SourceCount int          `json:"source_count"`
-	SourceURLs  []string     `json:"source_urls"`
-	CreatedAt   int64        `json:"created_at"`
-	CompletedAt *int64       `json:"completed_at,omitempty"`
-	DurationMs  int64        `json:"duration_ms"`
+	ID               string       `json:"id"`
+	Query            string       `json:"query"`
+	Status           ReportStatus `json:"status"`
+	ReportText       string       `json:"report_text,omitempty"`
+	ExecutiveSummary string       `json:"executive_summary,omitempty"`
+	Error            string       `json:"error,omitempty"`
+	SourceCount      int          `json:"source_count"`
+	SourceURLs       []string     `json:"source_urls"`
+	CreatedAt        int64        `json:"created_at"`
+	CompletedAt      *int64       `json:"completed_at,omitempty"`
+	DurationMs       int64        `json:"duration_ms"`
 }
 
 type ReportStore struct {
@@ -70,7 +71,7 @@ func (s *ReportStore) Create(query string) (string, error) {
 	return id, nil
 }
 
-func (s *ReportStore) Complete(id, reportText string, sourceURLs []string, duration time.Duration) error {
+func (s *ReportStore) Complete(id, reportText, execSummary string, sourceURLs []string, duration time.Duration) error {
 	return s.db.Update(func(tx *bbolt.Tx) error {
 		b := tx.Bucket([]byte("reports"))
 		data := b.Get([]byte(id))
@@ -83,6 +84,7 @@ func (s *ReportStore) Complete(id, reportText string, sourceURLs []string, durat
 		}
 		r.Status = ReportStatusCompleted
 		r.ReportText = reportText
+		r.ExecutiveSummary = execSummary
 		r.SourceURLs = sourceURLs
 		r.SourceCount = len(sourceURLs)
 		now := time.Now().UnixNano()

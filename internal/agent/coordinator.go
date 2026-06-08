@@ -15,8 +15,14 @@ import (
 type ProgressReporter func(event string, data map[string]any)
 
 type ResearchResult struct {
-	Report     string
-	SourceURLs []string
+	Report           string
+	ExecutiveSummary string
+	SourceURLs       []string
+}
+
+type SectionReport struct {
+	Name string
+	Text string
 }
 
 type CoordinatorAgent struct {
@@ -28,6 +34,7 @@ type CoordinatorAgent struct {
 	searchAgent            *SearchAgent
 	analystAgent           *AnalystAgent
 	criticAgent            *CriticAgent
+	verbosity              VerbosityLevel
 	maxIterations          int
 	maxConcurrentSubtopics int
 	maxSubtopicRetries     int
@@ -43,13 +50,14 @@ type CoordinatorConfig struct {
 	SearchAgent            *SearchAgent
 	AnalystAgent           *AnalystAgent
 	CriticAgent            *CriticAgent
+	Verbosity              VerbosityLevel
 	MaxIterations          int
 	MaxConcurrentSubtopics int
 	MaxSubtopicRetries     int
 }
 
 func NewCoordinator(cfg CoordinatorConfig) *CoordinatorAgent {
-	log.Debug("→ NewCoordinator(maxIter=%d, maxConcurrent=%d, maxRetries=%d)", cfg.MaxIterations, cfg.MaxConcurrentSubtopics, cfg.MaxSubtopicRetries)
+	log.Debug("→ NewCoordinator(maxIter=%d, maxConcurrent=%d, maxRetries=%d, verbosity=%s)", cfg.MaxIterations, cfg.MaxConcurrentSubtopics, cfg.MaxSubtopicRetries, cfg.Verbosity)
 	if cfg.MaxIterations == 0 {
 		cfg.MaxIterations = 3
 	}
@@ -68,6 +76,7 @@ func NewCoordinator(cfg CoordinatorConfig) *CoordinatorAgent {
 		searchAgent:            cfg.SearchAgent,
 		analystAgent:           cfg.AnalystAgent,
 		criticAgent:            cfg.CriticAgent,
+		verbosity:              cfg.Verbosity,
 		maxIterations:          cfg.MaxIterations,
 		maxConcurrentSubtopics: cfg.MaxConcurrentSubtopics,
 		maxSubtopicRetries:     cfg.MaxSubtopicRetries,
@@ -78,16 +87,17 @@ func (c *CoordinatorAgent) SetProgressReporter(reporter ProgressReporter) {
 	c.reporter = reporter
 }
 
-func (c *CoordinatorAgent) LLM() *llm.Client              { return c.llm }
-func (c *CoordinatorAgent) Memory() *memory.LongTermMemory { return c.memory }
-func (c *CoordinatorAgent) SearchAgent() *SearchAgent      { return c.searchAgent }
-func (c *CoordinatorAgent) AnalystAgent() *AnalystAgent    { return c.analystAgent }
-func (c *CoordinatorAgent) CriticAgent() *CriticAgent      { return c.criticAgent }
-func (c *CoordinatorAgent) MaxIterations() int             { return c.maxIterations }
-func (c *CoordinatorAgent) Model() string                  { return c.model }
-func (c *CoordinatorAgent) Temperature() float64           { return c.temperature }
-func (c *CoordinatorAgent) MaxConcurrentSubtopics() int    { return c.maxConcurrentSubtopics }
-func (c *CoordinatorAgent) MaxSubtopicRetries() int        { return c.maxSubtopicRetries }
+func (c *CoordinatorAgent) LLM() *llm.Client                 { return c.llm }
+func (c *CoordinatorAgent) Memory() *memory.LongTermMemory   { return c.memory }
+func (c *CoordinatorAgent) SearchAgent() *SearchAgent        { return c.searchAgent }
+func (c *CoordinatorAgent) AnalystAgent() *AnalystAgent      { return c.analystAgent }
+func (c *CoordinatorAgent) CriticAgent() *CriticAgent        { return c.criticAgent }
+func (c *CoordinatorAgent) MaxIterations() int               { return c.maxIterations }
+func (c *CoordinatorAgent) Model() string                    { return c.model }
+func (c *CoordinatorAgent) Temperature() float64             { return c.temperature }
+func (c *CoordinatorAgent) Verbosity() VerbosityLevel        { return c.verbosity }
+func (c *CoordinatorAgent) MaxConcurrentSubtopics() int      { return c.maxConcurrentSubtopics }
+func (c *CoordinatorAgent) MaxSubtopicRetries() int          { return c.maxSubtopicRetries }
 func (c *CoordinatorAgent) SourceStore() *memory.SourceStore { return c.sourceStore }
 
 func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *ResearchResult, err error) {
@@ -136,6 +146,16 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *R
 	result, err = c.criticLoop(ctx, plan.Title, sectionReports)
 	if err != nil {
 		return nil, fmt.Errorf("критический цикл не удался: %w", err)
+	}
+
+	// Generate executive summary if detailed verbosity
+	if c.verbosity == VerbosityDetailed && result != nil {
+		c.report("exec_summary_start", nil)
+		execSummary, err := c.generateExecutiveSummary(ctx, plan.Title, result.Report)
+		if err == nil {
+			result.ExecutiveSummary = execSummary
+		}
+		c.report("exec_summary_complete", map[string]any{"length": len(execSummary)})
 	}
 
 	c.report("finish", map[string]any{"result": result.Report})
@@ -213,10 +233,10 @@ func (c *CoordinatorAgent) researchSubtopics(ctx context.Context, plan *Research
 	return subReports
 }
 
-func (c *CoordinatorAgent) synthesizeSections(ctx context.Context, plan *ResearchPlan, subReports map[string]*SubReport) []string {
+func (c *CoordinatorAgent) synthesizeSections(ctx context.Context, plan *ResearchPlan, subReports map[string]*SubReport) []SectionReport {
 	type sectionResult struct {
 		index  int
-		report string
+		report SectionReport
 		err    error
 	}
 
@@ -237,13 +257,13 @@ func (c *CoordinatorAgent) synthesizeSections(ctx context.Context, plan *Researc
 			}
 
 			if len(analyses) == 0 {
-				results <- sectionResult{idx, "", fmt.Errorf("нет данных для секции '%s'", sec.Name)}
+				results <- sectionResult{idx, SectionReport{}, fmt.Errorf("нет данных для секции '%s'", sec.Name)}
 				return
 			}
 
 			report, err := c.synthesizeSection(ctx, sec.Name, analyses)
 			if err != nil {
-				results <- sectionResult{idx, "", err}
+				results <- sectionResult{idx, SectionReport{}, err}
 				return
 			}
 
@@ -256,11 +276,11 @@ func (c *CoordinatorAgent) synthesizeSections(ctx context.Context, plan *Researc
 					IsRaw:   true,
 				})
 			}
-			results <- sectionResult{idx, report, nil}
+			results <- sectionResult{idx, SectionReport{Name: sec.Name, Text: report}, nil}
 		}(i, section)
 	}
 
-	sectionReports := make([]string, len(plan.Sections))
+	sectionReports := make([]SectionReport, len(plan.Sections))
 	for i := 0; i < len(plan.Sections); i++ {
 		r := <-results
 		if r.err != nil {
@@ -273,13 +293,17 @@ func (c *CoordinatorAgent) synthesizeSections(ctx context.Context, plan *Researc
 	return sectionReports
 }
 
-func (c *CoordinatorAgent) criticLoop(ctx context.Context, title string, sectionReports []string) (*ResearchResult, error) {
+func (c *CoordinatorAgent) criticLoop(ctx context.Context, title string, sectionReports []SectionReport) (*ResearchResult, error) {
 	var finalReport string
 	var sourceURLs []string
+	currentSectionReports := make([]SectionReport, len(sectionReports))
+	copy(currentSectionReports, sectionReports)
+
+	var lastFeedback string
 	for iteration := 1; iteration <= c.maxIterations; iteration++ {
 		c.report("synthesis_start", map[string]any{"iteration": iteration})
 
-		report, urls, err := c.synthesizeFinal(ctx, title, sectionReports)
+		report, urls, err := c.synthesizeFinal(ctx, title, currentSectionReports, lastFeedback)
 		if err != nil {
 			return nil, fmt.Errorf("ошибка синтеза отчёта: %w", err)
 		}
@@ -301,12 +325,13 @@ func (c *CoordinatorAgent) criticLoop(ctx context.Context, title string, section
 		}
 
 		c.report("critic_start", map[string]any{"iteration": iteration})
-		score, feedback, err := c.criticAgent.Evaluate(ctx, finalReport)
+		score, feedback, weakSections, err := c.criticAgent.Evaluate(ctx, finalReport)
 		if err != nil {
 			log.Warn("Критик вернул ошибку: %v", err)
 			break
 		}
-		c.report("critic_complete", map[string]any{"score": score, "feedback": feedback})
+		lastFeedback = feedback
+		c.report("critic_complete", map[string]any{"score": score, "feedback": feedback, "weak_sections": weakSections})
 
 		if score >= 7 {
 			log.Info("Оценка %d >= 7, качество достаточное", score)
@@ -332,6 +357,8 @@ func (c *CoordinatorAgent) createPlan(ctx context.Context, userQuery string) (pl
 	}()
 	log.Debug("→ CoordinatorAgent.createPlan(query=%s)", userQuery)
 	systemPrompt := "Ты — планировщик исследований, отвечающий только JSON."
+
+	planScope := c.planScopeGuide()
 	prompt := fmt.Sprintf(`Пользователь задал тему исследования: "%s"
 
 Составь структурированный план исследования в формате JSON.
@@ -345,13 +372,9 @@ func (c *CoordinatorAgent) createPlan(ctx context.Context, userQuery string) (pl
 
 Каждая подтема содержит:
 - name: название подтемы
-- queries: массив из 2-3 конкретных поисковых запросов для сбора информации по этой подтеме
+- queries: массив конкретных поисковых запросов для сбора информации по этой подтеме
 
-Требования:
-- 2-4 секции
-- 2-3 подтемы в каждой секции
-- Запросы должны быть на русском языке (для поиска в Яндексе/Google)
-- Запросы должны быть конкретными и релевантными
+%s
 
 Пример формата:
 {
@@ -369,9 +392,9 @@ func (c *CoordinatorAgent) createPlan(ctx context.Context, userQuery string) (pl
   ]
 }
 
-Не пиши ничего кроме JSON.`, userQuery)
+Не пиши ничего кроме JSON.`, userQuery, planScope)
 
-	response, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature)
+	response, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -394,6 +417,7 @@ func (c *CoordinatorAgent) synthesizeSection(ctx context.Context, sectionName st
 		sb += fmt.Sprintf("Подтема %d:\n%s\n\n", i+1, a)
 	}
 
+	lengthGuide, maxTokens := c.sectionLengthGuide()
 	systemPrompt := "Ты — составитель разделов исследовательских отчётов."
 	prompt := fmt.Sprintf(`Название секции: "%s"
 
@@ -401,25 +425,26 @@ func (c *CoordinatorAgent) synthesizeSection(ctx context.Context, sectionName st
 Объедини их в связный, хорошо структурированный раздел отчёта.
 Убери дублирующуюся информацию, добавь логические переходы между подтемами.
 Раздел должен читаться как единое целое.
+%s
 
 Заметки по подтемам:
 %s
 
-Напиши раздел отчёта на русском языке.`, sectionName, sb)
+Напиши раздел отчёта на русском языке.`, sectionName, lengthGuide, sb)
 
-	report, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature)
+	report, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature, maxTokens)
 	if err != nil {
 		return "", fmt.Errorf("ошибка синтеза секции: %w", err)
 	}
 	return report, nil
 }
 
-func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, sectionReports []string) (string, []string, error) {
+func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, sectionReports []SectionReport, feedback string) (string, []string, error) {
 	log.Debug("→ CoordinatorAgent.synthesizeFinal(title=%s, sections=%d)", title, len(sectionReports))
 
 	var sb string
 	for i, sr := range sectionReports {
-		sb += fmt.Sprintf("=== Раздел %d ===\n%s\n\n", i+1, sr)
+		sb += fmt.Sprintf("=== Раздел %d: %s ===\n%s\n\n", i+1, sr.Name, sr.Text)
 	}
 
 	// Collect source URLs from memory
@@ -447,7 +472,13 @@ func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, se
 		}
 	}
 
+	lengthGuide, maxTokens := c.finalLengthGuide()
 	systemPrompt := "Ты — автор исследовательских отчётов."
+
+	feedbackBlock := ""
+	if feedback != "" {
+		feedbackBlock = fmt.Sprintf("\nЗамечания к предыдущей версии отчёта (учти их при подготовке новой версии):\n%s\n", feedback)
+	}
 	prompt := fmt.Sprintf(`Тема исследования: "%s"
 
 Ниже приведены разделы отчёта, подготовленные отдельными аналитиками.
@@ -455,17 +486,19 @@ func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, se
 
 Разделы:
 %s
-
+%s
 Требования:
 - Напиши введение: актуальность темы, цель исследования
 - Объедини разделы логическими переходами
-- Напиши заключение: выводы, рекомендации
+- Напиши заключение: выводы, рекомендации по каждому разделу
 - Если в разделах есть ссылки на источники, собери их в итоговый список в конце
-- При цитировании конкретных данных указывай URL из списка источников%s
+- При цитировании конкретных данных указывай URL из списка источников
+- Используй подзаголовки для структурирования разделов
+%s
 
-Отчёт пиши на русском языке.`, title, sb, sourcesText)
+Отчёт пиши на русском языке.`, title, sb, feedbackBlock, lengthGuide, sourcesText)
 
-	report, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature)
+	report, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature, maxTokens)
 	if err != nil {
 		return "", nil, fmt.Errorf("ошибка синтеза финального отчёта: %w", err)
 	}
@@ -483,7 +516,7 @@ func (c *CoordinatorAgent) extractQueriesFromFeedback(ctx context.Context, feedb
 Ответь ТОЛЬКО в формате JSON-массива строк, например: ["запрос 1", "запрос 2"]
 Не пиши ничего кроме JSON.`, feedback)
 
-	response, err := c.llm.CompleteSimple(ctx, c.model, "Ты полезный помощник.", prompt, c.temperature)
+	response, err := c.llm.CompleteSimple(ctx, c.model, "Ты полезный помощник.", prompt, c.temperature, 0)
 	if err != nil {
 		log.Warn("Ошибка при генерации доп. запросов: %v", err)
 		return nil
@@ -507,6 +540,73 @@ func (c *CoordinatorAgent) report(event string, data map[string]any) {
 	if c.reporter != nil {
 		c.reporter(event, data)
 	}
+}
+
+func (c *CoordinatorAgent) planScopeGuide() string {
+	switch c.verbosity {
+	case VerbosityDetailed:
+		return `Требования:
+- 4-6 секций
+- 3-5 подтем в каждой секции
+- 3-4 поисковых запроса на подтему
+- Запросы должны быть на русском языке (для поиска в Яндексе/Google)
+- Запросы должны быть конкретными, разноплановыми и релевантными`
+	case VerbosityBrief:
+		return `Требования:
+- 1-2 секции
+- 1-2 подтемы в каждой секции
+- 1-2 поисковых запроса на подтему
+- Запросы должны быть на русском языке (для поиска в Яндексе/Google)
+- Запросы должны быть конкретными и релевантными`
+	default:
+		return `Требования:
+- 2-4 секции
+- 2-3 подтемы в каждой секции
+- 2-3 поисковых запроса на подтему
+- Запросы должны быть на русском языке (для поиска в Яндексе/Google)
+- Запросы должны быть конкретными и релевантными`
+	}
+}
+
+func (c *CoordinatorAgent) sectionLengthGuide() (guide string, maxTokens int) {
+	switch c.verbosity {
+	case VerbosityDetailed:
+		return "Напиши подробный, глубокий раздел (800-1500 слов). Раскрой каждую подтему, добавь анализ, примеры, причинно-следственные связи.", 8192
+	case VerbosityBrief:
+		return "Напиши краткий раздел (150-300 слов), только основные выводы по каждой подтеме.", 2048
+	default:
+		return "Напиши хорошо структурированный, содержательный раздел.", 4096
+	}
+}
+
+func (c *CoordinatorAgent) finalLengthGuide() (guide string, maxTokens int) {
+	switch c.verbosity {
+	case VerbosityDetailed:
+		return "- Каждый раздел отчёта должен быть подробным и содержательным (800-1500 слов)\n- Введение: развёрнутое обоснование актуальности, 2-3 абзаца\n- Заключение: конкретные выводы по каждому разделу и практические рекомендации", 16384
+	case VerbosityBrief:
+		return "- Отчёт должен быть кратким (300-600 слов всего), только ключевые выводы\n- Введение: 1 абзац\n- Заключение: 1 абзац с основным выводом", 2048
+	default:
+		return "- Введение: 1-2 абзаца с обоснованием актуальности\n- Каждый раздел: содержательное раскрытие темы с фактами\n- Заключение: выводы по каждому разделу и общие рекомендации", 8192
+	}
+}
+
+func (c *CoordinatorAgent) generateExecutiveSummary(ctx context.Context, title, fullReport string) (string, error) {
+	systemPrompt := "Ты — составитель кратких резюме исследовательских отчётов."
+	prompt := fmt.Sprintf(`Тема исследования: "%s"
+
+Ниже представлен полный исследовательский отчёт.
+Составь по нему краткое резюме (executive summary) на русском языке, 200-400 слов.
+Резюме должно содержать:
+- Основной вопрос/тему исследования
+- Ключевые выводы (3-5 пунктов)
+- Основные рекомендации
+
+Полный отчёт:
+%s
+
+Напиши только резюме, без лишних пояснений.`, title, fullReport)
+
+	return c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature, 2048)
 }
 
 func flattenQueries(plan *ResearchPlan) []string {
