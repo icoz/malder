@@ -46,7 +46,7 @@ func (t *RecallFactsTool) Execute(ctx context.Context, args map[string]any) (res
 			topK = int(v)
 		}
 	}
-	facts, err := t.memory.RecallWithTopK(ctx, query, topK)
+	facts, _, err := t.memory.RecallWithTopK(ctx, query, topK)
 	if err != nil {
 		return "", err
 	}

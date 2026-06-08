@@ -50,7 +50,10 @@
 | OPENSERP_URL | URL OpenSerp | http://localhost:8080 |
 | MEMORY_PATH | Путь для сохранения памяти | ./data/malder_memory |
 | MAX_CONCURRENT_SEARCH | Параллельных поисков | 3 |
-| MIN_FACTS_FOR_CACHE | Сколько фактов в памяти нужно, чтобы пропустить поиск | 3 |
+| MIN_RELEVANT_FACTS | Минимум релевантных фактов для пропуска поиска | 10 |
+| RECALL_TOP_K | Сколько фактов возвращает векторный поиск | 15 |
+| RECALL_DISTANCE_THRESHOLD | Максимальная средняя косинусная дистанция (0–2) | 0.5 |
+| RECALL_LLM_CHECK | Проверять ли кеш через LLM перед пропуском поиска | true |
 | MAX_ITERATIONS | Итераций улучшения отчёта | 3 |
 | SERVER_PORT | Порт сервера | 8080 |
 

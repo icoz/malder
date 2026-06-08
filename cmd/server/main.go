@@ -109,7 +109,11 @@ type Config struct {
 
 	MaxConcurrentSearch int
 	MaxPagesPerQuery    int
-	MinFactsForCache    int
+	MinRelevantFacts    int
+
+	RecallTopK           int
+	RecallDistThreshold  float64
+	RecallLLMCheck       bool
 
 	MaxIterations int
 
@@ -131,7 +135,10 @@ func loadConfig() *Config {
 		SourceStorePath:     getEnv("SOURCE_STORE_PATH", ""),
 		MaxConcurrentSearch: getEnvInt("MAX_CONCURRENT_SEARCH", 3),
 		MaxPagesPerQuery:    getEnvInt("MAX_PAGES_PER_QUERY", 3),
-		MinFactsForCache:    getEnvInt("MIN_FACTS_FOR_CACHE", 3),
+		MinRelevantFacts:    getEnvInt("MIN_RELEVANT_FACTS", getEnvInt("MIN_FACTS_FOR_CACHE", 10)),
+		RecallTopK:          getEnvInt("RECALL_TOP_K", 15),
+		RecallDistThreshold: getEnvFloat("RECALL_DISTANCE_THRESHOLD", 0.5),
+		RecallLLMCheck:      os.Getenv("RECALL_LLM_CHECK") != "false",
 		MaxIterations:          getEnvInt("MAX_ITERATIONS", 3),
 		MaxConcurrentSubtopics: getEnvInt("MAX_CONCURRENT_SUBTOPICS", 3),
 		MaxSubtopicRetries:     getEnvInt("MAX_SUBTOPIC_RETRIES", 2),
@@ -207,7 +214,7 @@ func main() {
 	llmAnalyst := makeLLM(cfg.LLMEndpointAnalyst, cfg.LLMAPIKeyAnalyst, cfg.LLMTimeoutAnalyst)
 	llmCritic := makeLLM(cfg.LLMEndpointCritic, cfg.LLMAPIKeyCritic, cfg.LLMTimeoutCritic)
 
-	mem, err := memory.NewLongTermMemory(cfg.MemoryPath, cfg.EmbeddingEndpoint, cfg.EmbeddingAPIKey, cfg.EmbeddingModel)
+	mem, err := memory.NewLongTermMemory(cfg.MemoryPath, cfg.EmbeddingEndpoint, cfg.EmbeddingAPIKey, cfg.EmbeddingModel, cfg.RecallTopK)
 	if err != nil {
 		stdlog.Fatalf("Не удалось инициализировать память: %v", err)
 	}
@@ -239,7 +246,7 @@ func main() {
 	}
 	adaptiveScheduler := scheduler.NewAdaptiveScheduler(schedCfg)
 
-	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, sourceStore, llmAnalyst, cfg.LLMModelAnalyst, cfg.MaxPagesPerQuery, cfg.MinFactsForCache)
+	searchAgent := agent.NewSearchAgent(searchTool, fetchTool, mem, adaptiveScheduler, sourceStore, llmAnalyst, cfg.LLMModelAnalyst, cfg.MaxPagesPerQuery, cfg.MinRelevantFacts, cfg.RecallDistThreshold, cfg.RecallLLMCheck)
 
 	analystAgent := agent.NewAnalystAgent(llmAnalyst, cfg.LLMModelAnalyst, cfg.LLMTemperature, mem, saveFactTool, sourceStore)
 

@@ -16,9 +16,10 @@ type LongTermMemory struct {
 	path      string
 	count     int
 	embedFunc chromem.EmbeddingFunc
+	topK      int
 }
 
-func NewLongTermMemory(persistPath, embedEndpoint, embedAPIKey, embedModel string) (*LongTermMemory, error) {
+func NewLongTermMemory(persistPath, embedEndpoint, embedAPIKey, embedModel string, topK int) (*LongTermMemory, error) {
 	var db *chromem.DB
 	var err error
 	if persistPath != "" {
@@ -29,11 +30,15 @@ func NewLongTermMemory(persistPath, embedEndpoint, embedAPIKey, embedModel strin
 	} else {
 		db = chromem.NewDB()
 	}
+	if topK <= 0 {
+		topK = 15
+	}
 	return &LongTermMemory{
 		db:        db,
 		kv:        make(map[string]string),
 		path:      persistPath,
 		embedFunc: chromem.NewEmbeddingFuncOpenAICompat(embedEndpoint, embedAPIKey, embedModel, nil),
+		topK:      topK,
 	}, nil
 }
 
@@ -75,30 +80,37 @@ func (m *LongTermMemory) Load(key string) (val string, ok bool) {
 	return
 }
 
+func (m *LongTermMemory) TopK() int { return m.topK }
+
 func (m *LongTermMemory) Recall(ctx context.Context, query string) (facts []string, err error) {
-	facts, err = m.RecallWithTopK(ctx, query, 5)
+	facts, _, err = m.RecallWithTopK(ctx, query, m.topK)
 	log.Debug("← LongTermMemory.Recall(%s) = (len=%d, %v)", query, len(facts), err)
 	return
 }
 
-func (m *LongTermMemory) RecallWithTopK(ctx context.Context, query string, topK int) (facts []string, err error) {
+func (m *LongTermMemory) RecallWithTopK(ctx context.Context, query string, topK int) (facts []string, avgDistance float64, err error) {
 	defer func() {
-		log.Debug("← LongTermMemory.RecallWithTopK(%s, %d) = (len=%d, %v)", query, topK, len(facts), err)
+		log.Debug("← LongTermMemory.RecallWithTopK(%s, %d) = (len=%d, avgDist=%.3f, %v)", query, topK, len(facts), avgDistance, err)
 	}()
 	log.Debug("→ LongTermMemory.RecallWithTopK(query=%s, topK=%d)", query, topK)
 	coll := m.db.GetCollection("facts", m.embedFunc)
 	if coll == nil {
-		return []string{}, nil
+		return []string{}, 0, nil
 	}
 	results, err := coll.Query(ctx, query, topK, nil, nil)
 	if err != nil {
-		return nil, fmt.Errorf("query chromem: %w", err)
+		return nil, 0, fmt.Errorf("query chromem: %w", err)
 	}
 	facts = make([]string, len(results))
+	var totalSim float64
 	for i, res := range results {
 		facts[i] = res.Content
+		totalSim += float64(res.Similarity)
 	}
-	return facts, nil
+	if len(results) > 0 {
+		avgDistance = 1.0 - totalSim/float64(len(results))
+	}
+	return facts, avgDistance, nil
 }
 
 func (m *LongTermMemory) Close() error {

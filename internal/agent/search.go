@@ -15,15 +15,17 @@ import (
 )
 
 type SearchAgent struct {
-	searchTool       *tool.SearchTool
-	fetchTool        *tool.FetchPageTool
-	memory           *memory.LongTermMemory
-	scheduler        *scheduler.AdaptiveScheduler
-	sourceStore      *memory.SourceStore
-	summarizer       *llm.Client
-	summarizerModel  string
-	maxPagesPerQuery int
-	minFactsForCache int
+	searchTool        *tool.SearchTool
+	fetchTool         *tool.FetchPageTool
+	memory            *memory.LongTermMemory
+	scheduler         *scheduler.AdaptiveScheduler
+	sourceStore       *memory.SourceStore
+	summarizer        *llm.Client
+	summarizerModel   string
+	maxPagesPerQuery  int
+	minRelevantFacts  int
+	distanceThreshold float64
+	useLLMCheck       bool
 }
 
 func NewSearchAgent(
@@ -35,25 +37,32 @@ func NewSearchAgent(
 	summarizer *llm.Client,
 	summarizerModel string,
 	maxPagesPerQuery int,
-	minFactsForCache int,
+	minRelevantFacts int,
+	distanceThreshold float64,
+	useLLMCheck bool,
 ) *SearchAgent {
-	log.Debug("→ NewSearchAgent(maxPages=%d, minFacts=%d)", maxPagesPerQuery, minFactsForCache)
+	log.Debug("→ NewSearchAgent(maxPages=%d, minRelevant=%d, distThreshold=%.3f, llmCheck=%t)", maxPagesPerQuery, minRelevantFacts, distanceThreshold, useLLMCheck)
 	if maxPagesPerQuery <= 0 {
 		maxPagesPerQuery = 3
 	}
-	if minFactsForCache <= 0 {
-		minFactsForCache = 3
+	if minRelevantFacts <= 0 {
+		minRelevantFacts = 10
+	}
+	if distanceThreshold <= 0 {
+		distanceThreshold = 0.5
 	}
 	return &SearchAgent{
-		searchTool:       searchTool,
-		fetchTool:        fetchTool,
-		memory:           mem,
-		scheduler:        sched,
-		sourceStore:      sourceStore,
-		summarizer:       summarizer,
-		summarizerModel:  summarizerModel,
-		maxPagesPerQuery: maxPagesPerQuery,
-		minFactsForCache: minFactsForCache,
+		searchTool:        searchTool,
+		fetchTool:         fetchTool,
+		memory:            mem,
+		scheduler:         sched,
+		sourceStore:       sourceStore,
+		summarizer:        summarizer,
+		summarizerModel:   summarizerModel,
+		maxPagesPerQuery:  maxPagesPerQuery,
+		minRelevantFacts:  minRelevantFacts,
+		distanceThreshold: distanceThreshold,
+		useLLMCheck:       useLLMCheck,
 	}
 }
 
@@ -118,10 +127,19 @@ func (s *SearchAgent) processQueryInternal(ctx context.Context, query string) (e
 	}()
 	log.Debug("→ SearchAgent.processQueryInternal(query=%s)", query)
 
-	facts, recallErr := s.memory.Recall(ctx, query)
-	if recallErr == nil && len(facts) >= s.minFactsForCache {
-		log.Info("SearchAgent: по запросу '%s' уже есть %d фактов в памяти, пропускаем поиск", query, len(facts))
-		return nil
+	facts, avgDist, recallErr := s.memory.RecallWithTopK(ctx, query, s.memory.TopK())
+	if recallErr == nil && len(facts) >= s.minRelevantFacts {
+		if avgDist <= s.distanceThreshold {
+			if !s.useLLMCheck || s.llmCheck(ctx, query, facts) {
+				log.Info("SearchAgent: по запросу '%s' кеш достаточен (%d фактов, средняя дистанция %.3f)", query, len(facts), avgDist)
+				return nil
+			}
+			log.Info("SearchAgent: LLM счёл кеш недостаточным для '%s'", query)
+		} else {
+			log.Info("SearchAgent: кеш для '%s' недостаточно релевантен (средняя дистанция %.3f > %.3f)", query, avgDist, s.distanceThreshold)
+		}
+	} else if recallErr == nil {
+		log.Info("SearchAgent: по запросу '%s' недостаточно фактов (%d < %d)", query, len(facts), s.minRelevantFacts)
 	}
 	if recallErr != nil {
 		log.Warn("SearchAgent: ошибка поиска в памяти '%s': %v", query, recallErr)
@@ -257,6 +275,41 @@ func (s *SearchAgent) getPreview(text string) string {
 		return cleaned[:previewLen] + "..."
 	}
 	return cleaned
+}
+
+func (s *SearchAgent) llmCheck(ctx context.Context, query string, facts []string) bool {
+	if s.summarizer == nil {
+		return true
+	}
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	var sb strings.Builder
+	for i, f := range facts {
+		if i >= 5 {
+			sb.WriteString("...")
+			break
+		}
+		sb.WriteString(f)
+		sb.WriteString("\n---\n")
+	}
+
+	prompt := fmt.Sprintf(`Запрос: "%s"
+
+Факты из базы знаний:
+%s
+Достаточно ли этих фактов, чтобы полно ответить на запрос?
+Ответь только YES или NO.`, query, sb.String())
+
+	resp, err := s.summarizer.CompleteSimple(ctx, s.summarizerModel,
+		"Ты — эксперт по оценке полноты информации. Отвечай только YES или NO.",
+		prompt, 0.3)
+	if err != nil {
+		log.Warn("SearchAgent: LLM-проверка кеша ошибка: %v", err)
+		return false
+	}
+	resp = strings.TrimSpace(resp)
+	return strings.HasPrefix(resp, "YES")
 }
 
 func extractLinks(md string) []string {
