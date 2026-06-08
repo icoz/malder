@@ -32,6 +32,7 @@ type Report struct {
 	CreatedAt        int64        `json:"created_at"`
 	CompletedAt      *int64       `json:"completed_at,omitempty"`
 	DurationMs       int64        `json:"duration_ms"`
+	RawProgress      string       `json:"raw_progress,omitempty"`
 }
 
 type ReportStore struct {
@@ -120,6 +121,40 @@ func (s *ReportStore) Fail(id, errMsg string, duration time.Duration) error {
 			return fmt.Errorf("marshal report: %w", err)
 		}
 		return b.Put([]byte(id), data)
+	})
+}
+
+func (s *ReportStore) SaveProgress(id, event string, data map[string]any) error {
+	return s.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("reports"))
+		raw := b.Get([]byte(id))
+		if raw == nil {
+			return fmt.Errorf("report not found: %s", id)
+		}
+		var r Report
+		if err := json.Unmarshal(raw, &r); err != nil {
+			return fmt.Errorf("unmarshal report: %w", err)
+		}
+		progress := map[string]any{"last_event": event, "updated_at": time.Now().UnixNano()}
+		if r.RawProgress != "" {
+			if err := json.Unmarshal([]byte(r.RawProgress), &progress); err != nil {
+				log.Warn("ReportStore: ошибка десериализации прогресса %s: %v", id, err)
+				progress = map[string]any{"last_event": event, "updated_at": time.Now().UnixNano()}
+			}
+		}
+		for k, v := range data {
+			progress[k] = v
+		}
+		bs, err := json.Marshal(progress)
+		if err != nil {
+			return fmt.Errorf("marshal progress: %w", err)
+		}
+		r.RawProgress = string(bs)
+		raw, err = json.Marshal(r)
+		if err != nil {
+			return fmt.Errorf("marshal report: %w", err)
+		}
+		return b.Put([]byte(id), raw)
 	})
 }
 

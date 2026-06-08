@@ -57,6 +57,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ---- Auto-refresh for in-progress reports (detail page) ----
   var progressDiv = document.getElementById('progress');
+  var progressFill = document.getElementById('progress-fill');
+  var progressStatus = document.getElementById('progress-status');
   if (progressDiv && progressDiv.dataset.reportId) {
     var reportId = progressDiv.dataset.reportId;
     var pollInterval = setInterval(function () {
@@ -66,6 +68,26 @@ document.addEventListener('DOMContentLoaded', function () {
           if (report.status !== 'in_progress') {
             clearInterval(pollInterval);
             location.reload();
+            return;
+          }
+          if (report.raw_progress && progressStatus) {
+            try {
+              var p = JSON.parse(report.raw_progress);
+              var txt = '';
+              if (p.title) { txt += 'План: «' + p.title + '» — ' + (p.sections ? p.sections.length : 0) + ' разделов.\n'; }
+              var ev = p.last_event || '';
+              if (ev === 'plan_complete' || ev === 'search_start') { txt += 'Поиск источников...'; }
+              else if (ev === 'search_complete') { txt += 'Анализ подтем...'; }
+              else if (ev === 'subtopic_analysis_start' || ev === 'subtopic_analysis_complete') { txt += 'Анализ подтем (' + (p.completed||0) + '/' + (p.total||0) + ')...'; }
+              else if (ev === 'section_synthesis_start' || ev === 'section_synthesis_complete') { txt += 'Синтез разделов (' + (p.completed||0) + '/' + (p.total||0) + ')...'; }
+              else if (ev === 'critic_start') { txt += 'Проверка качества...'; }
+              else if (ev === 'critic_complete') { txt += 'Оценка: ' + (p.score||'?') + '/10. Итерация ' + (p.iteration||1) + '.'; }
+              else if (ev === 'additional_search_start') { txt += 'Дополнительный поиск (итерация ' + (p.iteration||1) + ')...'; }
+              else if (ev === 'exec_summary_start' || ev === 'exec_summary_complete') { txt += 'Завершение...'; }
+              else { txt += 'Исследование выполняется...'; }
+              if (txt) { progressStatus.textContent = txt; }
+              if (p.progress_pct && progressFill) { progressFill.style.width = p.progress_pct + '%'; }
+            } catch(e) {}
           }
         })
         .catch(function () {});
@@ -153,13 +175,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     evtSource.addEventListener('planning', function () { setProgress(5, 'Составляем план...'); });
-    evtSource.addEventListener('plan_complete', function () { addLog('План исследования составлен'); setProgress(10, 'План готов'); });
+    evtSource.addEventListener('plan_complete', function (event) { var d = JSON.parse(event.data); addLog('План: «' + d.title + '» — ' + (d.sections ? d.sections.length : 0) + ' разделов'); setProgress(10, 'План готов'); });
     evtSource.addEventListener('search_start', function () { addLog('Поиск в интернете...'); setProgress(15, 'Выполняем поиск...'); });
     evtSource.addEventListener('search_complete', function () { addLog('Поиск завершён'); setProgress(30, 'Поиск завершён'); });
     evtSource.addEventListener('subtopic_analysis_start', function () { addLog('Анализ подтем...'); setProgress(35, 'Анализируем подтемы...'); });
-    evtSource.addEventListener('subtopic_analysis_complete', function (event) { var d = JSON.parse(event.data); addLog('Проанализировано подтем: ' + d.completed); setProgress(55, 'Анализ подтем завершён'); });
+    evtSource.addEventListener('subtopic_analysis_complete', function (event) { var d = JSON.parse(event.data); addLog('Проанализировано подтем: ' + d.completed + '/' + d.total); setProgress(55, 'Анализ подтем завершён'); });
     evtSource.addEventListener('section_synthesis_start', function () { addLog('Синтез разделов...'); setProgress(60, 'Синтезируем разделы...'); });
-    evtSource.addEventListener('section_synthesis_complete', function (event) { var d = JSON.parse(event.data); addLog('Синтезировано разделов: ' + d.sections); setProgress(75, 'Синтез разделов завершён'); });
+    evtSource.addEventListener('section_synthesis_complete', function (event) { var d = JSON.parse(event.data); addLog('Синтезировано разделов: ' + d.completed + '/' + d.total); setProgress(75, 'Синтез разделов завершён'); });
     evtSource.addEventListener('critic_loop_start', function () { addLog('Проверка качества...'); setProgress(80, 'Проверяем отчёт...'); });
     evtSource.addEventListener('synthesis_start', function () { addLog('Формирование финального отчёта...'); setProgress(85, 'Формируем итоговый отчёт...'); });
     evtSource.addEventListener('synthesis_complete', function () { setProgress(90, 'Отчёт сформирован'); });

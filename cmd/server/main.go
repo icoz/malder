@@ -33,6 +33,26 @@ var staticFS embed.FS
 
 var mdRenderer = goldmark.New()
 
+type logResponseWriter struct {
+	http.ResponseWriter
+	code int
+}
+
+func (w *logResponseWriter) WriteHeader(code int) {
+	w.code = code
+	w.ResponseWriter.WriteHeader(code)
+}
+
+func logPageHandler(next http.HandlerFunc, name string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		lrw := &logResponseWriter{ResponseWriter: w, code: http.StatusOK}
+		start := time.Now()
+		malderlog.Debug("→ WebUI.%s", name)
+		next(lrw, r)
+		malderlog.Debug("← WebUI.%s: %s %s → %d (%v)", name, r.Method, r.URL.RequestURI(), lrw.code, time.Since(start))
+	}
+}
+
 func russianDate(ts int64) string {
 	t := time.Unix(0, ts)
 	months := []string{"января", "февраля", "марта", "апреля", "мая", "июня",
@@ -299,20 +319,38 @@ func main() {
 		"statusLabel":    statusLabel,
 		"durationLabel":  durationLabel,
 	}
-	tmpls := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "web/templates/*.html"))
+
+	base := template.New("").Funcs(funcMap)
+	template.Must(base.ParseFS(templateFS, "web/templates/base.html"))
+
+	indexTpl := template.Must(base.Clone())
+	template.Must(indexTpl.ParseFS(templateFS, "web/templates/index.html"))
+
+	listTpl := template.Must(base.Clone())
+	template.Must(listTpl.ParseFS(templateFS, "web/templates/report_list.html"))
+
+	detailTpl := template.Must(base.Clone())
+	template.Must(detailTpl.ParseFS(templateFS, "web/templates/report_detail.html"))
+
+	notFoundTpl := template.Must(base.Clone())
+	template.Must(notFoundTpl.ParseFS(templateFS, "web/templates/not_found.html"))
+
+	errorTpl := template.Must(base.Clone())
+	template.Must(errorTpl.ParseFS(templateFS, "web/templates/error.html"))
+
 	staticContent, _ := fs.Sub(staticFS, "web/static")
 	staticHandler := http.FileServer(http.FS(staticContent))
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /", logPageHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/" {
-			indexHandler(tmpls)(w, r)
+			indexHandler(indexTpl)(w, r)
 		} else {
-			notFoundHandler(tmpls)(w, r)
+			notFoundHandler(notFoundTpl)(w, r)
 		}
-	})
-	mux.HandleFunc("GET /reports", reportListHandler(tmpls, reportStore))
-	mux.HandleFunc("GET /reports/{id}", reportDetailHandler(tmpls, reportStore))
+	}, "indexHandler"))
+	mux.HandleFunc("GET /reports", logPageHandler(reportListHandler(listTpl, reportStore), "reportListHandler"))
+	mux.HandleFunc("GET /reports/{id}", logPageHandler(reportDetailHandler(detailTpl, notFoundTpl, reportStore), "reportDetailHandler"))
 	mux.HandleFunc("GET /api/reports", apiReportListHandler(reportStore))
 	mux.HandleFunc("GET /api/reports/{id}", apiReportGetHandler(reportStore))
 	mux.HandleFunc("GET /api/reports/{id}/raw", apiReportRawHandler(reportStore))
@@ -334,7 +372,6 @@ func main() {
 
 func indexHandler(tmpls *template.Template) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		malderlog.Debug("→ WebUI.indexHandler")
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		tmpls.ExecuteTemplate(w, "index.html", nil)
 	}
@@ -342,7 +379,6 @@ func indexHandler(tmpls *template.Template) http.HandlerFunc {
 
 func reportListHandler(tmpls *template.Template, store *memory.ReportStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		malderlog.Debug("→ WebUI.reportListHandler")
 		reports, err := store.List()
 		if err != nil {
 			malderlog.Warn("Список отчётов: ошибка: %v", err)
@@ -356,14 +392,13 @@ func reportListHandler(tmpls *template.Template, store *memory.ReportStore) http
 	}
 }
 
-func reportDetailHandler(tmpls *template.Template, store *memory.ReportStore) http.HandlerFunc {
+func reportDetailHandler(detailTpl, notFoundTpl *template.Template, store *memory.ReportStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
-		malderlog.Debug("→ WebUI.reportDetailHandler(id=%s)", id)
 		report, err := store.Get(id)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
-			tmpls.ExecuteTemplate(w, "not_found.html", nil)
+			notFoundTpl.ExecuteTemplate(w, "not_found.html", nil)
 			return
 		}
 		var htmlContent template.HTML
@@ -385,12 +420,17 @@ func reportDetailHandler(tmpls *template.Template, store *memory.ReportStore) ht
 			words := strings.Fields(report.ReportText)
 			wordCount = len(words)
 		}
+		var progressMap map[string]any
+		if report.RawProgress != "" {
+			json.Unmarshal([]byte(report.RawProgress), &progressMap)
+		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		tmpls.ExecuteTemplate(w, "report_detail.html", map[string]any{
+		detailTpl.ExecuteTemplate(w, "report_detail.html", map[string]any{
 			"Report":           report,
 			"ReportHTML":       htmlContent,
 			"ExecSummaryHTML":  execSummaryHTML,
 			"WordCount":        wordCount,
+			"Progress":         progressMap,
 		})
 	}
 }
@@ -452,6 +492,9 @@ func apiResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportStore
 			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 			return
 		}
+		coord.SetProgressSaver(func(event string, data map[string]any) {
+			store.SaveProgress(reportID, event, data)
+		})
 
 		start := time.Now()
 		result, err := coord.Run(r.Context(), req.Query)
@@ -536,6 +579,9 @@ func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 				MaxSubtopicRetries:     coord.MaxSubtopicRetries(),
 			})
 			tempCoord.SetProgressReporter(reporter)
+			tempCoord.SetProgressSaver(func(event string, data map[string]any) {
+				store.SaveProgress(reportID, event, data)
+			})
 			result, err := tempCoord.Run(ctx, query)
 			resultChan <- struct {
 				result *agent.ResearchResult

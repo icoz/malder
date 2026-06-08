@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -91,13 +92,14 @@ func jitter(d time.Duration) time.Duration {
 }
 
 func (c *Client) Complete(ctx context.Context, model string, messages []ChatMessage, temperature float64, maxTokens int) (string, error) {
-	log.Debug("→ llm.Complete(model=%s, messages=%d, temp=%.2f, maxTokens=%d)", model, len(messages), temperature, maxTokens)
+	reqID := fmt.Sprintf("%x", time.Now().UnixNano())[:12]
+	log.Debug("→ llm.Complete(req_id=%s, model=%s, messages=%d, temp=%.2f, maxTokens=%d)", reqID, model, len(messages), temperature, maxTokens)
 
 	var totalLen int
 	for _, m := range messages {
 		totalLen += len(m.Content)
 	}
-	log.Info("LLM запрос: модель=%s, сообщений=%d, символов=%d, temp=%.2f, maxTokens=%d", model, len(messages), totalLen, temperature, maxTokens)
+	log.Info("LLM запрос: req_id=%s, модель=%s, сообщений=%d, символов=%d, temp=%.2f, maxTokens=%d", reqID, model, len(messages), totalLen, temperature, maxTokens)
 
 	reqBody := chatRequest{
 		Model:       model,
@@ -114,6 +116,9 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 	}
 
 	var lastErr error
+	var httpStatus int
+	var lastBody string
+	start := time.Now()
 
 	for attempt := 0; attempt < c.retryAttempts; attempt++ {
 		if attempt > 0 {
@@ -123,7 +128,7 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 			} else {
 				delay = jitter(c.retryDelay * time.Duration(1<<(attempt-1)))
 			}
-			log.Warn("LLM request failed (attempt %d/%d): %v, retrying in %v", attempt+1, c.retryAttempts, lastErr, delay)
+			log.Warn("LLM request failed (attempt %d/%d): req_id=%s, model=%s, chars=%d, err=%v, retrying in %v", attempt+1, c.retryAttempts, reqID, model, totalLen, lastErr, delay)
 			select {
 			case <-time.After(delay):
 			case <-ctx.Done():
@@ -147,6 +152,7 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 		if err != nil {
 			cancel()
 			lastErr = fmt.Errorf("http do: %w", err)
+			httpStatus = 0
 			continue
 		}
 
@@ -155,11 +161,15 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 		cancel()
 		if err != nil {
 			lastErr = fmt.Errorf("read body: %w", err)
+			httpStatus = resp.StatusCode
+			lastBody = string(body)
 			continue
 		}
 
 		if resp.StatusCode >= 500 {
 			lastErr = fmt.Errorf("LLM API error %d: %s", resp.StatusCode, string(body))
+			httpStatus = resp.StatusCode
+			lastBody = string(body)
 			continue
 		}
 		if resp.StatusCode != http.StatusOK {
@@ -173,13 +183,13 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 		if chatResp.Error != nil {
 			err := fmt.Errorf("LLM error: %s", chatResp.Error.Message)
 			log.Info("LLM ответ: ошибка=%v", err)
-			log.Debug("← llm.Complete = (\"\", %v)", err)
+			log.Debug("← llm.Complete(req_id=%s) = (\"\", %v)", reqID, err)
 			return "", err
 		}
 		if len(chatResp.Choices) == 0 {
 			err := fmt.Errorf("no choices in response")
 			log.Info("LLM ответ: ошибка=%v", err)
-			log.Debug("← llm.Complete = (\"\", %v)", err)
+			log.Debug("← llm.Complete(req_id=%s) = (\"\", %v)", reqID, err)
 			return "", err
 		}
 		result := chatResp.Choices[0].Message.Content
@@ -193,10 +203,24 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 		} else {
 			log.Info("LLM ответ: длина=%d, начало: %s", len(result), truncated)
 		}
-		log.Debug("← llm.Complete = (len=%d, nil)", len(result))
+		log.Debug("← llm.Complete(req_id=%s) = (len=%d, nil)", reqID, len(result))
 		return result, nil
 	}
 
+	if lastErr != nil {
+		if isDeadlineErr(lastErr) {
+			lastErr = fmt.Errorf("timeout after %s: %w", c.timeout, lastErr)
+		} else if errors.Is(lastErr, context.Canceled) {
+			lastErr = fmt.Errorf("client disconnected: %w", lastErr)
+		}
+	}
+
+	snippet := lastBody
+	if len(snippet) > 200 {
+		snippet = snippet[:200]
+	}
+	log.Warn("LLM request failed: req_id=%s, model=%s, messages=%d, chars=%d, attempts=%d/%d, duration=%v, last_err=%v, http_status=%d, body_snippet=%q",
+		reqID, model, len(messages), totalLen, c.retryAttempts, c.retryAttempts, time.Since(start), lastErr, httpStatus, snippet)
 	return "", fmt.Errorf("LLM request failed after %d attempts: %w", c.retryAttempts, lastErr)
 }
 

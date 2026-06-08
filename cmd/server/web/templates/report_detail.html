@@ -22,9 +22,31 @@
 </div>
 
 {{if eq $r.Status "in_progress"}}
+{{$p := .Progress}}
 <div id="progress" class="progress" data-report-id="{{$r.ID}}">
-<div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
-<div class="progress-status" id="progress-status">Исследование выполняется...</div>
+<div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:{{if $p}}{{$p.progress_pct}}{{else}}0{{end}}%"></div></div>
+<div class="progress-status" id="progress-status">
+{{if $p}}
+{{if $p.title}}План: «{{$p.title}}» — {{len $p.sections}} разделов.<br>{{end}}
+{{if eq $p.last_event "plan_complete"}}Поиск источников...{{end}}
+{{if eq $p.last_event "search_start"}}Поиск источников...{{end}}
+{{if eq $p.last_event "search_complete"}}Анализ подтем...{{end}}
+{{if eq $p.last_event "subtopic_analysis_start"}}Анализ подтем ({{$p.completed}}/{{$p.total}})...{{end}}
+{{if eq $p.last_event "subtopic_analysis_complete"}}Анализ подтем завершён ({{$p.completed}}/{{$p.total}}). Синтез разделов...{{end}}
+{{if eq $p.last_event "section_synthesis_start"}}Синтез разделов ({{$p.completed}}/{{$p.total}})...{{end}}
+{{if eq $p.last_event "section_synthesis_complete"}}Синтез разделов завершён ({{$p.completed}}/{{$p.total}}).{{end}}
+{{if eq $p.last_event "critic_start"}}Проверка качества...{{end}}
+{{if eq $p.last_event "critic_complete"}}
+Оценка: {{$p.score}}/10. Итерация {{$p.iteration}}.
+{{if $p.weak_sections}}Слабые разделы: {{$p.weak_sections}}.{{end}}
+{{end}}
+{{if eq $p.last_event "additional_search_start"}}Дополнительный поиск (итерация {{$p.iteration}})...{{end}}
+{{if eq $p.last_event "exec_summary_start"}}Составление резюме...{{end}}
+{{if eq $p.last_event "exec_summary_complete"}}Завершение...{{end}}
+{{else}}
+Исследование выполняется...
+{{end}}
+</div>
 </div>
 {{end}}
 

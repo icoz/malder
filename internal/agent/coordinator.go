@@ -13,6 +13,7 @@ import (
 )
 
 type ProgressReporter func(event string, data map[string]any)
+type ProgressSaver func(event string, data map[string]any)
 
 type ResearchResult struct {
 	Report           string
@@ -39,6 +40,7 @@ type CoordinatorAgent struct {
 	maxConcurrentSubtopics int
 	maxSubtopicRetries     int
 	reporter               ProgressReporter
+	progressSaver          ProgressSaver
 }
 
 type CoordinatorConfig struct {
@@ -87,6 +89,10 @@ func (c *CoordinatorAgent) SetProgressReporter(reporter ProgressReporter) {
 	c.reporter = reporter
 }
 
+func (c *CoordinatorAgent) SetProgressSaver(saver ProgressSaver) {
+	c.progressSaver = saver
+}
+
 func (c *CoordinatorAgent) LLM() *llm.Client                 { return c.llm }
 func (c *CoordinatorAgent) Memory() *memory.LongTermMemory   { return c.memory }
 func (c *CoordinatorAgent) SearchAgent() *SearchAgent        { return c.searchAgent }
@@ -121,9 +127,18 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *R
 	for i, s := range plan.Sections {
 		log.Info("Coordinator: секция %d: %s (%d подтем)", i+1, s.Name, len(s.Subtopics))
 	}
+	sectionNames := make([]string, len(plan.Sections))
+	subtopicNames := make([]string, 0)
+	for _, s := range plan.Sections {
+		sectionNames = append(sectionNames, s.Name)
+		for _, st := range s.Subtopics {
+			subtopicNames = append(subtopicNames, st.Name)
+		}
+	}
 	c.report("plan_complete", map[string]any{
-		"title":    plan.Title,
-		"sections": len(plan.Sections),
+		"title":     plan.Title,
+		"sections":  sectionNames,
+		"subtopics": subtopicNames,
 	})
 
 	allQueries := flattenQueries(plan)
@@ -134,13 +149,13 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *R
 	}
 	c.report("search_complete", nil)
 
-	c.report("subtopic_analysis_start", nil)
+	c.report("subtopic_analysis_start", map[string]any{"total": len(subtopicNames)})
 	subResults := c.researchSubtopics(ctx, plan)
-	c.report("subtopic_analysis_complete", map[string]any{"completed": len(subResults)})
+	c.report("subtopic_analysis_complete", map[string]any{"completed": len(subResults), "total": len(subtopicNames)})
 
-	c.report("section_synthesis_start", nil)
+	c.report("section_synthesis_start", map[string]any{"total": len(sectionNames)})
 	sectionReports := c.synthesizeSections(ctx, plan, subResults)
-	c.report("section_synthesis_complete", map[string]any{"sections": len(sectionReports)})
+	c.report("section_synthesis_complete", map[string]any{"completed": len(sectionReports), "total": len(sectionNames)})
 
 	c.report("critic_loop_start", nil)
 	result, err = c.criticLoop(ctx, plan.Title, sectionReports)
@@ -154,6 +169,8 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *R
 		execSummary, err := c.generateExecutiveSummary(ctx, plan.Title, result.Report)
 		if err == nil {
 			result.ExecutiveSummary = execSummary
+		} else {
+			log.Debug("Coordinator: generateExecutiveSummary error: title=%q, err=%v", plan.Title, err)
 		}
 		c.report("exec_summary_complete", map[string]any{"length": len(execSummary)})
 	}
@@ -327,18 +344,19 @@ func (c *CoordinatorAgent) criticLoop(ctx context.Context, title string, section
 		c.report("critic_start", map[string]any{"iteration": iteration})
 		score, feedback, weakSections, err := c.criticAgent.Evaluate(ctx, finalReport)
 		if err != nil {
+			log.Debug("Coordinator: critic evaluate error: iteration=%d, title=%q, err=%v", iteration, title, err)
 			log.Warn("Критик вернул ошибку: %v", err)
 			break
 		}
 		lastFeedback = feedback
-		c.report("critic_complete", map[string]any{"score": score, "feedback": feedback, "weak_sections": weakSections})
+		c.report("critic_complete", map[string]any{"score": score, "feedback": feedback, "weak_sections": weakSections, "iteration": iteration})
 
 		if score >= 7 {
 			log.Info("Оценка %d >= 7, качество достаточное", score)
 			break
 		}
 
-		c.report("additional_search_start", map[string]any{"feedback": feedback})
+		c.report("additional_search_start", map[string]any{"feedback": feedback, "iteration": iteration})
 		additionalQueries := c.extractQueriesFromFeedback(ctx, feedback)
 		if len(additionalQueries) > 0 {
 			if err := c.searchAgent.Run(ctx, additionalQueries); err != nil {
@@ -396,6 +414,8 @@ func (c *CoordinatorAgent) createPlan(ctx context.Context, userQuery string) (pl
 
 	response, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature, 0)
 	if err != nil {
+		log.Debug("Coordinator: createPlan error: query=%q, model=%s, sys_prompt_len=%d, prompt_len=%d, err=%v",
+			userQuery, c.model, len(systemPrompt), len(prompt), err)
 		return nil, err
 	}
 
@@ -434,6 +454,8 @@ func (c *CoordinatorAgent) synthesizeSection(ctx context.Context, sectionName st
 
 	report, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature, maxTokens)
 	if err != nil {
+		log.Debug("Coordinator: synthesizeSection error: section=%q, model=%s, sys_prompt_len=%d, prompt_len=%d, err=%v",
+			sectionName, c.model, len(systemPrompt), len(prompt), err)
 		return "", fmt.Errorf("ошибка синтеза секции: %w", err)
 	}
 	return report, nil
@@ -486,7 +508,6 @@ func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, se
 
 Разделы:
 %s
-%s
 Требования:
 - Напиши введение: актуальность темы, цель исследования
 - Объедини разделы логическими переходами
@@ -495,11 +516,15 @@ func (c *CoordinatorAgent) synthesizeFinal(ctx context.Context, title string, se
 - При цитировании конкретных данных указывай URL из списка источников
 - Используй подзаголовки для структурирования разделов
 %s
+%s
+%s
 
 Отчёт пиши на русском языке.`, title, sb, feedbackBlock, lengthGuide, sourcesText)
 
 	report, err := c.llm.CompleteSimple(ctx, c.model, systemPrompt, prompt, c.temperature, maxTokens)
 	if err != nil {
+		log.Debug("Coordinator: synthesizeFinal error: title=%q, model=%s, sys_prompt_len=%d, prompt_len=%d, err=%v",
+			title, c.model, len(systemPrompt), len(prompt), err)
 		return "", nil, fmt.Errorf("ошибка синтеза финального отчёта: %w", err)
 	}
 	return report, sourceURLs, nil
@@ -518,6 +543,7 @@ func (c *CoordinatorAgent) extractQueriesFromFeedback(ctx context.Context, feedb
 
 	response, err := c.llm.CompleteSimple(ctx, c.model, "Ты полезный помощник.", prompt, c.temperature, 0)
 	if err != nil {
+		log.Debug("Coordinator: extractQueriesFromFeedback error: err=%v", err)
 		log.Warn("Ошибка при генерации доп. запросов: %v", err)
 		return nil
 	}
@@ -539,6 +565,9 @@ func (c *CoordinatorAgent) saveToMemory(ctx context.Context, key, value string) 
 func (c *CoordinatorAgent) report(event string, data map[string]any) {
 	if c.reporter != nil {
 		c.reporter(event, data)
+	}
+	if c.progressSaver != nil {
+		c.progressSaver(event, data)
 	}
 }
 
