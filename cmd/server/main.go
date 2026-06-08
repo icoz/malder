@@ -83,6 +83,8 @@ type Config struct {
 	LLMModel       string
 	LLMTemperature float64
 	LLMTimeout     time.Duration
+	LLMRetryAttempts int
+	LLMRetryBaseDelay time.Duration
 
 	LLMEndpointCoordinator string
 	LLMAPIKeyCoordinator   string
@@ -133,6 +135,8 @@ func loadConfig() *Config {
 		LLMModel:            getEnv("LLM_MODEL", "deepseek-v4-flash"),
 		LLMTemperature:      getEnvFloat("LLM_TEMPERATURE", 0.7),
 		LLMTimeout:          getEnvDuration("LLM_TIMEOUT", 60*time.Second),
+		LLMRetryAttempts:    getEnvInt("LLM_RETRY_ATTEMPTS", 3),
+		LLMRetryBaseDelay:   getEnvDuration("LLM_RETRY_BASE_DELAY", 1*time.Second),
 		OpenSerpURL:         getEnv("OPENSERP_URL", "http://localhost:8080"),
 		MemoryPath:          getEnv("MEMORY_PATH", "./data/malder_memory"),
 		SourceStorePath:     getEnv("SOURCE_STORE_PATH", ""),
@@ -208,9 +212,11 @@ func main() {
 
 	makeLLM := func(endpoint, apiKey string, timeout time.Duration) *llm.Client {
 		return llm.NewClient(llm.Config{
-			Endpoint: endpoint,
-			APIKey:   apiKey,
-			Timeout:  timeout,
+			Endpoint:         endpoint,
+			APIKey:           apiKey,
+			Timeout:          timeout,
+			RetryMaxAttempts: cfg.LLMRetryAttempts,
+			RetryBaseDelay:   cfg.LLMRetryBaseDelay,
 		})
 	}
 

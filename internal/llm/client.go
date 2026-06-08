@@ -3,9 +3,11 @@ package llm
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"time"
 
@@ -13,27 +15,39 @@ import (
 )
 
 type Client struct {
-	endpoint   string
-	apiKey     string
-	timeout    time.Duration
-	httpClient *http.Client
+	endpoint      string
+	apiKey        string
+	timeout       time.Duration
+	httpClient    *http.Client
+	retryAttempts int
+	retryDelay    time.Duration
 }
 
 type Config struct {
-	Endpoint string
-	APIKey   string
-	Timeout  time.Duration
+	Endpoint        string
+	APIKey          string
+	Timeout         time.Duration
+	RetryMaxAttempts int
+	RetryBaseDelay  time.Duration
 }
 
 func NewClient(cfg Config) *Client {
 	if cfg.Timeout == 0 {
 		cfg.Timeout = 60 * time.Second
 	}
+	if cfg.RetryMaxAttempts <= 0 {
+		cfg.RetryMaxAttempts = 3
+	}
+	if cfg.RetryBaseDelay <= 0 {
+		cfg.RetryBaseDelay = 1 * time.Second
+	}
 	return &Client{
-		endpoint:   cfg.Endpoint,
-		apiKey:     cfg.APIKey,
-		timeout:    cfg.Timeout,
-		httpClient: &http.Client{},
+		endpoint:      cfg.Endpoint,
+		apiKey:        cfg.APIKey,
+		timeout:       cfg.Timeout,
+		httpClient:    &http.Client{},
+		retryAttempts: cfg.RetryMaxAttempts,
+		retryDelay:    cfg.RetryBaseDelay,
 	}
 }
 
@@ -66,6 +80,16 @@ type chatResponse struct {
 	} `json:"error,omitempty"`
 }
 
+// jitter returns a duration in [d*0.5, d*1.5).
+func jitter(d time.Duration) time.Duration {
+	half := int64(d) / 2
+	n, err := rand.Int(rand.Reader, big.NewInt(half))
+	if err != nil {
+		return d
+	}
+	return time.Duration(int64(d) - half + n.Int64())
+}
+
 func (c *Client) Complete(ctx context.Context, model string, messages []ChatMessage, temperature float64, maxTokens int) (string, error) {
 	log.Debug("→ llm.Complete(model=%s, messages=%d, temp=%.2f, maxTokens=%d)", model, len(messages), temperature, maxTokens)
 
@@ -89,22 +113,25 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 		return "", fmt.Errorf("marshal request: %w", err)
 	}
 
-	const maxAttempts = 3
 	var lastErr error
 
-	for attempt := 0; attempt < maxAttempts; attempt++ {
+	for attempt := 0; attempt < c.retryAttempts; attempt++ {
 		if attempt > 0 {
-			backoff := c.timeout * time.Duration(1<<(attempt-1))
-			log.Warn("LLM request failed (attempt %d/%d): %v, retrying in %v", attempt+1, maxAttempts, lastErr, backoff)
+			var delay time.Duration
+			if isDeadlineErr(lastErr) {
+				delay = jitter(c.retryDelay)
+			} else {
+				delay = jitter(c.retryDelay * time.Duration(1<<(attempt-1)))
+			}
+			log.Warn("LLM request failed (attempt %d/%d): %v, retrying in %v", attempt+1, c.retryAttempts, lastErr, delay)
 			select {
-			case <-time.After(backoff):
+			case <-time.After(delay):
 			case <-ctx.Done():
 				return "", ctx.Err()
 			}
 		}
 
-		attemptTimeout := c.timeout * time.Duration(1<<(attempt))
-		attemptCtx, cancel := context.WithTimeout(ctx, attemptTimeout)
+		attemptCtx, cancel := context.WithTimeout(ctx, c.timeout)
 
 		httpReq, err := http.NewRequestWithContext(attemptCtx, "POST", c.endpoint+"/v1/chat/completions", bytes.NewReader(jsonData))
 		if err != nil {
@@ -170,7 +197,22 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 		return result, nil
 	}
 
-	return "", fmt.Errorf("LLM request failed after %d attempts: %w", maxAttempts, lastErr)
+	return "", fmt.Errorf("LLM request failed after %d attempts: %w", c.retryAttempts, lastErr)
+}
+
+// isDeadlineErr returns true if err is a context deadline exceeded or a timeout.
+func isDeadlineErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	if err == context.DeadlineExceeded {
+		return true
+	}
+	// http.Client wraps deadline errors for Do requests.
+	if e, ok := err.(interface{ Timeout() bool }); ok && e.Timeout() {
+		return true
+	}
+	return false
 }
 
 func (c *Client) CompleteSimple(ctx context.Context, model string, systemPrompt, userPrompt string, temperature float64, maxTokens int) (string, error) {
