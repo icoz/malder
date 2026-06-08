@@ -250,6 +250,12 @@ func main() {
 	sourceStore := memory.NewSourceStore(boltDB)
 	reportStore := memory.NewReportStore(boltDB)
 
+	if n, err := reportStore.FailInProgressReports(context.Background(), "сервер был перезапущен"); err != nil {
+		malderlog.Warn("Очистка зависших репортов: ошибка: %v", err)
+	} else if n > 0 {
+		malderlog.Info("Очистка зависших репортов: %d помечено как error", n)
+	}
+
 	searchTool := tool.NewSearchTool(cfg.OpenSerpURL, 10*time.Second, getEnv("SEARCH_ENGINE", "duck"))
 	fetchTool := tool.NewFetchPageTool(15 * time.Second)
 	saveFactTool := tool.NewSaveFactTool(mem)
@@ -304,6 +310,8 @@ func main() {
 	mux.HandleFunc("GET /api/reports/{id}/raw", apiReportRawHandler(reportStore))
 	mux.HandleFunc("POST /api/research", apiResearchHandler(coordinator, reportStore))
 	mux.HandleFunc("GET /api/research/stream", apiSSEResearchHandler(coordinator, reportStore))
+	mux.HandleFunc("POST /api/reports/{id}/fail", apiReportFailHandler(reportStore))
+	mux.HandleFunc("POST /api/reports/{id}/retry", apiReportRetryHandler(coordinator, reportStore))
 	mux.HandleFunc("GET /api/health", healthHandler)
 	mux.Handle("GET /static/", staticHandler)
 	mux.HandleFunc("GET /{path...}", notFoundHandler(tmpls))
@@ -540,6 +548,78 @@ func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 			}
 			flusher.Flush()
 		}
+	}
+}
+
+func apiReportFailHandler(store *memory.ReportStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		report, err := store.Get(id)
+		if err != nil {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+			return
+		}
+		if report.Status != memory.ReportStatusInProgress {
+			writeJSON(w, http.StatusConflict, map[string]string{"error": "report is not in progress"})
+			return
+		}
+
+		var body struct {
+			Error string `json:"error"`
+		}
+		json.NewDecoder(r.Body).Decode(&body)
+		if body.Error == "" {
+			body.Error = "завершён вручную"
+		}
+
+		if err := store.Fail(id, body.Error, 0); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	}
+}
+
+func apiReportRetryHandler(coord *agent.CoordinatorAgent, store *memory.ReportStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		report, err := store.Get(id)
+		if err != nil {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+			return
+		}
+		if report.Status == memory.ReportStatusCompleted {
+			writeJSON(w, http.StatusConflict, map[string]string{"error": "report is already completed"})
+			return
+		}
+
+		newID, err := store.Create(report.Query)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+
+		start := time.Now()
+		result, err := coord.Run(r.Context(), report.Query)
+		duration := time.Since(start)
+
+		if err != nil {
+			store.Fail(newID, err.Error(), duration)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+
+		store.Complete(newID, result.Report, result.ExecutiveSummary, result.SourceURLs, duration)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"report_id":         newID,
+			"old_report_id":     id,
+			"report":            result.Report,
+			"executive_summary": result.ExecutiveSummary,
+			"source_urls":       result.SourceURLs,
+			"duration_ms":       duration.Milliseconds(),
+		})
 	}
 }
 

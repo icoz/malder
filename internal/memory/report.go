@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -120,6 +121,46 @@ func (s *ReportStore) Fail(id, errMsg string, duration time.Duration) error {
 		}
 		return b.Put([]byte(id), data)
 	})
+}
+
+func (s *ReportStore) FailInProgressReports(ctx context.Context, message string) (int, error) {
+	var count int
+	err := s.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("reports"))
+		return b.ForEach(func(k, v []byte) error {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+			var r Report
+			if err := json.Unmarshal(v, &r); err != nil {
+				log.Warn("ReportStore: ошибка десериализации отчёта %s: %v", string(k), err)
+				return nil
+			}
+			if r.Status != ReportStatusInProgress {
+				return nil
+			}
+			r.Status = ReportStatusError
+			r.Error = message
+			now := time.Now().UnixNano()
+			r.CompletedAt = &now
+			data, err := json.Marshal(r)
+			if err != nil {
+				log.Warn("ReportStore: ошибка маршалинга отчёта %s: %v", string(k), err)
+				return nil
+			}
+			if err := b.Put(k, data); err != nil {
+				return fmt.Errorf("bolt put: %w", err)
+			}
+			count++
+			return nil
+		})
+	})
+	if err != nil {
+		return count, err
+	}
+	return count, nil
 }
 
 func (s *ReportStore) Get(id string) (*Report, error) {
