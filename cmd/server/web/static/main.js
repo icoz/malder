@@ -72,46 +72,45 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 3000);
   }
 
-  // ---- Nav search: redirect to index with query ----
+  // ---- Nav search: start research directly via SSE ----
   var navForm = document.getElementById('nav-search');
   if (navForm) {
     navForm.addEventListener('submit', function (e) {
+      e.preventDefault();
       var q = navForm.querySelector('input').value.trim();
-      if (!q) { e.preventDefault(); return; }
+      if (!q) return;
       if (window.location.pathname === '/') {
-        e.preventDefault();
-        var mainInput = document.getElementById('query');
-        var mainForm = document.getElementById('research-form');
-        if (mainInput && mainForm) {
-          mainInput.value = q;
-          mainForm.dispatchEvent(new Event('submit'));
-        }
+        startResearch(q);
+        return;
       }
-      // otherwise native GET /?q=... carries the request
+      window.location.href = '/?q=' + encodeURIComponent(q);
+    });
+  }
+
+  // ---- Research form (index page) ----
+  var form = document.getElementById('research-form');
+
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var q = document.getElementById('query').value.trim();
+      if (!q) return;
+      startResearch(q);
     });
   }
 
   // ---- Auto-submit from URL param (index page) ----
   var urlParams = new URLSearchParams(window.location.search);
   var urlQuery = urlParams.get('q');
-  var form = document.getElementById('research-form');
   if (urlQuery && form) {
     document.getElementById('query').value = urlQuery;
-    form.dispatchEvent(new Event('submit'));
-    // Clean URL without reload
     if (window.history.replaceState) {
       window.history.replaceState({}, '', '/');
     }
-    return; // SSE handler runs synchronously from submit
+    startResearch(urlQuery);
   }
 
-  if (!form) return;
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var query = document.getElementById('query').value.trim();
-    if (!query) return;
-
+  function startResearch(query) {
     var submitBtn = document.getElementById('submit-btn');
     var progress = document.getElementById('progress');
     var progressFill = document.getElementById('progress-fill');
@@ -119,12 +118,12 @@ document.addEventListener('DOMContentLoaded', function () {
     var eventLog = document.getElementById('event-log');
     var errorDiv = document.getElementById('error');
 
-    errorDiv.style.display = 'none';
-    eventLog.innerHTML = '';
-    progress.style.display = 'block';
-    progressFill.style.width = '0%';
-    progressStatus.textContent = 'Подключаемся...';
-    submitBtn.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
+    if (errorDiv) errorDiv.style.display = 'none';
+    if (eventLog) eventLog.innerHTML = '';
+    if (progress) progress.style.display = 'block';
+    if (progressFill) progressFill.style.width = '0%';
+    if (progressStatus) progressStatus.textContent = 'Подключаемся...';
 
     var evtSource = new EventSource('/api/research/stream?q=' + encodeURIComponent(query));
     var reportId = null;
@@ -134,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 120000);
 
     function addLog(text) {
+      if (!eventLog) return;
       var item = document.createElement('div');
       item.className = 'event-log-item';
       item.innerHTML = '<span class="event-log-dot"></span>' + escapeHtml(text);
@@ -142,8 +142,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function setProgress(pct, label) {
-      progressFill.style.width = Math.min(pct, 100) + '%';
-      if (label) progressStatus.textContent = label;
+      if (progressFill) progressFill.style.width = Math.min(pct, 100) + '%';
+      if (label && progressStatus) progressStatus.textContent = label;
     }
 
     evtSource.addEventListener('started', function (event) {
@@ -190,7 +190,6 @@ document.addEventListener('DOMContentLoaded', function () {
       showError('Исследование отменено.', submitBtn, progress, errorDiv);
     });
 
-    // Reset timeout on any data
     evtSource.onmessage = function () {
       clearTimeout(stageTimeout);
       stageTimeout = setTimeout(function () {
@@ -198,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
         showError('Сервер не отвечает. Попробуйте ещё раз.', submitBtn, progress, errorDiv);
       }, 120000);
     };
-  });
+  }
 
   function showError(msg, btn, progressEl, errorEl) {
     if (progressEl) progressEl.style.display = 'none';
