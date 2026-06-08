@@ -572,12 +572,24 @@ func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 			err    error
 		}, 1)
 
-		ctx, cancel := context.WithCancel(r.Context())
+		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
+
+		go func() {
+			select {
+			case <-r.Context().Done():
+				cancel()
+			case <-ctx.Done():
+			}
+		}()
 
 		go func() {
 			defer malderlog.Recover("SSE research handler")
 			reporter := func(event string, data map[string]any) {
+				defer func() { recover() }()
+				if ctx.Err() != nil {
+					return
+				}
 				malderlog.Debug("→ WebUI.SSE(event=%s, report_id=%s)", event, reportID)
 				dataJSON, _ := json.Marshal(data)
 				fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, string(dataJSON))
