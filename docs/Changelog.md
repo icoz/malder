@@ -97,6 +97,16 @@
 | `docs/Architech.md` | Описание VerbosityLevel, обновлены диаграммы, раздел 5.7 |
 | `docs/Changelog.md` | **Новый**: журнал изменений |
 
+#### Ретраи embedding API
+
+Переработана логика повторных попыток при ошибках embedding API (chromem):
+
+- Добавлен вспомогательный метод `retryWithBackoff` с экспоненциальным backoff и джиттером (±50%)
+- Обёрнуты `coll.AddDocument` (сохранение фактов) и `coll.Query` (поиск) — обе операции могут падать по 502
+- Параметры:
+  - `EMBEDDING_RETRY_ATTEMPTS=3` (наследуется от `LLM_RETRY_ATTEMPTS`)
+  - `EMBEDDING_RETRY_BASE_DELAY=1s` (наследуется от `LLM_RETRY_BASE_DELAY`)
+
 ### Конфигурация
 
 ```bash

@@ -101,9 +101,11 @@ type Config struct {
 	LLMModelCritic    string
 	LLMTimeoutCritic  time.Duration
 
-	EmbeddingEndpoint string
-	EmbeddingAPIKey   string
-	EmbeddingModel    string
+	EmbeddingEndpoint      string
+	EmbeddingAPIKey        string
+	EmbeddingModel         string
+	EmbeddingRetryAttempts int
+	EmbeddingRetryBaseDelay time.Duration
 
 	OpenSerpURL string
 
@@ -167,6 +169,8 @@ func loadConfig() *Config {
 	cfg.EmbeddingEndpoint = getEnv("EMBEDDING_ENDPOINT", cfg.LLMEndpoint+"/v1")
 	cfg.EmbeddingAPIKey = getEnv("EMBEDDING_API_KEY", cfg.LLMAPIKey)
 	cfg.EmbeddingModel = getEnv("EMBEDDING_MODEL", "text-embedding-3-small")
+	cfg.EmbeddingRetryAttempts = getEnvInt("EMBEDDING_RETRY_ATTEMPTS", cfg.LLMRetryAttempts)
+	cfg.EmbeddingRetryBaseDelay = getEnvDuration("EMBEDDING_RETRY_BASE_DELAY", cfg.LLMRetryBaseDelay)
 	return cfg
 }
 
@@ -224,7 +228,10 @@ func main() {
 	llmAnalyst := makeLLM(cfg.LLMEndpointAnalyst, cfg.LLMAPIKeyAnalyst, cfg.LLMTimeoutAnalyst)
 	llmCritic := makeLLM(cfg.LLMEndpointCritic, cfg.LLMAPIKeyCritic, cfg.LLMTimeoutCritic)
 
-	mem, err := memory.NewLongTermMemory(cfg.MemoryPath, cfg.EmbeddingEndpoint, cfg.EmbeddingAPIKey, cfg.EmbeddingModel, cfg.RecallTopK)
+	mem, err := memory.NewLongTermMemory(cfg.MemoryPath, cfg.EmbeddingEndpoint, cfg.EmbeddingAPIKey, cfg.EmbeddingModel, cfg.RecallTopK, &memory.RetryConfig{
+		MaxAttempts: cfg.EmbeddingRetryAttempts,
+		BaseDelay:   cfg.EmbeddingRetryBaseDelay,
+	})
 	if err != nil {
 		stdlog.Fatalf("Не удалось инициализировать память: %v", err)
 	}

@@ -2,12 +2,21 @@ package memory
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"sync"
+	"time"
 
 	"github.com/icoz/malder/internal/log"
 	"github.com/philippgille/chromem-go"
 )
+
+// RetryConfig настраивает ретраи для операций с embedding API.
+type RetryConfig struct {
+	MaxAttempts int
+	BaseDelay   time.Duration
+}
 
 type LongTermMemory struct {
 	db        *chromem.DB
@@ -17,9 +26,22 @@ type LongTermMemory struct {
 	count     int
 	embedFunc chromem.EmbeddingFunc
 	topK      int
+
+	retryMaxAttempts int
+	retryBaseDelay   time.Duration
 }
 
-func NewLongTermMemory(persistPath, embedEndpoint, embedAPIKey, embedModel string, topK int) (*LongTermMemory, error) {
+func NewLongTermMemory(persistPath, embedEndpoint, embedAPIKey, embedModel string, topK int, retryCfg *RetryConfig) (*LongTermMemory, error) {
+	retryAttempts := 3
+	retryDelay := 1 * time.Second
+	if retryCfg != nil {
+		if retryCfg.MaxAttempts > 0 {
+			retryAttempts = retryCfg.MaxAttempts
+		}
+		if retryCfg.BaseDelay > 0 {
+			retryDelay = retryCfg.BaseDelay
+		}
+	}
 	var db *chromem.DB
 	var err error
 	if persistPath != "" {
@@ -39,11 +61,45 @@ func NewLongTermMemory(persistPath, embedEndpoint, embedAPIKey, embedModel strin
 		path:      persistPath,
 		embedFunc: chromem.NewEmbeddingFuncOpenAICompat(embedEndpoint, embedAPIKey, embedModel, nil),
 		topK:      topK,
+
+		retryMaxAttempts: retryAttempts,
+		retryBaseDelay:   retryDelay,
 	}, nil
 }
 
 func (m *LongTermMemory) ensureCollection(ctx context.Context) (*chromem.Collection, error) {
 	return m.db.GetOrCreateCollection("facts", nil, m.embedFunc)
+}
+
+// jitter returns a duration in [d*0.5, d*1.5).
+func jitter(d time.Duration) time.Duration {
+	half := int64(d) / 2
+	n, err := rand.Int(rand.Reader, big.NewInt(half))
+	if err != nil {
+		return d
+	}
+	return time.Duration(int64(d) - half + n.Int64())
+}
+
+func (m *LongTermMemory) retryWithBackoff(ctx context.Context, op string, fn func(context.Context) error) error {
+	var lastErr error
+	for attempt := 0; attempt < m.retryMaxAttempts; attempt++ {
+		if attempt > 0 {
+			delay := jitter(m.retryBaseDelay * time.Duration(1<<(attempt-1)))
+			log.Warn("Embedding %s failed (attempt %d/%d): %v, retrying in %v", op, attempt+1, m.retryMaxAttempts, lastErr, delay)
+			select {
+			case <-time.After(delay):
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		}
+		err := fn(ctx)
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+	}
+	return fmt.Errorf("embedding %s failed after %d attempts: %w", op, m.retryMaxAttempts, lastErr)
 }
 
 func (m *LongTermMemory) Save(ctx context.Context, key, value string) (err error) {
@@ -59,9 +115,11 @@ func (m *LongTermMemory) Save(ctx context.Context, key, value string) (err error
 	if err != nil {
 		return fmt.Errorf("chromem get collection: %w", err)
 	}
-	if err := coll.AddDocument(ctx, chromem.Document{
-		ID:      key,
-		Content: value,
+	if err := m.retryWithBackoff(ctx, "add", func(ctx context.Context) error {
+		return coll.AddDocument(ctx, chromem.Document{
+			ID:      key,
+			Content: value,
+		})
 	}); err != nil {
 		return fmt.Errorf("chromem add: %w", err)
 	}
@@ -97,8 +155,12 @@ func (m *LongTermMemory) RecallWithTopK(ctx context.Context, query string, topK 
 	if coll == nil {
 		return []string{}, 0, nil
 	}
-	results, err := coll.Query(ctx, query, topK, nil, nil)
-	if err != nil {
+	var results []chromem.Result
+	if err := m.retryWithBackoff(ctx, "query", func(ctx context.Context) error {
+		var qErr error
+		results, qErr = coll.Query(ctx, query, topK, nil, nil)
+		return qErr
+	}); err != nil {
 		return nil, 0, fmt.Errorf("query chromem: %w", err)
 	}
 	facts = make([]string, len(results))
