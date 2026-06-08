@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/icoz/malder/internal/agent"
@@ -346,11 +347,17 @@ func reportDetailHandler(tmpls *template.Template, store *memory.ReportStore) ht
 				execSummaryHTML = template.HTML(buf.String())
 			}
 		}
+		wordCount := 0
+		if report.ReportText != "" {
+			words := strings.Fields(report.ReportText)
+			wordCount = len(words)
+		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		tmpls.ExecuteTemplate(w, "report_detail.html", map[string]any{
 			"Report":           report,
 			"ReportHTML":       htmlContent,
 			"ExecSummaryHTML":  execSummaryHTML,
+			"WordCount":        wordCount,
 		})
 	}
 }

@@ -1,4 +1,78 @@
 document.addEventListener('DOMContentLoaded', function () {
+  // ---- Nav: highlight active link ----
+  var path = window.location.pathname;
+  document.querySelectorAll('.nav-links a').forEach(function (a) {
+    if (a.getAttribute('href') === path) a.classList.add('active');
+  });
+
+  // ---- TOC generation from headings (report detail page) ----
+  var reportContent = document.getElementById('report-content');
+  var toc = document.getElementById('toc');
+  var tocList = document.getElementById('toc-list');
+  if (reportContent && toc && tocList) {
+    var headings = reportContent.querySelectorAll('h2');
+    if (headings.length > 1) {
+      headings.forEach(function (h, i) {
+        var id = 'section-' + i;
+        h.id = id;
+        var li = document.createElement('li');
+        var a = document.createElement('a');
+        a.href = '#' + id;
+        a.textContent = h.textContent;
+        li.appendChild(a);
+        tocList.appendChild(li);
+      });
+      toc.style.display = 'block';
+    }
+  }
+
+  // ---- Copy report button (report detail page) ----
+  var copyBtn = document.getElementById('copy-report-btn');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', function () {
+      var url = copyBtn.dataset.url;
+      fetch(url)
+        .then(function (r) { return r.text(); })
+        .then(function (text) { return navigator.clipboard.writeText(text); })
+        .then(function () {
+          var notice = document.getElementById('copy-notice');
+          if (notice) { notice.classList.add('show'); setTimeout(function () { notice.classList.remove('show'); }, 2000); }
+        })
+        .catch(function () {
+          fetch(copyBtn.dataset.url).then(function (r) { return r.text(); }).then(function (text) {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            var notice = document.getElementById('copy-notice');
+            if (notice) { notice.classList.add('show'); setTimeout(function () { notice.classList.remove('show'); }, 2000); }
+          }).catch(function () {});
+        });
+    });
+  }
+
+  // ---- Auto-refresh for in-progress reports (detail page) ----
+  var progressDiv = document.getElementById('progress');
+  if (progressDiv && progressDiv.dataset.reportId) {
+    var reportId = progressDiv.dataset.reportId;
+    var pollInterval = setInterval(function () {
+      fetch('/api/reports/' + reportId)
+        .then(function (r) { return r.json(); })
+        .then(function (report) {
+          if (report.status !== 'in_progress') {
+            clearInterval(pollInterval);
+            location.reload();
+          }
+        })
+        .catch(function () {});
+    }, 3000);
+  }
+
+  // ---- Research form (index page) ----
   var form = document.getElementById('research-form');
   if (!form) return;
 
@@ -64,9 +138,6 @@ document.addEventListener('DOMContentLoaded', function () {
     evtSource.addEventListener('critic_complete', function (event) { var d = JSON.parse(event.data); var s = 'Оценка: ' + d.score + '/10'; if (d.weak_sections && d.weak_sections.length) s += ', слабые разделы: ' + d.weak_sections.join(', '); addLog(s); setProgress(84, 'Оценка получена'); });
     evtSource.addEventListener('additional_search_start', function () { addLog('Дополнительный поиск...'); setProgress(70, 'Дополнительный поиск...'); });
     evtSource.addEventListener('additional_search_complete', function () { addLog('Дополнительный поиск завершён'); setProgress(78, 'Дополнительный поиск завершён'); });
-    evtSource.addEventListener('section_deepen_start', function () { addLog('Углубление слабых разделов...'); setProgress(76, 'Дорабатываем разделы...'); });
-    evtSource.addEventListener('section_deepen_complete', function () { addLog('Разделы доработаны'); setProgress(79, 'Разделы доработаны'); });
-    evtSource.addEventListener('finish', function () { setProgress(100, 'Исследование завершено!'); });
 
     evtSource.addEventListener('result', function (event) {
       clearTimeout(stageTimeout);
@@ -96,29 +167,6 @@ document.addEventListener('DOMContentLoaded', function () {
         showError('Сервер не отвечает. Попробуйте ещё раз.', submitBtn, progress, errorDiv);
       }, 120000);
     };
-  });
-
-  // Auto-refresh for in-progress reports on detail page
-  var progressDiv = document.getElementById('progress');
-  if (progressDiv && progressDiv.dataset.reportId) {
-    var reportId = progressDiv.dataset.reportId;
-    var pollInterval = setInterval(function () {
-      fetch('/api/reports/' + reportId)
-        .then(function (r) { return r.json(); })
-        .then(function (report) {
-          if (report.status !== 'in_progress') {
-            clearInterval(pollInterval);
-            location.reload();
-          }
-        })
-        .catch(function () {});
-    }, 3000);
-  }
-
-  // Nav: highlight active link
-  var path = window.location.pathname;
-  document.querySelectorAll('.nav-links a').forEach(function (a) {
-    if (a.getAttribute('href') === path) a.classList.add('active');
   });
 
   function showError(msg, btn, progressEl, errorEl) {

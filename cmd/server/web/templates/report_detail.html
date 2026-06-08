@@ -9,12 +9,16 @@
 {{if ne $r.Status "in_progress"}}
 <div class="meta-item"><span class="meta-label">Источников:</span> {{$r.SourceCount}}</div>
 <div class="meta-item"><span class="meta-label">Время:</span> {{durationLabel $r.DurationMs}}</div>
+<div class="meta-item"><span class="meta-label">Объём:</span> {{$.WordCount}} слов</div>
 {{end}}
 <div class="meta-item"><span class="meta-label">Создан:</span> {{russianDate $r.CreatedAt}}</div>
 {{if $r.CompletedAt}}
 <div class="meta-item"><span class="meta-label">Завершён:</span> {{russianDate $r.CompletedAt}}</div>
 {{end}}
-<div class="meta-item"><a href="/api/reports/{{$r.ID}}/raw" class="meta-link">Сырой markdown</a></div>
+<div class="meta-item" style="display:flex;gap:0.75rem">
+<a href="/api/reports/{{$r.ID}}/raw" class="meta-link">Сырой markdown</a>
+<button class="btn btn-sm btn-secondary" id="copy-report-btn" data-url="/api/reports/{{$r.ID}}/raw">Копировать</button>
+</div>
 </div>
 
 {{if eq $r.Status "in_progress"}}
@@ -38,7 +42,12 @@
 {{end}}
 
 {{if $.ReportHTML}}
-<div class="report-content">{{$.ReportHTML}}</div>
+<div class="toc" id="toc" style="display:none">
+<h2>Содержание</h2>
+<nav class="toc-list" id="toc-list"></nav>
+</div>
+
+<div class="report-content" id="report-content">{{$.ReportHTML}}</div>
 {{end}}
 
 {{if $r.SourceURLs}}
@@ -51,4 +60,6 @@
 </ol>
 </div>
 {{end}}
+
+<div id="copy-notice" class="copy-notice">Скопировано</div>
 {{end}}
