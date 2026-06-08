@@ -302,7 +302,13 @@ func main() {
 	staticHandler := http.FileServer(http.FS(staticFS))
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /", indexHandler(tmpls))
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			indexHandler(tmpls)(w, r)
+		} else {
+			notFoundHandler(tmpls)(w, r)
+		}
+	})
 	mux.HandleFunc("GET /reports", reportListHandler(tmpls, reportStore))
 	mux.HandleFunc("GET /reports/{id}", reportDetailHandler(tmpls, reportStore))
 	mux.HandleFunc("GET /api/reports", apiReportListHandler(reportStore))
@@ -314,7 +320,6 @@ func main() {
 	mux.HandleFunc("POST /api/reports/{id}/retry", apiReportRetryHandler(coordinator, reportStore))
 	mux.HandleFunc("GET /api/health", healthHandler)
 	mux.Handle("GET /static/", staticHandler)
-	mux.HandleFunc("GET /{path...}", notFoundHandler(tmpls))
 
 	addr := ":" + cfg.ServerPort
 	malderlog.Info("Сервер запущен на %s", addr)
