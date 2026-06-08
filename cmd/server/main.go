@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io/fs"
 	stdlog "log"
 	"net/http"
 	"os"
@@ -27,7 +28,7 @@ import (
 //go:embed web/templates/*.html
 var templateFS embed.FS
 
-//go:embed web/static/*
+//go:embed web/static
 var staticFS embed.FS
 
 var mdRenderer = goldmark.New()
@@ -299,7 +300,8 @@ func main() {
 		"durationLabel":  durationLabel,
 	}
 	tmpls := template.Must(template.New("").Funcs(funcMap).ParseFS(templateFS, "web/templates/*.html"))
-	staticHandler := http.FileServer(http.FS(staticFS))
+	staticContent, _ := fs.Sub(staticFS, "web/static")
+	staticHandler := http.FileServer(http.FS(staticContent))
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", func(w http.ResponseWriter, r *http.Request) {
@@ -319,7 +321,9 @@ func main() {
 	mux.HandleFunc("POST /api/reports/{id}/fail", apiReportFailHandler(reportStore))
 	mux.HandleFunc("POST /api/reports/{id}/retry", apiReportRetryHandler(coordinator, reportStore))
 	mux.HandleFunc("GET /api/health", healthHandler)
-	mux.Handle("GET /static/", cacheControlMiddleware(staticHandler))
+	mux.Handle("GET /static/", cacheControlMiddleware(
+		http.StripPrefix("/static/", staticHandler),
+	))
 
 	addr := ":" + cfg.ServerPort
 	malderlog.Info("Сервер запущен на %s", addr)
