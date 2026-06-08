@@ -109,8 +109,33 @@ a:hover { text-decoration: underline; }
   text-decoration: none;
 }
 .nav-links a.active {
-  color: var(--accent);
-  background: var(--accent-light);
+	color: var(--accent);
+	background: var(--accent-light);
+}
+.nav-search {
+	display: flex;
+	gap: 0.4rem;
+	margin-left: auto;
+	align-items: center;
+}
+.nav-search-input {
+	width: 180px;
+	padding: 0.35rem 0.6rem;
+	font-size: 0.85rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	background: var(--bg);
+	color: var(--text);
+	outline: none;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+.nav-search-input:focus {
+	border-color: var(--accent);
+	box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+@media (max-width: 640px) {
+	.nav-search { display: none; }
 }
 
 /* Container */

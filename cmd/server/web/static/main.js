@@ -72,8 +72,39 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 3000);
   }
 
-  // ---- Research form (index page) ----
+  // ---- Nav search: redirect to index with query ----
+  var navForm = document.getElementById('nav-search');
+  if (navForm) {
+    navForm.addEventListener('submit', function (e) {
+      var q = navForm.querySelector('input').value.trim();
+      if (!q) { e.preventDefault(); return; }
+      if (window.location.pathname === '/') {
+        e.preventDefault();
+        var mainInput = document.getElementById('query');
+        var mainForm = document.getElementById('research-form');
+        if (mainInput && mainForm) {
+          mainInput.value = q;
+          mainForm.dispatchEvent(new Event('submit'));
+        }
+      }
+      // otherwise native GET /?q=... carries the request
+    });
+  }
+
+  // ---- Auto-submit from URL param (index page) ----
+  var urlParams = new URLSearchParams(window.location.search);
+  var urlQuery = urlParams.get('q');
   var form = document.getElementById('research-form');
+  if (urlQuery && form) {
+    document.getElementById('query').value = urlQuery;
+    form.dispatchEvent(new Event('submit'));
+    // Clean URL without reload
+    if (window.history.replaceState) {
+      window.history.replaceState({}, '', '/');
+    }
+    return; // SSE handler runs synchronously from submit
+  }
+
   if (!form) return;
 
   form.addEventListener('submit', function (e) {
