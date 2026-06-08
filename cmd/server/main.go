@@ -292,6 +292,7 @@ func main() {
 	mux.HandleFunc("GET /api/research/stream", apiSSEResearchHandler(coordinator, reportStore))
 	mux.HandleFunc("GET /api/health", healthHandler)
 	mux.Handle("GET /static/", staticHandler)
+	mux.HandleFunc("GET /{path...}", notFoundHandler(tmpls))
 
 	addr := ":" + cfg.ServerPort
 	malderlog.Info("Сервер запущен на %s", addr)
@@ -327,7 +328,8 @@ func reportDetailHandler(tmpls *template.Template, store *memory.ReportStore) ht
 		id := r.PathValue("id")
 		report, err := store.Get(id)
 		if err != nil {
-			http.Error(w, "Отчёт не найден", http.StatusNotFound)
+			w.WriteHeader(http.StatusNotFound)
+			tmpls.ExecuteTemplate(w, "not_found.html", nil)
 			return
 		}
 		var htmlContent template.HTML
@@ -524,6 +526,22 @@ func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ok"}`))
+}
+
+func notFoundHandler(tmpls *template.Template) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		tmpls.ExecuteTemplate(w, "not_found.html", nil)
+	}
+}
+
+func errorHandler(tmpls *template.Template) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+		tmpls.ExecuteTemplate(w, "error.html", map[string]any{
+			"Error": "Произошла внутренняя ошибка сервера.",
+		})
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, data any) {

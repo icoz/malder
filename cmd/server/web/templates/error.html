@@ -1,0 +1,10 @@
+{{template "base" .}}
+{{define "title"}}Ошибка — Malder{{end}}
+{{define "content"}}
+<div class="empty" style="margin-top:3rem">
+<h1 style="font-size:3rem;margin-bottom:0.5rem">500</h1>
+<p style="font-size:1.1rem;margin-bottom:0.5rem">Внутренняя ошибка сервера</p>
+<p style="color:var(--text-secondary)">{{.Error}}</p>
+<p style="margin-top:1.5rem"><a href="/" class="btn btn-primary">На главную</a></p>
+</div>
+{{end}}
