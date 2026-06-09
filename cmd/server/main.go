@@ -146,10 +146,16 @@ type Config struct {
 	EmbeddingRetryAttempts int
 	EmbeddingRetryBaseDelay time.Duration
 
+	VLMEndpoint string
+	VLMAPIKey   string
+	VLMModel    string
+	VLMTimeout  time.Duration
+
 	OpenSerpURL string
 
 	MemoryPath      string
 	SourceStorePath string
+	KnowledgePath   string
 
 	MaxConcurrentSearch int
 	MaxPagesPerQuery    int
@@ -181,6 +187,7 @@ func loadConfig() *Config {
 		OpenSerpURL:         getEnv("OPENSERP_URL", "http://localhost:8080"),
 		MemoryPath:          getEnv("MEMORY_PATH", "./data/malder_memory"),
 		SourceStorePath:     getEnv("SOURCE_STORE_PATH", ""),
+		KnowledgePath:       getEnv("KNOWLEDGE_PATH", "./data/malder_knowledge"),
 		MaxConcurrentSearch: getEnvInt("MAX_CONCURRENT_SEARCH", 3),
 		MaxPagesPerQuery:    getEnvInt("MAX_PAGES_PER_QUERY", 3),
 		MinRelevantFacts:    getEnvInt("MIN_RELEVANT_FACTS", getEnvInt("MIN_FACTS_FOR_CACHE", 10)),
@@ -210,6 +217,10 @@ func loadConfig() *Config {
 	cfg.EmbeddingModel = getEnv("EMBEDDING_MODEL", "text-embedding-3-small")
 	cfg.EmbeddingRetryAttempts = getEnvInt("EMBEDDING_RETRY_ATTEMPTS", cfg.LLMRetryAttempts)
 	cfg.EmbeddingRetryBaseDelay = getEnvDuration("EMBEDDING_RETRY_BASE_DELAY", cfg.LLMRetryBaseDelay)
+	cfg.VLMEndpoint = getEnv("VLM_ENDPOINT", cfg.LLMEndpoint)
+	cfg.VLMAPIKey = getEnv("VLM_API_KEY", cfg.LLMAPIKey)
+	cfg.VLMModel = getEnv("VLM_MODEL", "ibm-granite-vision-7b")
+	cfg.VLMTimeout = getEnvDuration("VLM_TIMEOUT", 30*time.Second)
 	return cfg
 }
 
