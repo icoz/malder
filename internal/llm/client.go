@@ -54,7 +54,7 @@ func NewClient(cfg Config) *Client {
 
 type ChatMessage struct {
 	Role    string `json:"role"`
-	Content string `json:"content"`
+	Content any    `json:"content"`
 }
 
 type chatRequest struct {
@@ -97,7 +97,11 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 
 	var totalLen int
 	for _, m := range messages {
-		totalLen += len(m.Content)
+		switch c := m.Content.(type) {
+		case string:
+			totalLen += len(c)
+		default:
+		}
 	}
 	log.Info("LLM запрос: req_id=%s, модель=%s, сообщений=%d, символов=%d, temp=%.2f, maxTokens=%d", reqID, model, len(messages), totalLen, temperature, maxTokens)
 
@@ -192,7 +196,8 @@ func (c *Client) Complete(ctx context.Context, model string, messages []ChatMess
 			log.Debug("← llm.Complete(req_id=%s) = (\"\", %v)", reqID, err)
 			return "", err
 		}
-		result := chatResp.Choices[0].Message.Content
+		resultAny := chatResp.Choices[0].Message.Content
+		result, _ := resultAny.(string)
 		truncated := result
 		if len(truncated) > 500 {
 			truncated = truncated[:500] + "..."
@@ -243,6 +248,32 @@ func (c *Client) CompleteSimple(ctx context.Context, model string, systemPrompt,
 	messages := []ChatMessage{
 		{Role: "system", Content: systemPrompt},
 		{Role: "user", Content: userPrompt},
+	}
+	return c.Complete(ctx, model, messages, temperature, maxTokens)
+}
+
+type VisionContentPart struct {
+	Type     string `json:"type"`
+	Text     string `json:"text,omitempty"`
+	ImageURL *struct {
+		URL string `json:"url"`
+	} `json:"image_url,omitempty"`
+}
+
+func (c *Client) CompleteVision(ctx context.Context, model, systemPrompt, userText string, base64Images []string, temperature float64, maxTokens int) (string, error) {
+	content := make([]VisionContentPart, 0, 1+len(base64Images))
+	content = append(content, VisionContentPart{Type: "text", Text: userText})
+	for _, b64 := range base64Images {
+		content = append(content, VisionContentPart{
+			Type: "image_url",
+			ImageURL: &struct {
+				URL string `json:"url"`
+			}{URL: "data:image/jpeg;base64," + b64},
+		})
+	}
+	messages := []ChatMessage{
+		{Role: "system", Content: systemPrompt},
+		{Role: "user", Content: content},
 	}
 	return c.Complete(ctx, model, messages, temperature, maxTokens)
 }
