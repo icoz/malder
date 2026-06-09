@@ -1,58 +1,75 @@
 # Сбор информации из локальных документов
 
-## Цель
+## Реализовано
 
-Добавить возможность загрузки локальных документов (doc, docx, odt, pdf) для пополнения базы знаний и последующего использования в исследованиях.
+### KnowledgeStore — `internal/memory/knowledge.go`
 
-## Конверсия в Markdown
+- bbolt-таблица `knowledge_meta` для метаданных документов (`DocumentMeta`)
+- Markdown-файлы хранятся на диске в `{KNOWLEDGE_PATH}/docs/{doc_id}.md`
+- Методы: Create, Get, List, GetMarkdown, Delete, SaveChunkIDs, ExportArchive (ZIP)
+- Чанки сохраняются в chromem-коллекцию `knowledge` через `LongTermMemory.SaveKnowledgeChunk`
 
-| Формат | Стратегия | Сложность |
-|--------|-----------|-----------|
-| **DOCX** | Pandoc | Простая |
-| **ODT** | Pandoc | Простая |
-| **PDF** | Pandoc (через pdftotext) | Средняя — структура, таблицы, колонки теряются |
-| **DOC** | Pandoc (через LibreOffice) | Средняя — требуется LibreOffice в образе |
+### DocumentAgent — `internal/agent/document.go`
 
-**Решение**: затащить Pandoc (+ при необходимости LibreOffice и poppler-utils) в Docker-образ.
+1. Pandoc: документ → markdown (`--extract-media` для извлечения изображений)
+2. Regexp `!\[.*?\]\((media/.*?)\)` — сбор всех ссылок на изображения
+3. VLM (CompleteVision) для каждого изображения:
+   - Используется `ibm-granite-vision-7b` (modelgate)
+   - Эвристика: min 80×80, не экстремальный ratio
+   - Замена `![image](...)` на текстовое описание
+4. Чанкинг: по ~500 слов с перекрытием ~100 слов
+5. Сохранение: метаданные + markdown → KnowledgeStore, чанки → chromem
 
-## Визуальные элементы (таблицы, схемы, графики, скриншоты)
+### KnowledgeSearchTool — `internal/tool/knowledge_search.go`
 
-Pandoc конвертирует таблицы в markdown-таблицы — LLM понимает их нормально, дополнительной обработки не требуется.
+- tool `knowledge_search` для вызова из LLM-агентов
+- Выполняет `memory.RecallKnowledge(query, topK)` по коллекции `knowledge`
+- Используется в CoordinatorAgent после веб-поиска как дополнительный источник
 
-Визуальные элементы (диаграммы, схемы, скриншоты, графики) Pandoc выносит как `![image](media/image123.png)` без описания содержимого. Для них нужна отдельная обработка.
+### Интеграция в CoordinatorAgent
 
-### Пайплайн
+- Поле `knowledgeSearchTool` в `CoordinatorConfig`
+- В `Run()` после `searchAgent.Run()` и перед `subtopic_analysis_start`:
+  `kbSearchTool.Execute({"query": userQuery})` → `memory.Save("knowledge: ...")`
+- KB-факты видны AnalystAgent через `memory.Recall` наравне с веб-фактами
 
-1. Pandoc: документ → markdown (теряется только визуальное содержимое)
-2. Извлечение бинарных изображений из архива DOCX/ODT (лежат в `word/media/`)
-3. Для каждого изображения — запрос к VLM (Gemini Flash, GPT-4o mini vision) с промптом «опиши эту схему/график текстом для поиска»
-4. Эвристика для фильтрации: min размер 100×100, не экстремальное соотношение сторон, не однотонный фон
-5. Замена `![image](...)` на VLM-описание в итоговом markdown
-6. Полученный текст идёт в чанкинг → chromem
+### API endpoints
 
-### Оценка стоимости VLM
+| Метод | Путь | Описание |
+|-------|------|----------|
+| `POST` | `/api/knowledge/upload` | multipart, загрузка документа |
+| `GET` | `/api/knowledge/documents` | JSON-список документов |
+| `GET` | `/api/knowledge/documents/{id}` | JSON метаданных |
+| `GET` | `/api/knowledge/documents/{id}/raw` | Markdown документа |
+| `GET` | `/api/knowledge/export` | ZIP-архив всех md |
+| `DELETE` | `/api/knowledge/documents/{id}` | Удаление документа |
+| `GET` | `/knowledge` | WebUI страница |
 
-- Gemini 3.1 Flash Lite — уже используется, vision-capable
-- GPT-4o mini — тоже есть vision
-- Запрос: ~1–2К входных токенов (изображение), ~100–300 токенов на выход
-- Для типового документа с 3–5 изображениями: +2–5 секунд на обработку
+### LLM client — поддержка vision
 
-### Сложные моменты
+- `ChatMessage.Content` изменён с `string` на `any` для content parts
+- Добавлен `CompleteVision(ctx, model, systemPrompt, userText, base64Images, temperature, maxTokens)`
 
-- **PDF** — Pandoc конвертирует, но изображения из PDF извлекаются через `pdfimages` (poppler). Без poppler Pandoc сгенерирует `![image]()` без файла.
-- **DOC** — Pandoc через LibreOffice, изображения извлекаются нормально.
-- **Распознавание** — не каждое изображение стоит отправлять в VLM (иконки, декоративные элементы — пустая трата токенов). Нужна эвристика: `size >= 100×100`, ratio 1:10…10:1, не пустой/однотонный.
-- **Таблицы** — Pandoc конвертирует в markdown-таблицы, LLM понимает нормально. VLM не требуется.
+### Dockerfile
 
-### Альтернативы без VLM
+```dockerfile
+RUN apk --no-cache add ca-certificates pandoc poppler-utils
+```
 
-- **docling** (Python) — visual parsing документов с таблицами и изображениями
-- **marker** (Python) — конверсия PDF в markdown с сохранением структуры
+### Config (env vars)
 
-Обе не в Go-стеке. Если VLM нежелателен, можно использовать их как внешние утилиты (вызов через `os/exec`).
+| Env | Default | Описание |
+|-----|---------|----------|
+| `VLM_ENDPOINT` | наследует `LLM_ENDPOINT` | Vision API |
+| `VLM_API_KEY` | наследует `LLM_API_KEY` | |
+| `VLM_MODEL` | `ibm-granite-vision-7b` | |
+| `VLM_TIMEOUT` | `30s` | |
+| `KNOWLEDGE_PATH` | `./data/malder_knowledge` | Путь к KB |
 
-## Подход к реализации (предлагаемый порядок)
+## Оставшиеся возможности (на будущее)
 
-1. **Шаг 1 (базовый)**: Pandoc + markdown без VLM. Загрузка документа, конверсия, чанкинг, сохранение в chromem.
-2. **Шаг 2**: VLM-описание изображений. Добавить Vision API, эвристику фильтрации, замену `![image]()` на описание.
-3. **Шаг 3** (опционально): Поддержка PDF с poppler-utils, поддержка DOC с LibreOffice.
+- **Удаление чанков из chromem** — API chromem-go v0.5.0 не имеет DeleteDocument, только DeleteCollection
+- **LibreOffice для .doc** — если потребуется поддержка старого формата
+- **PDF-изображения через poppler-utils** — Pandoc конвертирует PDF в md, но изображения из PDF извлекаются только через `pdfimages`
+- **WebUI-страница документа** — просмотр markdown и метаданных в браузере
+
