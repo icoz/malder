@@ -33,6 +33,7 @@ type Report struct {
 	CompletedAt      *int64       `json:"completed_at,omitempty"`
 	DurationMs       int64        `json:"duration_ms"`
 	RawProgress      string       `json:"raw_progress,omitempty"`
+	CheckpointJSON   string       `json:"checkpoint_json,omitempty"`
 }
 
 type ReportStore struct {
@@ -151,6 +152,49 @@ func (s *ReportStore) SaveProgress(id, event string, data map[string]any) error 
 		}
 		r.RawProgress = string(bs)
 		raw, err = json.Marshal(r)
+		if err != nil {
+			return fmt.Errorf("marshal report: %w", err)
+		}
+		return b.Put([]byte(id), raw)
+	})
+}
+
+func (s *ReportStore) SaveCheckpoint(id, cpJSON string) error {
+	return s.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("reports"))
+		raw := b.Get([]byte(id))
+		if raw == nil {
+			return fmt.Errorf("report not found: %s", id)
+		}
+		var r Report
+		if err := json.Unmarshal(raw, &r); err != nil {
+			return fmt.Errorf("unmarshal report: %w", err)
+		}
+		r.CheckpointJSON = cpJSON
+		raw, err := json.Marshal(r)
+		if err != nil {
+			return fmt.Errorf("marshal report: %w", err)
+		}
+		return b.Put([]byte(id), raw)
+	})
+}
+
+func (s *ReportStore) ResetToInProgress(id string) error {
+	return s.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket([]byte("reports"))
+		raw := b.Get([]byte(id))
+		if raw == nil {
+			return fmt.Errorf("report not found: %s", id)
+		}
+		var r Report
+		if err := json.Unmarshal(raw, &r); err != nil {
+			return fmt.Errorf("unmarshal report: %w", err)
+		}
+		r.Status = ReportStatusInProgress
+		r.Error = ""
+		r.CompletedAt = nil
+		r.DurationMs = 0
+		raw, err := json.Marshal(r)
 		if err != nil {
 			return fmt.Errorf("marshal report: %w", err)
 		}

@@ -377,6 +377,7 @@ func main() {
 	mux.HandleFunc("GET /api/research/stream", apiSSEResearchHandler(coordinator, reportStore))
 	mux.HandleFunc("POST /api/reports/{id}/fail", apiReportFailHandler(reportStore))
 	mux.HandleFunc("POST /api/reports/{id}/retry", apiReportRetryHandler(coordinator, reportStore))
+	mux.HandleFunc("POST /api/reports/{id}/resume", apiReportResumeHandler(coordinator, reportStore))
 	mux.HandleFunc("GET /api/health", healthHandler)
 	mux.Handle("GET /static/", cacheControlMiddleware(
 		http.StripPrefix("/static/", staticHandler),
@@ -450,6 +451,7 @@ func reportDetailHandler(detailTpl, notFoundTpl *template.Template, store *memor
 			"ExecSummaryHTML":  execSummaryHTML,
 			"WordCount":        wordCount,
 			"Progress":         progressMap,
+			"HasCheckpoint":    report.CheckpointJSON != "",
 		})
 	}
 }
@@ -513,6 +515,9 @@ func apiResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportStore
 		}
 		coord.SetProgressSaver(func(event string, data map[string]any) {
 			store.SaveProgress(reportID, event, data)
+		})
+		coord.SetCheckpointSaver(func(cpJSON string) {
+			store.SaveCheckpoint(reportID, cpJSON)
 		})
 
 		start := time.Now()
@@ -613,6 +618,9 @@ func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 			tempCoord.SetProgressSaver(func(event string, data map[string]any) {
 				store.SaveProgress(reportID, event, data)
 			})
+			tempCoord.SetCheckpointSaver(func(cpJSON string) {
+				store.SaveCheckpoint(reportID, cpJSON)
+			})
 			result, err := tempCoord.Run(ctx, query)
 			resultChan <- struct {
 				result *agent.ResearchResult
@@ -709,6 +717,75 @@ func apiReportRetryHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 			"executive_summary": result.ExecutiveSummary,
 			"source_urls":       result.SourceURLs,
 			"duration_ms":       duration.Milliseconds(),
+		})
+	}
+}
+
+func apiReportResumeHandler(coord *agent.CoordinatorAgent, store *memory.ReportStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+
+		report, err := store.Get(id)
+		if err != nil {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+			return
+		}
+		if report.Status != memory.ReportStatusError {
+			writeJSON(w, http.StatusConflict, map[string]string{"error": "report must be in error status"})
+			return
+		}
+		if report.CheckpointJSON == "" {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "no checkpoint available for this report"})
+			return
+		}
+
+		var cp agent.Checkpoint
+		if err := json.Unmarshal([]byte(report.CheckpointJSON), &cp); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "invalid checkpoint: " + err.Error()})
+			return
+		}
+
+		tempCoord := agent.NewCoordinator(agent.CoordinatorConfig{
+			LLM:                    coord.LLM(),
+			Model:                  coord.Model(),
+			Temperature:            coord.Temperature(),
+			Memory:                 coord.Memory(),
+			SourceStore:            coord.SourceStore(),
+			SearchAgent:            coord.SearchAgent(),
+			AnalystAgent:           coord.AnalystAgent(),
+			CriticAgent:            coord.CriticAgent(),
+			Verbosity:              coord.Verbosity(),
+			MaxIterations:          coord.MaxIterations(),
+			MaxConcurrentSubtopics: coord.MaxConcurrentSubtopics(),
+			MaxSubtopicRetries:     coord.MaxSubtopicRetries(),
+		})
+		tempCoord.SetProgressSaver(func(event string, data map[string]any) {
+			store.SaveProgress(id, event, data)
+		})
+		tempCoord.SetCheckpointSaver(func(cpJSON string) {
+			store.SaveCheckpoint(id, cpJSON)
+		})
+
+		store.ResetToInProgress(id)
+
+		start := time.Now()
+		result, err := tempCoord.RunWithCheckpoint(r.Context(), report.Query, &cp)
+		duration := time.Since(start)
+
+		if err != nil {
+			store.Fail(id, err.Error(), duration)
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+
+		store.Complete(id, result.Report, result.ExecutiveSummary, result.SourceURLs, duration)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"report_id":         id,
+			"report":            result.Report,
+			"executive_summary": result.ExecutiveSummary,
+			"source_urls":       result.SourceURLs,
+			"duration_ms":       duration.Milliseconds(),
+			"resumed":           true,
 		})
 	}
 }

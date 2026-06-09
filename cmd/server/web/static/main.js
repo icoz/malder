@@ -112,6 +112,32 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 3000);
   }
 
+  // ---- Resume research button (detail page for error reports) ----
+  var resumeBtn = document.getElementById('resume-btn');
+  if (resumeBtn) {
+    resumeBtn.addEventListener('click', function () {
+      var id = resumeBtn.dataset.reportId;
+      resumeBtn.disabled = true;
+      resumeBtn.textContent = 'Продолжаем...';
+      fetch('/api/reports/' + id + '/resume', { method: 'POST' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (data.error) {
+            alert('Ошибка: ' + data.error);
+            resumeBtn.disabled = false;
+            resumeBtn.textContent = 'Продолжить исследование';
+          } else {
+            location.reload();
+          }
+        })
+        .catch(function () {
+          alert('Сетевая ошибка');
+          resumeBtn.disabled = false;
+          resumeBtn.textContent = 'Продолжить исследование';
+        });
+    });
+  }
+
   // ---- Nav search: start research directly via SSE ----
   var navForm = document.getElementById('nav-search');
   if (navForm) {

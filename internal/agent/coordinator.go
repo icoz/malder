@@ -14,6 +14,18 @@ import (
 
 type ProgressReporter func(event string, data map[string]any)
 type ProgressSaver func(event string, data map[string]any)
+type CheckpointSaver func(cpJSON string)
+
+type Checkpoint struct {
+	PlanJSON           string            `json:"plan_json,omitempty"`
+	SubReportTexts     map[string]string `json:"sub_report_texts,omitempty"`
+	SectionReports     []SectionReport   `json:"section_reports,omitempty"`
+	CompletedSubtopics []string          `json:"completed_subtopics,omitempty"`
+	Phase              string            `json:"phase"`
+	CriticIteration    int               `json:"critic_iteration,omitempty"`
+	CriticFeedback     string            `json:"critic_feedback,omitempty"`
+	SourceURLs         []string          `json:"source_urls,omitempty"`
+}
 
 type ResearchResult struct {
 	Report           string
@@ -41,6 +53,7 @@ type CoordinatorAgent struct {
 	maxSubtopicRetries     int
 	reporter               ProgressReporter
 	progressSaver          ProgressSaver
+	checkpointSaver        CheckpointSaver
 }
 
 type CoordinatorConfig struct {
@@ -93,6 +106,22 @@ func (c *CoordinatorAgent) SetProgressSaver(saver ProgressSaver) {
 	c.progressSaver = saver
 }
 
+func (c *CoordinatorAgent) SetCheckpointSaver(saver CheckpointSaver) {
+	c.checkpointSaver = saver
+}
+
+func (c *CoordinatorAgent) saveCheckpoint(cp *Checkpoint) {
+	if c.checkpointSaver == nil {
+		return
+	}
+	bs, err := json.Marshal(cp)
+	if err != nil {
+		log.Warn("Coordinator: ошибка маршалинга checkpoint: %v", err)
+		return
+	}
+	c.checkpointSaver(string(bs))
+}
+
 func (c *CoordinatorAgent) LLM() *llm.Client                 { return c.llm }
 func (c *CoordinatorAgent) Memory() *memory.LongTermMemory   { return c.memory }
 func (c *CoordinatorAgent) SearchAgent() *SearchAgent        { return c.searchAgent }
@@ -127,6 +156,7 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *R
 	for i, s := range plan.Sections {
 		log.Info("Coordinator: секция %d: %s (%d подтем)", i+1, s.Name, len(s.Subtopics))
 	}
+	planJSON, _ := json.Marshal(plan)
 	sectionNames := make([]string, len(plan.Sections))
 	subtopicNames := make([]string, 0)
 	for _, s := range plan.Sections {
@@ -141,6 +171,7 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *R
 		"subtopics": subtopicNames,
 		"plan_sections": c.sectionsToMap(plan.Sections),
 	})
+	c.saveCheckpoint(&Checkpoint{PlanJSON: string(planJSON), Phase: "search"})
 
 	allQueries := flattenQueries(plan)
 	log.Info("Coordinator: всего поисковых запросов: %d", len(allQueries))
@@ -151,22 +182,191 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *R
 	c.report("search_complete", map[string]any{
 		"sources_count": c.searchAgent.PagesProcessed(),
 	})
+	cp := &Checkpoint{PlanJSON: string(planJSON), Phase: "subtopics"}
+	c.saveCheckpoint(cp)
 
 	c.report("subtopic_analysis_start", map[string]any{"total": len(subtopicNames)})
 	subResults := c.researchSubtopics(ctx, plan)
 	c.report("subtopic_analysis_complete", map[string]any{"completed": len(subResults), "total": len(subtopicNames)})
+	subReportTexts := make(map[string]string, len(subResults))
+	for key, sr := range subResults {
+		subReportTexts[key] = sr.Analysis
+	}
+	cp = &Checkpoint{
+		PlanJSON:       string(planJSON),
+		SubReportTexts: subReportTexts,
+		Phase:          "sections",
+	}
+	c.saveCheckpoint(cp)
 
 	c.report("section_synthesis_start", map[string]any{"total": len(sectionNames)})
 	sectionReports := c.synthesizeSections(ctx, plan, subResults)
 	c.report("section_synthesis_complete", map[string]any{"completed": len(sectionReports), "total": len(sectionNames)})
+	cp = &Checkpoint{
+		PlanJSON:       string(planJSON),
+		SubReportTexts: subReportTexts,
+		SectionReports: sectionReports,
+		Phase:          "critic",
+	}
+	c.saveCheckpoint(cp)
 
 	c.report("critic_loop_start", nil)
 	result, err = c.criticLoop(ctx, plan.Title, sectionReports)
 	if err != nil {
 		return nil, fmt.Errorf("критический цикл не удался: %w", err)
 	}
+	cp = &Checkpoint{
+		PlanJSON:       string(planJSON),
+		SubReportTexts: subReportTexts,
+		SectionReports: sectionReports,
+		Phase:          "summary",
+		SourceURLs:         result.SourceURLs,
+	}
+	c.saveCheckpoint(cp)
 
 	// Generate executive summary if detailed verbosity
+	if c.verbosity == VerbosityDetailed && result != nil {
+		c.report("exec_summary_start", nil)
+		execSummary, err := c.generateExecutiveSummary(ctx, plan.Title, result.Report)
+		if err == nil {
+			result.ExecutiveSummary = execSummary
+		} else {
+			log.Debug("Coordinator: generateExecutiveSummary error: title=%q, err=%v", plan.Title, err)
+		}
+		c.report("exec_summary_complete", map[string]any{"length": len(execSummary)})
+	}
+
+	c.report("finish", map[string]any{"result": result.Report})
+	return result, nil
+}
+
+func (c *CoordinatorAgent) RunWithCheckpoint(ctx context.Context, userQuery string, cp *Checkpoint) (result *ResearchResult, err error) {
+	defer func() {
+		if err != nil {
+			log.Debug("← CoordinatorAgent.RunWithCheckpoint(%s) = (nil, %v)", userQuery, err)
+		} else {
+			log.Debug("← CoordinatorAgent.RunWithCheckpoint(%s) = (len=%d, nil)", userQuery, len(result.Report))
+		}
+	}()
+	log.Debug("→ CoordinatorAgent.RunWithCheckpoint(query=%s, phase=%s)", userQuery, cp.Phase)
+
+	c.report("start", map[string]any{"query": userQuery, "resumed": true})
+
+	var plan ResearchPlan
+	if cp.PlanJSON != "" {
+		if err := json.Unmarshal([]byte(cp.PlanJSON), &plan); err != nil {
+			return nil, fmt.Errorf("ошибка десериализации плана: %w", err)
+		}
+	}
+	sectionNames := make([]string, len(plan.Sections))
+	subtopicNames := make([]string, 0)
+	for _, s := range plan.Sections {
+		sectionNames = append(sectionNames, s.Name)
+		for _, st := range s.Subtopics {
+			subtopicNames = append(subtopicNames, st.Name)
+		}
+	}
+
+	// Phase: plan (always have it from checkpoint)
+	c.report("planning", nil)
+	c.report("plan_complete", map[string]any{
+		"title":     plan.Title,
+		"sections":  sectionNames,
+		"subtopics": subtopicNames,
+		"plan_sections": c.sectionsToMap(plan.Sections),
+		"resumed":   true,
+	})
+
+	// Phase: search
+	if cp.Phase == "search" || cp.Phase == "planning" {
+		allQueries := flattenQueries(&plan)
+		log.Info("Coordinator: повторный поиск (resume), запросов: %d", len(allQueries))
+		c.report("search_start", nil)
+		if err := c.searchAgent.Run(ctx, allQueries); err != nil {
+			log.Warn("Ошибки при поиске: %v", err)
+		}
+		c.report("search_complete", map[string]any{
+			"sources_count": c.searchAgent.PagesProcessed(),
+		})
+	} else {
+		c.report("search_start", nil)
+		c.report("search_complete", map[string]any{"sources_count": 0, "skipped": true})
+	}
+	c.saveCheckpoint(&Checkpoint{
+		PlanJSON:       cp.PlanJSON,
+		SubReportTexts: cp.SubReportTexts,
+		SectionReports: cp.SectionReports,
+		Phase:          "subtopics",
+	})
+
+	// Phase: subtopic analysis
+	var subResults map[string]*SubReport
+	if cp.Phase == "search" || cp.Phase == "subtopics" || cp.SubReportTexts == nil {
+		c.report("subtopic_analysis_start", map[string]any{"total": len(subtopicNames)})
+		subResults = c.researchSubtopics(ctx, &plan)
+		c.report("subtopic_analysis_complete", map[string]any{"completed": len(subResults), "total": len(subtopicNames)})
+	} else {
+		subResults = make(map[string]*SubReport, len(cp.SubReportTexts))
+		for key, text := range cp.SubReportTexts {
+			subResults[key] = &SubReport{Analysis: text, Complete: true}
+		}
+		c.report("subtopic_analysis_start", map[string]any{"total": len(subtopicNames)})
+		c.report("subtopic_analysis_complete", map[string]any{"completed": len(subResults), "total": len(subtopicNames), "resumed": true})
+	}
+	subReportTexts := make(map[string]string, len(subResults))
+	for key, sr := range subResults {
+		subReportTexts[key] = sr.Analysis
+	}
+	c.saveCheckpoint(&Checkpoint{
+		PlanJSON:       cp.PlanJSON,
+		SubReportTexts: subReportTexts,
+		Phase:          "sections",
+	})
+
+	// Phase: section synthesis
+	var sectionReports []SectionReport
+	if cp.Phase == "search" || cp.Phase == "subtopics" || cp.Phase == "sections" || len(cp.SectionReports) == 0 {
+		c.report("section_synthesis_start", map[string]any{"total": len(sectionNames)})
+		sectionReports = c.synthesizeSections(ctx, &plan, subResults)
+		c.report("section_synthesis_complete", map[string]any{"completed": len(sectionReports), "total": len(sectionNames)})
+	} else {
+		sectionReports = cp.SectionReports
+		c.report("section_synthesis_start", map[string]any{"total": len(sectionNames)})
+		c.report("section_synthesis_complete", map[string]any{"completed": len(sectionReports), "total": len(sectionNames), "resumed": true})
+	}
+	c.saveCheckpoint(&Checkpoint{
+		PlanJSON:       cp.PlanJSON,
+		SubReportTexts: subReportTexts,
+		SectionReports: sectionReports,
+		Phase:          "critic",
+	})
+
+	// Phase: critic loop
+	c.report("critic_loop_start", nil)
+	switch cp.Phase {
+	case "critic", "summary":
+		result, err = c.criticLoop(ctx, plan.Title, sectionReports)
+	case "done":
+		result, err = c.criticLoop(ctx, plan.Title, sectionReports)
+		if err != nil && len(cp.SectionReports) > 0 {
+			log.Info("Coordinator: повтор criticLoop со checkpoint-секциями")
+			result, err = c.criticLoop(ctx, plan.Title, cp.SectionReports)
+		}
+	default:
+		result, err = c.criticLoop(ctx, plan.Title, sectionReports)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("критический цикл не удался: %w", err)
+	}
+	c.saveCheckpoint(&Checkpoint{
+		PlanJSON:       cp.PlanJSON,
+		SubReportTexts: subReportTexts,
+		SectionReports: sectionReports,
+		Phase:          "summary",
+		SourceURLs:     result.SourceURLs,
+	})
+
+	// Phase: executive summary
 	if c.verbosity == VerbosityDetailed && result != nil {
 		c.report("exec_summary_start", nil)
 		execSummary, err := c.generateExecutiveSummary(ctx, plan.Title, result.Report)

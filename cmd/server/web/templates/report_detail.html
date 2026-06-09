@@ -81,6 +81,11 @@
 {{if eq $r.Status "error"}}
 <div class="error-box">
 <strong>Ошибка:</strong> {{$r.Error}}
+{{if $.HasCheckpoint}}
+<div style="margin-top:0.75rem">
+<button class="btn btn-primary" id="resume-btn" data-report-id="{{$r.ID}}">Продолжить исследование</button>
+</div>
+{{end}}
 </div>
 {{end}}
 
