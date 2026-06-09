@@ -10,6 +10,7 @@ import (
 	"github.com/icoz/malder/internal/llm"
 	"github.com/icoz/malder/internal/log"
 	"github.com/icoz/malder/internal/memory"
+	"github.com/icoz/malder/internal/tool"
 )
 
 type ProgressReporter func(event string, data map[string]any)
@@ -54,6 +55,7 @@ type CoordinatorAgent struct {
 	reporter               ProgressReporter
 	progressSaver          ProgressSaver
 	checkpointSaver        CheckpointSaver
+	knowledgeSearchTool    *tool.KnowledgeSearchTool
 }
 
 type CoordinatorConfig struct {
@@ -69,6 +71,7 @@ type CoordinatorConfig struct {
 	MaxIterations          int
 	MaxConcurrentSubtopics int
 	MaxSubtopicRetries     int
+	KnowledgeSearchTool    *tool.KnowledgeSearchTool
 }
 
 func NewCoordinator(cfg CoordinatorConfig) *CoordinatorAgent {
@@ -95,6 +98,7 @@ func NewCoordinator(cfg CoordinatorConfig) *CoordinatorAgent {
 		maxIterations:          cfg.MaxIterations,
 		maxConcurrentSubtopics: cfg.MaxConcurrentSubtopics,
 		maxSubtopicRetries:     cfg.MaxSubtopicRetries,
+		knowledgeSearchTool:    cfg.KnowledgeSearchTool,
 	}
 }
 
@@ -184,6 +188,14 @@ func (c *CoordinatorAgent) Run(ctx context.Context, userQuery string) (result *R
 	})
 	cp := &Checkpoint{PlanJSON: string(planJSON), Phase: "subtopics"}
 	c.saveCheckpoint(cp)
+
+	if c.knowledgeSearchTool != nil {
+		kbResult, kberr := c.knowledgeSearchTool.Execute(ctx, map[string]any{"query": userQuery, "topK": float64(5)})
+		if kberr == nil && kbResult != "" && !strings.Contains(kbResult, "В базе знаний ничего не найдено") {
+			c.memory.Save(ctx, fmt.Sprintf("knowledge: %s", userQuery), kbResult)
+			log.Info("Coordinator: добавлены результаты из базы знаний по запросу '%s'", userQuery)
+		}
+	}
 
 	c.report("subtopic_analysis_start", map[string]any{"total": len(subtopicNames)})
 	subResults := c.researchSubtopics(ctx, plan)
