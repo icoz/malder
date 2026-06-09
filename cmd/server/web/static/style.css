@@ -218,6 +218,8 @@ h2 { font-size: 1.35rem; font-weight: 700; line-height: 1.35; margin-bottom: 0.5
 }
 .btn-secondary:hover { background: var(--surface-hover); }
 .btn-sm { padding: 0.4rem 0.85rem; font-size: 0.85rem; border-radius: var(--radius-sm); }
+.btn-danger { background: #dc2626; color: #fff; }
+.btn-danger:hover { background: #b91c1c; }
 
 /* Progress */
 .progress { margin-bottom: 2rem; }

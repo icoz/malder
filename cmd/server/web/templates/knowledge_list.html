@@ -1,0 +1,90 @@
+{{template "base" .}}
+{{define "title"}}База знаний — Malder{{end}}
+{{define "content"}}
+<h1>База знаний</h1>
+<p class="subtitle">Загруженные документы. Система автоматически конвертирует их в Markdown и индексирует для поиска.</p>
+
+<div style="margin-bottom:1.5rem">
+<form id="upload-form" enctype="multipart/form-data">
+<div class="input-row">
+<input type="file" id="file-input" name="file" accept=".docx,.odt,.pdf" class="form-input" style="flex:1;padding:0.5rem">
+<button type="submit" class="btn btn-primary" id="upload-btn">Загрузить</button>
+</div>
+</form>
+<div id="upload-status" style="display:none" class="progress-status"></div>
+</div>
+
+<table class="doc-table">
+<thead>
+<tr>
+<th>Название</th>
+<th>Тип</th>
+<th>Размер</th>
+<th>Чанков</th>
+<th>Дата</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+{{range .Documents}}
+<tr>
+<td><a href="/api/knowledge/documents/{{.ID}}/raw" target="_blank">{{.OriginalName}}</a></td>
+<td>{{.ContentType}}</td>
+<td>{{fileSize .Size}}</td>
+<td>{{.ChunkCount}}</td>
+<td>{{russianDate .CreatedAt}}</td>
+<td><button class="btn btn-sm btn-danger" onclick="deleteDoc('{{.ID}}')">Удалить</button></td>
+</tr>
+{{else}}
+<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:2rem">Документов пока нет. Загрузите DOCX, ODT или PDF.</td></tr>
+{{end}}
+</tbody>
+</table>
+
+<script>
+document.getElementById('upload-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var fileInput = document.getElementById('file-input');
+  var uploadBtn = document.getElementById('upload-btn');
+  var status = document.getElementById('upload-status');
+  if (!fileInput.files.length) return;
+  uploadBtn.disabled = true;
+  status.style.display = 'block';
+  status.textContent = 'Загружаем и обрабатываем «' + fileInput.files[0].name + '»...';
+  var fd = new FormData();
+  fd.append('file', fileInput.files[0]);
+  fetch('/api/knowledge/upload', { method: 'POST', body: fd })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) {
+        status.textContent = 'Ошибка: ' + d.error;
+        uploadBtn.disabled = false;
+      } else {
+        location.reload();
+      }
+    })
+    .catch(function() {
+      status.textContent = 'Сетевая ошибка';
+      uploadBtn.disabled = false;
+    });
+});
+
+function deleteDoc(id) {
+  if (!confirm('Удалить документ?')) return;
+  fetch('/api/knowledge/documents/' + id, { method: 'DELETE' })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) { alert(d.error); }
+      else { location.reload(); }
+    })
+    .catch(function() { alert('Сетевая ошибка'); });
+}
+</script>
+
+<style>
+.doc-table { width:100%; border-collapse:collapse; font-size:0.9rem; }
+.doc-table th { text-align:left; padding:0.5rem 0.75rem; border-bottom:2px solid var(--border); font-weight:600; color:var(--text-secondary); }
+.doc-table td { padding:0.5rem 0.75rem; border-bottom:1px solid var(--border); }
+.doc-table tr:hover td { background:var(--surface); }
+</style>
+{{end}}
