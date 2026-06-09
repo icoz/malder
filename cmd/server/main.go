@@ -520,8 +520,18 @@ func apiResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportStore
 			store.SaveCheckpoint(reportID, cpJSON)
 		})
 
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go func() {
+			select {
+			case <-r.Context().Done():
+				cancel()
+			case <-ctx.Done():
+			}
+		}()
+
 		start := time.Now()
-		result, err := coord.Run(r.Context(), req.Query)
+		result, err := coord.Run(ctx, req.Query)
 		duration := time.Since(start)
 
 		if err != nil {
@@ -700,7 +710,16 @@ func apiReportRetryHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 		}
 
 		start := time.Now()
-		result, err := coord.Run(r.Context(), report.Query)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go func() {
+			select {
+			case <-r.Context().Done():
+				cancel()
+			case <-ctx.Done():
+			}
+		}()
+		result, err := coord.Run(ctx, report.Query)
 		duration := time.Since(start)
 
 		if err != nil {
@@ -768,8 +787,18 @@ func apiReportResumeHandler(coord *agent.CoordinatorAgent, store *memory.ReportS
 
 		store.ResetToInProgress(id)
 
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go func() {
+			select {
+			case <-r.Context().Done():
+				cancel()
+			case <-ctx.Done():
+			}
+		}()
+
 		start := time.Now()
-		result, err := tempCoord.RunWithCheckpoint(r.Context(), report.Query, &cp)
+		result, err := tempCoord.RunWithCheckpoint(ctx, report.Query, &cp)
 		duration := time.Since(start)
 
 		if err != nil {
