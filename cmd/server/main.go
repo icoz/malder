@@ -7,10 +7,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"io/fs"
 	stdlog "log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -327,6 +329,14 @@ func main() {
 
 	criticAgent := agent.NewCriticAgent(llmCritic, cfg.LLMModelCritic, cfg.LLMTemperature, verbosity)
 
+	vlmClient := makeLLM(cfg.VLMEndpoint, cfg.VLMAPIKey, cfg.VLMTimeout)
+
+	knowledgeStore := memory.NewKnowledgeStore(boltDB, cfg.KnowledgePath+"/docs")
+
+	docAgent := agent.NewDocumentAgent(vlmClient, cfg.VLMModel, mem, knowledgeStore)
+
+	kbSearchTool := tool.NewKnowledgeSearchTool(mem)
+
 	coordinator := agent.NewCoordinator(agent.CoordinatorConfig{
 		LLM:                    llmCoordinator,
 		Model:                  cfg.LLMModelCoordinator,
@@ -340,6 +350,7 @@ func main() {
 		MaxIterations:          cfg.MaxIterations,
 		MaxConcurrentSubtopics: cfg.MaxConcurrentSubtopics,
 		MaxSubtopicRetries:     cfg.MaxSubtopicRetries,
+		KnowledgeSearchTool:    kbSearchTool,
 	})
 
 	funcMap := template.FuncMap{
@@ -368,6 +379,9 @@ func main() {
 	errorTpl := template.Must(base.Clone())
 	template.Must(errorTpl.ParseFS(templateFS, "web/templates/error.html"))
 
+	knowledgeTpl := template.Must(base.Clone())
+	template.Must(knowledgeTpl.ParseFS(templateFS, "web/templates/knowledge_list.html"))
+
 	staticContent, _ := fs.Sub(staticFS, "web/static")
 	staticHandler := http.FileServer(http.FS(staticContent))
 
@@ -389,6 +403,13 @@ func main() {
 	mux.HandleFunc("POST /api/reports/{id}/fail", apiReportFailHandler(reportStore))
 	mux.HandleFunc("POST /api/reports/{id}/retry", apiReportRetryHandler(coordinator, reportStore))
 	mux.HandleFunc("POST /api/reports/{id}/resume", apiReportResumeHandler(coordinator, reportStore))
+	mux.HandleFunc("GET /api/knowledge/documents", apiKnowledgeListHandler(knowledgeStore))
+	mux.HandleFunc("GET /api/knowledge/documents/{id}", apiKnowledgeGetHandler(knowledgeStore))
+	mux.HandleFunc("GET /api/knowledge/documents/{id}/raw", apiKnowledgeRawHandler(knowledgeStore))
+	mux.HandleFunc("POST /api/knowledge/upload", apiKnowledgeUploadHandler(docAgent, knowledgeStore))
+	mux.HandleFunc("DELETE /api/knowledge/documents/{id}", apiKnowledgeDeleteHandler(knowledgeStore))
+	mux.HandleFunc("GET /api/knowledge/export", apiKnowledgeExportHandler(knowledgeStore))
+	mux.HandleFunc("GET /knowledge", logPageHandler(knowledgeListHandler(knowledgeTpl, knowledgeStore), "knowledgeListHandler"))
 	mux.HandleFunc("GET /api/health", healthHandler)
 	mux.Handle("GET /static/", cacheControlMiddleware(
 		http.StripPrefix("/static/", staticHandler),
@@ -829,6 +850,119 @@ func apiReportResumeHandler(coord *agent.CoordinatorAgent, store *memory.ReportS
 			"duration_ms":       duration.Milliseconds(),
 			"resumed":           true,
 		})
+	}
+}
+
+func knowledgeListHandler(tmpls *template.Template, store *memory.KnowledgeStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		docs, err := store.List()
+		if err != nil {
+			malderlog.Warn("База знаний: список: %v", err)
+			http.Error(w, "Internal error", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		tmpls.ExecuteTemplate(w, "knowledge_list.html", map[string]any{
+			"Documents": docs,
+		})
+	}
+}
+
+func apiKnowledgeListHandler(store *memory.KnowledgeStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		docs, err := store.List()
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, docs)
+	}
+}
+
+func apiKnowledgeGetHandler(store *memory.KnowledgeStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		doc, err := store.Get(id)
+		if err != nil {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+			return
+		}
+		writeJSON(w, http.StatusOK, doc)
+	}
+}
+
+func apiKnowledgeRawHandler(store *memory.KnowledgeStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		md, err := store.GetMarkdown(id)
+		if err != nil {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})
+			return
+		}
+		w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+		w.Write([]byte(md))
+	}
+}
+
+func apiKnowledgeDeleteHandler(store *memory.KnowledgeStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id := r.PathValue("id")
+		if err := store.Delete(id); err != nil {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+	}
+}
+
+func apiKnowledgeUploadHandler(docAgent *agent.DocumentAgent, store *memory.KnowledgeStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if err := r.ParseMultipartForm(100 << 20); err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid multipart form: " + err.Error()})
+			return
+		}
+		file, header, err := r.FormFile("file")
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "missing file"})
+			return
+		}
+		defer file.Close()
+
+		tmpFile, err := os.CreateTemp("", "malder-upload-*"+filepath.Ext(header.Filename))
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		defer os.Remove(tmpFile.Name())
+
+		if _, err := io.Copy(tmpFile, file); err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		tmpFile.Close()
+
+		docID, err := docAgent.Process(r.Context(), tmpFile.Name(), header.Filename)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+
+		doc, err := store.Get(docID)
+		if err != nil {
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+			return
+		}
+		writeJSON(w, http.StatusOK, doc)
+	}
+}
+
+func apiKnowledgeExportHandler(store *memory.KnowledgeStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", "attachment; filename=knowledge_export.zip")
+		if err := store.ExportArchive(r.Context(), w); err != nil {
+			malderlog.Warn("KnowledgeStore: экспорт: %v", err)
+		}
 	}
 }
 
