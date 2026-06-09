@@ -133,6 +133,19 @@ a:hover { text-decoration: underline; }
 	border-color: var(--accent);
 	box-shadow: 0 0 0 2px var(--accent-light);
 }
+.nav-search-select {
+	padding: 0.25rem 0.4rem;
+	font-size: 0.8rem;
+	border: 1px solid var(--border);
+	border-radius: var(--radius-sm);
+	background: var(--bg);
+	color: var(--text);
+	outline: none;
+	cursor: pointer;
+}
+.nav-search-select:focus {
+	border-color: var(--accent);
+}
 
 @media (max-width: 640px) {
 	.nav-search { display: none; }
@@ -168,6 +181,17 @@ h2 { font-size: 1.35rem; font-weight: 700; line-height: 1.35; margin-bottom: 0.5
 }
 .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
 .form-input::placeholder { color: var(--text-muted); }
+.form-select {
+  padding: 0.5rem 0.75rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  background: var(--surface);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+.form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
 
 /* Buttons */
 .btn {

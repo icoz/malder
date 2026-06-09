@@ -570,6 +570,8 @@ func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 			return
 		}
 
+		depth := r.URL.Query().Get("v")
+
 		reportID, err := store.Create(query)
 		if err != nil {
 			fmt.Fprintf(w, "event: error\ndata: %s\n\n", jsonEscape("Failed to create report: "+err.Error()))
@@ -619,7 +621,7 @@ func apiSSEResearchHandler(coord *agent.CoordinatorAgent, store *memory.ReportSt
 				SearchAgent:            coord.SearchAgent(),
 				AnalystAgent:           coord.AnalystAgent(),
 				CriticAgent:            coord.CriticAgent(),
-				Verbosity:              coord.Verbosity(),
+				Verbosity:              agent.ParseVerbosity(depth),
 				MaxIterations:          coord.MaxIterations(),
 				MaxConcurrentSubtopics: coord.MaxConcurrentSubtopics(),
 				MaxSubtopicRetries:     coord.MaxSubtopicRetries(),

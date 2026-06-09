@@ -143,13 +143,14 @@ document.addEventListener('DOMContentLoaded', function () {
   if (navForm) {
     navForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      var q = navForm.querySelector('input').value.trim();
+      var q = navForm.querySelector('input[name="q"]').value.trim();
       if (!q) return;
+      var v = document.getElementById('nav-depth').value;
       if (window.location.pathname === '/') {
-        startResearch(q);
+        startResearch(q, v);
         return;
       }
-      window.location.href = '/?q=' + encodeURIComponent(q);
+      window.location.href = '/?q=' + encodeURIComponent(q) + '&v=' + encodeURIComponent(v);
     });
   }
 
@@ -161,22 +162,27 @@ document.addEventListener('DOMContentLoaded', function () {
       e.preventDefault();
       var q = document.getElementById('query').value.trim();
       if (!q) return;
-      startResearch(q);
+      var v = document.getElementById('depth').value;
+      startResearch(q, v);
     });
   }
 
   // ---- Auto-submit from URL param (index page) ----
   var urlParams = new URLSearchParams(window.location.search);
   var urlQuery = urlParams.get('q');
+  var urlDepth = urlParams.get('v') || 'normal';
   if (urlQuery && form) {
     document.getElementById('query').value = urlQuery;
+    var depthSelect = document.getElementById('depth');
+    if (depthSelect) depthSelect.value = urlDepth;
     if (window.history.replaceState) {
       window.history.replaceState({}, '', '/');
     }
-    startResearch(urlQuery);
+    startResearch(urlQuery, urlDepth);
   }
 
-  function startResearch(query) {
+  function startResearch(query, depth) {
+    depth = depth || 'normal';
     var submitBtn = document.getElementById('submit-btn');
     var progress = document.getElementById('progress');
     var progressFill = document.getElementById('progress-fill');
@@ -191,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (progressFill) progressFill.style.width = '0%';
     if (progressStatus) progressStatus.textContent = 'Подключаемся...';
 
-    var evtSource = new EventSource('/api/research/stream?q=' + encodeURIComponent(query));
+    var evtSource = new EventSource('/api/research/stream?q=' + encodeURIComponent(query) + '&v=' + encodeURIComponent(depth));
     var reportId = null;
     var stageTimeout = setTimeout(function () {
       evtSource.close();

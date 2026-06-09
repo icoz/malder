@@ -16,6 +16,11 @@
 <a href="/reports">Отчёты</a>
 </div>
 <form class="nav-search" id="nav-search">
+<select name="v" class="nav-search-select" id="nav-depth">
+<option value="brief">Кратко</option>
+<option value="normal" selected>Стандарт</option>
+<option value="detailed">Глубоко</option>
+</select>
 <input type="text" name="q" class="nav-search-input" placeholder="Новое исследование..." required>
 <button type="submit" class="btn btn-sm btn-primary">Исследовать</button>
 </form>
