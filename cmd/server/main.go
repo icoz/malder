@@ -100,6 +100,16 @@ func durationLabel(ms int64) string {
 	return fmt.Sprintf("%d сек", s)
 }
 
+func fileSizeLabel(bytes int64) string {
+	if bytes < 1024 {
+		return fmt.Sprintf("%d B", bytes)
+	}
+	if bytes < 1024*1024 {
+		return fmt.Sprintf("%.1f KB", float64(bytes)/1024)
+	}
+	return fmt.Sprintf("%.1f MB", float64(bytes)/(1024*1024))
+}
+
 func contains(slice any, s string) bool {
 	switch v := slice.(type) {
 	case []string:
@@ -358,6 +368,7 @@ func main() {
 		"russianDatePtr": russianDatePtr,
 		"statusLabel":    statusLabel,
 		"durationLabel":  durationLabel,
+		"fileSize":       fileSizeLabel,
 		"contains":       contains,
 	}
 
