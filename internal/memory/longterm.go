@@ -71,6 +71,10 @@ func (m *LongTermMemory) ensureCollection(ctx context.Context) (*chromem.Collect
 	return m.db.GetOrCreateCollection("facts", nil, m.embedFunc)
 }
 
+func (m *LongTermMemory) ensureKnowledgeCollection(ctx context.Context) (*chromem.Collection, error) {
+	return m.db.GetOrCreateCollection("knowledge", nil, m.embedFunc)
+}
+
 // jitter returns a duration in [d*0.5, d*1.5).
 func jitter(d time.Duration) time.Duration {
 	half := int64(d) / 2
@@ -173,6 +177,41 @@ func (m *LongTermMemory) RecallWithTopK(ctx context.Context, query string, topK 
 		avgDistance = 1.0 - totalSim/float64(len(results))
 	}
 	return facts, avgDistance, nil
+}
+
+func (m *LongTermMemory) SaveKnowledgeChunk(ctx context.Context, key, value string) error {
+	log.Debug("→ LongTermMemory.SaveKnowledgeChunk(key=%s, len=%d)", key, len(value))
+	coll, err := m.ensureKnowledgeCollection(ctx)
+	if err != nil {
+		return fmt.Errorf("chromem get knowledge collection: %w", err)
+	}
+	return m.retryWithBackoff(ctx, "add_knowledge", func(ctx context.Context) error {
+		return coll.AddDocument(ctx, chromem.Document{
+			ID:      key,
+			Content: value,
+		})
+	})
+}
+
+func (m *LongTermMemory) RecallKnowledge(ctx context.Context, query string, topK int) ([]string, error) {
+	log.Debug("→ LongTermMemory.RecallKnowledge(query=%s, topK=%d)", query, topK)
+	coll := m.db.GetCollection("knowledge", m.embedFunc)
+	if coll == nil {
+		return []string{}, nil
+	}
+	var results []chromem.Result
+	if err := m.retryWithBackoff(ctx, "query_knowledge", func(ctx context.Context) error {
+		var qErr error
+		results, qErr = coll.Query(ctx, query, topK, nil, nil)
+		return qErr
+	}); err != nil {
+		return nil, fmt.Errorf("query knowledge chromem: %w", err)
+	}
+	chunks := make([]string, len(results))
+	for i, res := range results {
+		chunks[i] = res.Content
+	}
+	return chunks, nil
 }
 
 func (m *LongTermMemory) Close() error {
